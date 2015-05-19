@@ -123,8 +123,11 @@ import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.metadata.VirtualColumn;
 import org.apache.hadoop.hive.ql.optimizer.ColumnPruner;
 import org.apache.hadoop.hive.ql.optimizer.Optimizer;
+import org.apache.hadoop.hive.ql.optimizer.Transform;
 import org.apache.hadoop.hive.ql.optimizer.calcite.CalciteSemanticException;
 import org.apache.hadoop.hive.ql.optimizer.calcite.CalciteSemanticException.UnsupportedFeature;
+import org.apache.hadoop.hive.ql.optimizer.calcite.translator.HiveOpConverterPostProc;
+import org.apache.hadoop.hive.ql.optimizer.lineage.Generator;
 import org.apache.hadoop.hive.ql.optimizer.unionproc.UnionProcContext;
 import org.apache.hadoop.hive.ql.parse.BaseSemanticAnalyzer.TableSpec.SpecType;
 import org.apache.hadoop.hive.ql.parse.CalcitePlanner.ASTSearcher;
@@ -221,7 +224,6 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.hive.shims.HadoopShims;
-import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.hive.shims.Utils;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.Text;
@@ -3006,8 +3008,9 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       return input;
     }
 
-    Operator output = putOpInsertMap(OperatorFactory.getAndMakeChild(
-        new FilterDesc(filterPred, false),
+    FilterDesc filterDesc = new FilterDesc(filterPred, false);
+    filterDesc.setGenerated(true);
+    Operator output = putOpInsertMap(OperatorFactory.getAndMakeChild(filterDesc,
         new RowSchema(inputRR.getColumnInfos()), input), inputRR);
 
     if (LOG.isDebugEnabled()) {
@@ -5516,6 +5519,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       OpParseContext inputCtx = opParseCtx.get(input);
       RowResolver inputRR = inputCtx.getRowResolver();
       FilterDesc orFilterDesc = new FilterDesc(previous, false);
+      orFilterDesc.setGenerated(true);
 
       selectInput = putOpInsertMap(OperatorFactory.getAndMakeChild(
           orFilterDesc, new RowSchema(
@@ -9622,9 +9626,11 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         LOG.info("No need for sample filter");
         ExprNodeDesc samplePredicate = genSamplePredicate(ts, tabBucketCols,
             colsEqual, alias, rwsch, qb.getMetaData(), null);
-        op = OperatorFactory.getAndMakeChild(new FilterDesc(
-            samplePredicate, true, new SampleDesc(ts.getNumerator(), ts
-                .getDenominator(), tabBucketCols, true)),
+        FilterDesc filterDesc = new FilterDesc(
+          samplePredicate, true, new SampleDesc(ts.getNumerator(),
+            ts.getDenominator(), tabBucketCols, true));
+        filterDesc.setGenerated(true);
+        op = OperatorFactory.getAndMakeChild(filterDesc,
             new RowSchema(rwsch.getColumnInfos()), top);
       } else {
         // need to add filter
@@ -9632,8 +9638,9 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         LOG.info("Need sample filter");
         ExprNodeDesc samplePredicate = genSamplePredicate(ts, tabBucketCols,
             colsEqual, alias, rwsch, qb.getMetaData(), null);
-        op = OperatorFactory.getAndMakeChild(new FilterDesc(
-            samplePredicate, true),
+        FilterDesc filterDesc = new FilterDesc(samplePredicate, true);
+        filterDesc.setGenerated(true);
+        op = OperatorFactory.getAndMakeChild(filterDesc,
             new RowSchema(rwsch.getColumnInfos()), top);
       }
     } else {
@@ -9662,11 +9669,12 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
             qb.getParseInfo().setTabSample(alias, tsSample);
             ExprNodeDesc samplePred = genSamplePredicate(tsSample, tab
                 .getBucketCols(), true, alias, rwsch, qb.getMetaData(), null);
-            op = OperatorFactory
-                .getAndMakeChild(new FilterDesc(samplePred, true,
-                    new SampleDesc(tsSample.getNumerator(), tsSample
-                        .getDenominator(), tab.getBucketCols(), true)),
-                    new RowSchema(rwsch.getColumnInfos()), top);
+            FilterDesc filterDesc = new FilterDesc(samplePred, true,
+              new SampleDesc(tsSample.getNumerator(), tsSample
+                .getDenominator(), tab.getBucketCols(), true));
+            filterDesc.setGenerated(true);
+            op = OperatorFactory.getAndMakeChild(filterDesc,
+              new RowSchema(rwsch.getColumnInfos()), top);
             LOG.info("No need for sample filter");
           } else {
             // The table is not bucketed, add a dummy filter :: rand()
@@ -9680,8 +9688,9 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
                     .valueOf(460476415)));
             ExprNodeDesc samplePred = genSamplePredicate(tsSample, null, false,
                 alias, rwsch, qb.getMetaData(), randFunc);
-            op = OperatorFactory.getAndMakeChild(new FilterDesc(
-                samplePred, true),
+            FilterDesc filterDesc = new FilterDesc(samplePred, true);
+            filterDesc.setGenerated(true);
+            op = OperatorFactory.getAndMakeChild(filterDesc,
                 new RowSchema(rwsch.getColumnInfos()), top);
           }
         }

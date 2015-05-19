@@ -2248,8 +2248,8 @@ SELECT key, count(1) FROM T1 GROUP BY key
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@t1
 POSTHOOK: Output: default@outputtbl1
-POSTHOOK: Lineage: outputtbl1.cnt EXPRESSION [(t1)t1.null, (t1)t1.null, ]
-POSTHOOK: Lineage: outputtbl1.key EXPRESSION [(t1)t1.FieldSchema(name:key, type:string, comment:null), (t1)t1.FieldSchema(name:key, type:string, comment:null), ]
+POSTHOOK: Lineage: outputtbl1.cnt EXPRESSION [(t1)t1.null, ]
+POSTHOOK: Lineage: outputtbl1.key EXPRESSION [(t1)t1.FieldSchema(name:key, type:string, comment:null), ]
 PREHOOK: query: SELECT * FROM outputTbl1
 PREHOOK: type: QUERY
 PREHOOK: Input: default@outputtbl1
@@ -2641,8 +2641,8 @@ SELECT cast(key + key as string) as key, count(1) as cnt FROM T1 GROUP BY key + 
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@t1
 POSTHOOK: Output: default@outputtbl1
-POSTHOOK: Lineage: outputtbl1.cnt EXPRESSION [(t1)t1.null, (t1)t1.null, ]
-POSTHOOK: Lineage: outputtbl1.key EXPRESSION [(t1)t1.FieldSchema(name:key, type:string, comment:null), (t1)t1.FieldSchema(name:key, type:string, comment:null), ]
+POSTHOOK: Lineage: outputtbl1.cnt EXPRESSION [(t1)t1.null, ]
+POSTHOOK: Lineage: outputtbl1.key EXPRESSION [(t1)t1.FieldSchema(name:key, type:string, comment:null), ]
 PREHOOK: query: SELECT * FROM outputTbl1
 PREHOOK: type: QUERY
 PREHOOK: Input: default@outputtbl1
@@ -3024,7 +3024,7 @@ ON subq1.key = subq2.key
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@t1
 POSTHOOK: Output: default@outputtbl1
-POSTHOOK: Lineage: outputtbl1.cnt EXPRESSION [(t1)t1.null, (t1)t1.null, ]
+POSTHOOK: Lineage: outputtbl1.cnt EXPRESSION [(t1)t1.null, ]
 POSTHOOK: Lineage: outputtbl1.key EXPRESSION [(t1)t1.FieldSchema(name:key, type:string, comment:null), ]
 PREHOOK: query: SELECT * FROM outputTbl1
 PREHOOK: type: QUERY

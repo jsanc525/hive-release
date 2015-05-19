@@ -487,7 +487,7 @@ public class Driver implements CommandProcessor {
 
       plan = new QueryPlan(queryStr, sem, perfLogger.getStartTime(PerfLogger.DRIVER_RUN), queryId,
           SessionState.get().getCommandType(), SessionState.get().getSessionId(), Thread.currentThread().getName(),
-          HiveConf.getVar(conf, HiveConf.ConfVars.HIVE_LOG_TRACE_ID));
+          HiveConf.getVar(conf, HiveConf.ConfVars.HIVE_LOG_TRACE_ID), getSchema(sem, conf));
 
       conf.setVar(HiveConf.ConfVars.HIVEQUERYSTRING, queryStr);
 
