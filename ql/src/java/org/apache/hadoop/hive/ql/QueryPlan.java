@@ -37,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hive.metastore.api.Schema;
 import org.apache.hadoop.hive.ql.exec.ConditionalTask;
 import org.apache.hadoop.hive.ql.exec.ExplainTask;
 import org.apache.hadoop.hive.ql.exec.FetchTask;
@@ -89,6 +90,7 @@ public class QueryPlan implements Serializable {
   protected LineageInfo linfo;
   private TableAccessInfo tableAccessInfo;
   private ColumnAccessInfo columnAccessInfo;
+  private Schema resultSchema;
 
   private HashMap<String, String> idToTableNameMap;
 
@@ -114,7 +116,7 @@ public class QueryPlan implements Serializable {
   }
 
   public QueryPlan(String queryString, BaseSemanticAnalyzer sem, Long startTime, String queryId,
-      String operationName, String sessionId, String threadName, String userProvidedContext) {
+      String operationName, String sessionId, String threadName, String userProvidedContext, Schema resultSchema) {
     this.queryString = queryString;
 
     rootTasks = new ArrayList<Task<? extends Serializable>>();
@@ -139,6 +141,7 @@ public class QueryPlan implements Serializable {
     this.setSessionId(sessionId);
     this.setThreadName(threadName);
     this.setUserProvidedContext(userProvidedContext);
+    this.resultSchema = resultSchema;
   }
 
   public String getQueryStr() {
@@ -685,6 +688,10 @@ public class QueryPlan implements Serializable {
 
   public void setOutputs(HashSet<WriteEntity> outputs) {
     this.outputs = outputs;
+  }
+
+  public Schema getResultSchema() {
+    return resultSchema;
   }
 
   public HashMap<String, String> getIdToTableNameMap() {
