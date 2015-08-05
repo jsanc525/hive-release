@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
@@ -124,7 +125,7 @@ public class ExprProcFactory {
         bci_set.addAll(child_dep.getBaseCols());
       }
 
-      dep.setBaseCols(new ArrayList<BaseColumnInfo>(bci_set));
+      dep.setBaseCols(bci_set);
       dep.setType(new_type);
 
       return dep;
@@ -146,7 +147,7 @@ public class ExprProcFactory {
       // Create a dependency that has no basecols
       Dependency dep = new Dependency();
       dep.setType(LineageInfo.DependencyType.SIMPLE);
-      dep.setBaseCols(new ArrayList<BaseColumnInfo>());
+      dep.setBaseCols(new LinkedHashSet<BaseColumnInfo>());
 
       return dep;
     }
@@ -211,9 +212,9 @@ public class ExprProcFactory {
       String tabAlias = ci != null ? ci.getTabAlias() : col.getTabAlias();
       if ((tabAlias == null || tabAlias.startsWith("_") || tabAlias.startsWith("$"))
           && (dep != null && dep.getType() == DependencyType.SIMPLE)) {
-        List<BaseColumnInfo> baseCols = dep.getBaseCols();
+        Set<BaseColumnInfo> baseCols = dep.getBaseCols();
         if (baseCols != null && !baseCols.isEmpty()) {
-          BaseColumnInfo baseCol = baseCols.get(0);
+          BaseColumnInfo baseCol = baseCols.iterator().next();
           tabAlias = baseCol.getTabAlias().getAlias();
           alias = baseCol.getColumn().getName();
         }
