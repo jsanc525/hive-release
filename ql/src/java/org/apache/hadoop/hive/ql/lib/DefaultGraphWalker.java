@@ -62,7 +62,7 @@ public class DefaultGraphWalker implements GraphWalker {
   /**
    * @return the doneList
    */
-  public Set<Node> getDispatchedList() {
+  protected Set<Node> getDispatchedList() {
     return retMap.keySet();
   }
 
@@ -121,7 +121,7 @@ public class DefaultGraphWalker implements GraphWalker {
    *          current operator in the graph
    * @throws SemanticException
    */
-  public void walk(Node nd) throws SemanticException {
+  protected void walk(Node nd) throws SemanticException {
     if (opStack.empty() || nd != opStack.peek()) {
       opStack.push(nd);
     }

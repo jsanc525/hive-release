@@ -154,7 +154,7 @@ public class ColumnPruner implements Transform {
      * Walk the given operator.
      */
     @Override
-    public void walk(Node nd) throws SemanticException {
+    protected void walk(Node nd) throws SemanticException {
       boolean walkChildren = true;
       opStack.push(nd);
 
