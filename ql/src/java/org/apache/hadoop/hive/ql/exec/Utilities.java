@@ -18,6 +18,9 @@
 
 package org.apache.hadoop.hive.ql.exec;
 
+import java.util.ArrayList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import java.beans.DefaultPersistenceDelegate;
 import java.beans.Encoder;
 import java.beans.ExceptionListener;
@@ -2445,6 +2448,19 @@ public final class Utilities {
       return result;
     }
 
+  private static boolean useExistingClassLoader(ClassLoader cl) {
+    if (!(cl instanceof UDFClassLoader)) {
+      // Cannot use the same classloader if it is not an instance of {@code UDFClassLoader}
+      return false;
+    }
+    final UDFClassLoader udfClassLoader = (UDFClassLoader) cl;
+    if (udfClassLoader.isClosed()) {
+      // The classloader may have been closed, Cannot add to the same instance
+      return false;
+    }
+    return true;
+  }
+
   /**
    * Add new elements to the classpath.
    *
@@ -2452,24 +2468,28 @@ public final class Utilities {
    *          Array of classpath elements
    */
   public static ClassLoader addToClassPath(ClassLoader cloader, String[] newPaths) {
-    URLClassLoader loader = (URLClassLoader) cloader;
-    List<URL> curPath = Arrays.asList(loader.getURLs());
-    ArrayList<URL> newPath = new ArrayList<URL>();
-
-    // get a list with the current classpath components
-    for (URL onePath : curPath) {
-      newPath.add(onePath);
+    final URLClassLoader loader = (URLClassLoader) cloader;
+    if (useExistingClassLoader(cloader)) {
+      final UDFClassLoader udfClassLoader = (UDFClassLoader) loader;
+      for (String path : newPaths) {
+        udfClassLoader.addURL(urlFromPathString(path));
+      }
+      return udfClassLoader;
+    } else {
+      return createUDFClassLoader(loader, newPaths);
     }
-    curPath = newPath;
+  }
 
+  public static ClassLoader createUDFClassLoader(URLClassLoader loader, String[] newPaths) {
+    final Set<URL> curPathsSet = Sets.newHashSet(loader.getURLs());
+    final List<URL> curPaths = Lists.newArrayList(curPathsSet);
     for (String onestr : newPaths) {
-      URL oneurl = urlFromPathString(onestr);
-      if (oneurl != null && !curPath.contains(oneurl)) {
-        curPath.add(oneurl);
+      final URL oneurl = urlFromPathString(onestr);
+      if (oneurl != null && !curPathsSet.contains(oneurl)) {
+        curPaths.add(oneurl);
       }
     }
-
-    return new URLClassLoader(curPath.toArray(new URL[0]), loader);
+    return new UDFClassLoader(curPaths.toArray(new URL[0]), loader);
   }
 
   /**
@@ -2491,7 +2511,7 @@ public final class Utilities {
     }
     JavaUtils.closeClassLoader(loader);
 
-    loader = new URLClassLoader(newPath.toArray(new URL[0]));
+    loader = new UDFClassLoader(newPath.toArray(new URL[0]));
     curThread.setContextClassLoader(loader);
     SessionState.get().getConf().setClassLoader(loader);
   }
