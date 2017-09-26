@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,6 +37,7 @@ import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Schema;
 import org.apache.hadoop.hive.ql.session.OperationLog;
+import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hive.service.AbstractService;
 import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;
@@ -167,6 +169,14 @@ public class OperationManager extends AbstractService {
     if (operation != null && operation.isTimedOut(System.currentTimeMillis())) {
       handleToOperation.remove(operationHandle);
       return operation;
+    }
+    return null;
+  }
+
+  private String getQueryId(Operation operation) {
+    if (operation instanceof SQLOperation) {
+      SQLOperation sqlOperation = (SQLOperation) operation;
+      return sqlOperation.getQueryId();
     }
     return null;
   }
@@ -308,5 +318,17 @@ public class OperationManager extends AbstractService {
   // Needed for testing
   int getOperationCount() {
     return handleToOperation.size();
+  }
+
+  public Operation getOperationByQueryId(String queryId) {
+    for (Operation operation : getOperations()) {
+      if (operation instanceof SQLOperation) {
+        SQLOperation sqlOperation = (SQLOperation) operation;
+        if (sqlOperation.getQueryId().equals(queryId)) {
+          return sqlOperation;
+        }
+      }
+    }
+    return null;
   }
 }

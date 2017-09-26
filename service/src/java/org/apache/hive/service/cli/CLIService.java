@@ -46,7 +46,9 @@ import org.apache.hive.service.ServiceException;
 import org.apache.hive.service.ServiceUtils;
 import org.apache.hive.service.auth.HiveAuthFactory;
 import org.apache.hive.service.cli.operation.Operation;
+import org.apache.hive.service.cli.operation.SQLOperation;
 import org.apache.hive.service.cli.session.SessionManager;
+import org.apache.hive.service.cli.thrift.TOperationHandle;
 import org.apache.hive.service.cli.thrift.TProtocolVersion;
 import org.apache.hive.service.server.HiveServer2;
 import org.apache.hadoop.hive.common.log.ProgressMonitor;
@@ -566,6 +568,17 @@ public class CLIService extends CompositeService implements ICLIService {
       String tokenStr) throws HiveSQLException {
     sessionManager.getSession(sessionHandle).renewDelegationToken(authFactory, tokenStr);
     LOG.info(sessionHandle  + ": renewDelegationToken()");
+  }
+
+  @Override
+  public String getQueryId(TOperationHandle opHandle) throws HiveSQLException {
+    Operation operation = sessionManager.getOperationManager().getOperation(
+        new OperationHandle(opHandle));
+    if (operation instanceof SQLOperation) {
+      SQLOperation sqlOperation = (SQLOperation) operation;
+      return sqlOperation.getQueryId();
+    }
+    return null;
   }
 
   public SessionManager getSessionManager() {

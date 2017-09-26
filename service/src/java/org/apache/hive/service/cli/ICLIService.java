@@ -24,6 +24,7 @@ import java.util.Map;
 
 
 import org.apache.hive.service.auth.HiveAuthFactory;
+import org.apache.hive.service.cli.thrift.TOperationHandle;
 
 public interface ICLIService {
 
@@ -80,6 +81,8 @@ public interface ICLIService {
 
   OperationStatus getOperationStatus(OperationHandle opHandle, boolean getProgressUpdate)
       throws HiveSQLException;
+
+  String getQueryId(TOperationHandle operationHandle) throws HiveSQLException;
 
   void cancelOperation(OperationHandle opHandle)
       throws HiveSQLException;

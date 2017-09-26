@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hive.service.auth.HiveAuthFactory;
+import org.apache.hive.service.cli.thrift.TOperationHandle;
 
 
 /**
@@ -207,5 +208,10 @@ public class EmbeddedCLIServiceClient extends CLIServiceClient {
   public void renewDelegationToken(SessionHandle sessionHandle, HiveAuthFactory authFactory,
       String tokenStr) throws HiveSQLException {
     cliService.renewDelegationToken(sessionHandle, authFactory, tokenStr);
+  }
+
+  @Override
+  public String getQueryId(TOperationHandle operationHandle) throws HiveSQLException {
+    return cliService.getQueryId(operationHandle);
   }
 }

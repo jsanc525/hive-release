@@ -117,6 +117,7 @@ public final class SemanticAnalyzerFactory {
     commandType.put(HiveParser.TOK_REPL_DUMP, HiveOperation.REPLDUMP);
     commandType.put(HiveParser.TOK_REPL_LOAD, HiveOperation.REPLLOAD);
     commandType.put(HiveParser.TOK_REPL_STATUS, HiveOperation.REPLSTATUS);
+    commandType.put(HiveParser.TOK_KILL_QUERY, HiveOperation.KILL_QUERY);
   }
 
   static {
@@ -266,6 +267,7 @@ public final class SemanticAnalyzerFactory {
       case HiveParser.TOK_ALTERDATABASE_OWNER:
       case HiveParser.TOK_TRUNCATETABLE:
       case HiveParser.TOK_SHOW_SET_ROLE:
+      case HiveParser.TOK_KILL_QUERY:
         return new DDLSemanticAnalyzer(conf);
 
       case HiveParser.TOK_CREATEFUNCTION:

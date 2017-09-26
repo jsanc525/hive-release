@@ -722,6 +722,15 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
   }
 
   @Override
+  public TGetQueryIdResp GetQueryId(TGetQueryIdReq req) throws TException {
+    try {
+      return new TGetQueryIdResp(cliService.getQueryId(req.getOperationHandle()));
+    } catch (HiveSQLException e) {
+      throw new TException(e);
+    }
+  }
+
+  @Override
   public abstract void run();
 
   /**

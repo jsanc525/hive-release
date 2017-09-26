@@ -909,6 +909,9 @@ public class Driver implements CommandProcessor {
       case PARTITION:
         // not currently handled
         continue;
+      case SERVICE_NAME:
+        objName = privObject.getServiceName();
+        break;
         default:
           throw new AssertionError("Unexpected object type");
       }
@@ -1901,4 +1904,7 @@ public class Driver implements CommandProcessor {
     this.operationId = opId;
   }
 
+  public String getQueryId() {
+    return conf.getVar(ConfVars.HIVEQUERYID);
+  }
 }

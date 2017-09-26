@@ -153,6 +153,7 @@ KW_COLLECTION: 'COLLECTION';
 KW_ITEMS: 'ITEMS';
 KW_KEYS: 'KEYS';
 KW_KEY_TYPE: '$KEY$';
+KW_KILL: 'KILL';
 KW_LINES: 'LINES';
 KW_STORED: 'STORED';
 KW_FILEFORMAT: 'FILEFORMAT';
@@ -314,6 +315,7 @@ KW_DUMP: 'DUMP';
 KW_STATUS: 'STATUS';
 KW_MERGE: 'MERGE';
 KW_MATCHED: 'MATCHED';
+KW_QUERY: 'QUERY';
 
 // Operators
 // NOTE: if you add a new function/operator, add it to sysFuncNames so that describe function _FUNC_ will work.

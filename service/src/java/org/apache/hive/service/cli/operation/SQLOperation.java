@@ -533,4 +533,8 @@ public class SQLOperation extends ExecuteStatementOperation {
     return sqlOperationConf;
   }
 
+  public String getQueryId() {
+    return driver.getQueryId();
+  }
+
 }

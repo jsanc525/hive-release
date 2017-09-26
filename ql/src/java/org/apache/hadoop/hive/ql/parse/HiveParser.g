@@ -366,6 +366,7 @@ TOK_MATCHED;
 TOK_NOT_MATCHED;
 TOK_UPDATE;
 TOK_DELETE;
+TOK_KILL_QUERY;
 }
 
 
@@ -513,6 +514,8 @@ import org.apache.commons.logging.LogFactory;
     xlateMap.put("KW_PURGE", "PURGE");
     xlateMap.put("KW_ABORT", "ABORT");
     xlateMap.put("KW_TRANSACTIONS", "TRANSACTIONS");
+    xlateMap.put("KW_KILL", "KILL");
+    xlateMap.put("KW_QUERY", "QUERY");
 
 
     // Operators
@@ -821,6 +824,7 @@ ddlStatement
     | setRole
     | showCurrentRole
     | abortTransactionStatement
+    | killQueryStatement
     ;
 
 ifExists
@@ -1404,7 +1408,7 @@ fileFormat
 tabTypeExpr
 @init { pushMsg("specifying table types", state); }
 @after { popMsg(state); }
-   : identifier (DOT^ 
+   : identifier (DOT^
    (
    (KW_ELEM_TYPE) => KW_ELEM_TYPE
    | 
@@ -1440,7 +1444,7 @@ descStatement
 analyzeStatement
 @init { pushMsg("analyze statement", state); }
 @after { popMsg(state); }
-    : KW_ANALYZE KW_TABLE (parttype=tableOrPartition) KW_COMPUTE KW_STATISTICS ((noscan=KW_NOSCAN) | (partialscan=KW_PARTIALSCAN) 
+    : KW_ANALYZE KW_TABLE (parttype=tableOrPartition) KW_COMPUTE KW_STATISTICS ((noscan=KW_NOSCAN) | (partialscan=KW_PARTIALSCAN)
                                                       | (KW_FOR KW_COLUMNS (statsColumnName=columnNameList)?))?
       -> ^(TOK_ANALYZE $parttype $noscan? $partialscan? KW_COLUMNS? $statsColumnName?)
     ;
@@ -2056,7 +2060,7 @@ skewedValueLocationElement
       skewedColumnValue
      | skewedColumnValuePair
     ;
-    
+
 columnNameOrder
 @init { pushMsg("column name order", state); }
 @after { popMsg(state); }
@@ -2513,3 +2517,10 @@ updateOrDelete
 /*
 END SQL Merge statement
 */
+
+killQueryStatement
+@init { pushMsg("kill query statement", state); }
+@after { popMsg(state); }
+  :
+  KW_KILL KW_QUERY ( StringLiteral )+ -> ^(TOK_KILL_QUERY ( StringLiteral )+)
+  ;

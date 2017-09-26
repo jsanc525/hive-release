@@ -73,6 +73,7 @@ import org.apache.hive.service.cli.operation.MetadataOperation;
 import org.apache.hive.service.cli.operation.Operation;
 import org.apache.hive.service.cli.operation.OperationManager;
 import org.apache.hive.service.cli.thrift.TProtocolVersion;
+import org.apache.hive.service.server.KillQueryImpl;
 import org.apache.hive.service.server.ThreadWithGarbageCleanup;
 
 /**
@@ -141,6 +142,7 @@ public class HiveSessionImpl implements HiveSession {
     sessionState.setUserIpAddress(ipAddress);
     sessionState.setIsHiveServerQuery(true);
     sessionState.setForwardedAddresses(SessionManager.getForwardedAddresses());
+    sessionState.setKillQuery(new KillQueryImpl(operationManager));
     SessionState.start(sessionState);
     try {
       sessionState.loadAuxJars();

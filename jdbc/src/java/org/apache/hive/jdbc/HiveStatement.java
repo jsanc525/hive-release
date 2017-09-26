@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.codec.binary.Base64;
@@ -45,11 +46,13 @@ import org.apache.hive.service.cli.thrift.TExecuteStatementReq;
 import org.apache.hive.service.cli.thrift.TExecuteStatementResp;
 import org.apache.hive.service.cli.thrift.TGetOperationStatusReq;
 import org.apache.hive.service.cli.thrift.TGetOperationStatusResp;
+import org.apache.hive.service.cli.thrift.TGetQueryIdReq;
 import org.apache.hive.service.cli.thrift.TOperationHandle;
 import org.apache.hive.service.cli.thrift.TSessionHandle;
 import org.apache.hive.service.cli.thrift.TFetchResultsReq;
 import org.apache.hive.service.cli.thrift.TFetchResultsResp;
 import org.apache.hive.service.cli.thrift.TFetchOrientation;
+import org.apache.thrift.TException;
 
 /**
  * HiveStatement.
@@ -921,5 +924,15 @@ public class HiveStatement implements java.sql.Statement {
    */
   public void setInPlaceUpdateStream(InPlaceUpdateStream stream) {
     this.inPlaceUpdateStream = stream;
+  }
+
+
+  @VisibleForTesting
+  public String getQueryId() throws SQLException {
+    try {
+      return client.GetQueryId(new TGetQueryIdReq(stmtHandle)).getQueryId();
+    } catch (TException e) {
+      throw new SQLException(e);
+    }
   }
 }

@@ -377,7 +377,7 @@ public class HiveServer2 extends CompositeService {
         + thriftCLIService.getPortNumber();
   }
 
-  private String getServerHost() throws Exception {
+  public String getServerHost() throws Exception {
     if ((thriftCLIService == null) || (thriftCLIService.getServerIPAddress() == null)) {
       throw new Exception("Unable to get the server address; it hasn't been initialized yet.");
     }

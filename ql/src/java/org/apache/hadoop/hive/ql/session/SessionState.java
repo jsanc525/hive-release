@@ -187,6 +187,10 @@ public class SessionState {
   private HiveAuthorizer authorizerV2;
   private volatile ProgressMonitor progressMonitor;
 
+  private String hiveServer2HostName;
+
+  private KillQuery killQuery;
+
   public enum AuthorizationMode{V1, V2};
 
   private HiveAuthenticationProvider authenticator;
@@ -1698,7 +1702,7 @@ public class SessionState {
   public List<String> getForwardedAddresses() {
     return forwardedAddresses;
   }
-  
+
   /**
    * Gets the comma-separated reloadable aux jars
    * @return the list of reloadable aux jars
@@ -1715,6 +1719,21 @@ public class SessionState {
     return progressMonitor;
   }
 
+  public void setHiveServer2Host(String hiveServer2HostName) {
+    this.hiveServer2HostName = hiveServer2HostName;
+  }
+
+  public String getHiveServer2Host() {
+    return hiveServer2HostName;
+  }
+
+  public void setKillQuery(KillQuery killQuery) {
+    this.killQuery = killQuery;
+  }
+
+  public KillQuery getKillQuery() {
+    return killQuery;
+  }
 }
 
 class ResourceMaps {

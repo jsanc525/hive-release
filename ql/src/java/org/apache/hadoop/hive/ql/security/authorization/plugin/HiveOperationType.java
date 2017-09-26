@@ -124,6 +124,7 @@ public enum HiveOperationType {
   SHOW_TRANSACTIONS,
   ABORT_TRANSACTIONS,
   ALTERTABLE_EXCHANGEPARTITION,
+  KILL_QUERY,
   // ==== Hive command operation types starts here ==== //
   SET,
   RESET,

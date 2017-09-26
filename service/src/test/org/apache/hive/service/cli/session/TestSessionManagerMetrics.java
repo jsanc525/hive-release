@@ -51,8 +51,7 @@ public class TestSessionManagerMetrics {
     conf.setVar(HiveConf.ConfVars.HIVE_METRICS_REPORTER, MetricsReporting.JSON_FILE.name() + "," + MetricsReporting.JMX.name());
     MetricsFactory.init(conf);
 
-    HiveServer2 hs2 = new HiveServer2();
-    sm = new SessionManager(hs2);
+    sm = new SessionManager(null);
     sm.init(conf);
 
     metrics = (CodahaleMetrics) MetricsFactory.getInstance();
