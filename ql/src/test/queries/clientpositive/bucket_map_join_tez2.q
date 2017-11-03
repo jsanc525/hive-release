@@ -49,3 +49,14 @@ select a.key, b.key from (select key from tab_part where key > 1) a right outer 
 explain select a.key, b.key from (select distinct key from tab) a join tab b on b.key = a.key;
 
 explain select a.value, b.value from (select distinct value from tab) a join tab b on b.key = a.value;
+
+
+--HIVE-17939
+create table small (i int) stored as ORC;
+create table big (i int) partitioned by (k int) clustered by (i) into 10 buckets stored as ORC;
+
+insert into small values (1),(2),(3),(4),(5),(6);
+insert into big partition(k=1) values(1),(3),(5),(7),(9);
+insert into big partition(k=2) values(0),(2),(4),(6),(8);
+explain select small.i, big.i from small,big where small.i=big.i;
+select small.i, big.i from small,big where small.i=big.i order by small.i, big.i;
