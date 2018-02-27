@@ -1766,7 +1766,7 @@ public class SessionState {
     // Provide a facility to set current timestamp during tests
     if (conf.getBoolVar(ConfVars.HIVE_IN_TEST)) {
       String overrideTimestampString =
-          HiveConf.getVar(conf, HiveConf.ConfVars.HIVETESTCURRENTTIMESTAMP, null);
+          HiveConf.getVar(conf, HiveConf.ConfVars.HIVETESTCURRENTTIMESTAMP, (String)null);
       if (overrideTimestampString != null && overrideTimestampString.length() > 0) {
         queryCurrentTimestamp = Timestamp.valueOf(overrideTimestampString);
       }

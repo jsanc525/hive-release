@@ -57,6 +57,10 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.Shell;
 import org.apache.hive.common.HiveCompat;
 
+import java.io.*;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+
 
 /**
  * Hive Configuration.
@@ -91,6 +95,36 @@ public class HiveConf extends Configuration {
 
   public void setSparkConfigUpdated(boolean isSparkConfigUpdated) {
     this.isSparkConfigUpdated = isSparkConfigUpdated;
+  }
+
+  public interface EncoderDecoder<K, V> {
+    V encode(K key);
+    K decode(V value);
+  }
+
+  public static class URLEncoderDecoder implements EncoderDecoder<String, String> {
+    private static final String UTF_8 = "UTF-8";
+    @Override
+    public String encode(String key) {
+      try {
+        return URLEncoder.encode(key, UTF_8);
+      } catch (UnsupportedEncodingException e) {
+        return key;
+      }
+    }
+
+    @Override
+    public String decode(String value) {
+      try {
+        return URLDecoder.decode(value, UTF_8);
+      } catch (UnsupportedEncodingException e) {
+        return value;
+      }
+    }
+  }
+
+  public static class EncoderDecoderFactory {
+    public static final URLEncoderDecoder URL_ENCODER_DECODER = new URLEncoderDecoder();
   }
 
   static {
@@ -1654,39 +1688,39 @@ public class HiveConf extends Configuration {
     HIVE_COMPACTOR_ABORTEDTXN_THRESHOLD("hive.compactor.abortedtxn.threshold", 1000,
         "Number of aborted transactions involving a given table or partition that will trigger\n" +
         "a major compaction."),
-    
+
     COMPACTOR_INITIATOR_FAILED_THRESHOLD("hive.compactor.initiator.failed.compacts.threshold", 2,
       new RangeValidator(1, 20), "Number of consecutive compaction failures (per table/partition) " +
       "after which automatic compactions will not be scheduled any more.  Note that this must be less " +
       "than hive.compactor.history.retention.failed."),
-    
+
     HIVE_COMPACTOR_CLEANER_RUN_INTERVAL("hive.compactor.cleaner.run.interval", "5000ms",
         new TimeValidator(TimeUnit.MILLISECONDS), "Time between runs of the cleaner thread"),
     COMPACTOR_JOB_QUEUE("hive.compactor.job.queue", "", "Used to specify name of Hadoop queue to which\n" +
       "Compaction jobs will be submitted.  Set to empty string to let Hadoop choose the queue."),
-    
+
     COMPACTOR_HISTORY_RETENTION_SUCCEEDED("hive.compactor.history.retention.succeeded", 3,
       new RangeValidator(0, 100), "Determines how many successful compaction records will be " +
       "retained in compaction history for a given table/partition."),
-    
+
     COMPACTOR_HISTORY_RETENTION_FAILED("hive.compactor.history.retention.failed", 3,
       new RangeValidator(0, 100), "Determines how many failed compaction records will be " +
       "retained in compaction history for a given table/partition."),
-    
+
     COMPACTOR_HISTORY_RETENTION_ATTEMPTED("hive.compactor.history.retention.attempted", 2,
       new RangeValidator(0, 100), "Determines how many attempted compaction records will be " +
       "retained in compaction history for a given table/partition."),
-    
+
     COMPACTOR_HISTORY_REAPER_INTERVAL("hive.compactor.history.reaper.interval", "2m",
       new TimeValidator(TimeUnit.MILLISECONDS), "Determines how often compaction history reaper runs"),
-    
+
     HIVE_TIMEDOUT_TXN_REAPER_START("hive.timedout.txn.reaper.start", "100s",
       new TimeValidator(TimeUnit.MILLISECONDS), "Time delay of 1st reaper run after metastore start"),
     HIVE_TIMEDOUT_TXN_REAPER_INTERVAL("hive.timedout.txn.reaper.interval", "180s",
       new TimeValidator(TimeUnit.MILLISECONDS), "Time interval describing how often the reaper runs"),
     WRITE_SET_REAPER_INTERVAL("hive.writeset.reaper.interval", "60s",
       new TimeValidator(TimeUnit.MILLISECONDS), "Frequency of WriteSet reaper runs"),
-    
+
     MERGE_CARDINALITY_VIOLATION_CHECK("hive.merge.cardinality.check", true,
       "Set to true to ensure that each SQL Merge statement ensures that for each row in the target\n" +
         "table there is at most 1 matching row in the source table per SQL Specification."),
@@ -2938,6 +2972,10 @@ public class HiveConf extends Configuration {
     return conf.get(var.varname, defaultVal);
   }
 
+  public static String getVar(Configuration conf, ConfVars var, EncoderDecoder<String, String> encoderDecoder) {
+    return encoderDecoder.decode(getVar(conf, var));
+  }
+
   public String getLogIdVar() {
     String retval = getVar(ConfVars.HIVE_LOG_TRACE_ID);
 
@@ -2953,7 +2991,11 @@ public class HiveConf extends Configuration {
     assert (var.valClass == String.class) : var.varname;
     conf.set(var.varname, val);
   }
-
+  public static void setVar(Configuration conf, ConfVars var, String val,
+    EncoderDecoder<String, String> encoderDecoder) {
+    setVar(conf, var, encoderDecoder.encode(val));
+  }
+  
   public static ConfVars getConfVars(String name) {
     return vars.get(name);
   }
@@ -2970,6 +3012,21 @@ public class HiveConf extends Configuration {
     setVar(this, var, val);
   }
 
+  public String getQueryString() {
+    return getQueryString(this);
+  }
+
+  public static String getQueryString(Configuration conf) {
+    return getVar(conf, ConfVars.HIVEQUERYSTRING, EncoderDecoderFactory.URL_ENCODER_DECODER);
+  }
+
+  public void setQueryString(String query) {
+    setQueryString(this, query);
+  }
+
+  public static void setQueryString(Configuration conf, String query) {
+    setVar(conf, ConfVars.HIVEQUERYSTRING, query, EncoderDecoderFactory.URL_ENCODER_DECODER);
+  }
   public void logVars(PrintStream ps) {
     for (ConfVars one : ConfVars.values()) {
       ps.println(one.varname + "=" + ((get(one.varname) != null) ? get(one.varname) : ""));

@@ -304,6 +304,15 @@ public class Driver implements CommandProcessor {
     this.userName = userName;
   }
 
+  public Driver(org.apache.hadoop.hive.ql.QueryState queryState, String userName) {
+    this(queryState, userName, null);
+  }
+
+  public Driver(org.apache.hadoop.hive.ql.QueryState queryState, String userName, HiveTxnManager txnMgr) {
+    this.conf = queryState.getConf();
+    this.userName = userName;
+  }
+
   public Driver() {
     if (SessionState.get() != null) {
       conf = SessionState.get().getConf();
@@ -626,7 +635,7 @@ public class Driver implements CommandProcessor {
     }
 
     // The following union operation returns a union, which traverses over the
-    // first set once and then  then over each element of second set, in order, 
+    // first set once and then  then over each element of second set, in order,
     // that is not contained in first. This means it doesn't replace anything
     // in first set, and would preserve the WriteType in WriteEntity in first
     // set in case of outputs list.
@@ -1665,16 +1674,16 @@ public class Driver implements CommandProcessor {
         console.printInfo("Total MapReduce CPU Time Spent: " + Utilities.formatMsecToStr(totalCpu));
       }
     }
-    
+
     releasePlan(plan);
-    
+
     if (console != null) {
       console.printInfo("OK");
     }
 
     return (0);
   }
-  
+
   private synchronized void releasePlan(QueryPlan plan) {
     // Plan maybe null if Driver.close is called in another thread for the same Driver object
     if (plan != null) {
