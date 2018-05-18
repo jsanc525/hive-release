@@ -2809,26 +2809,11 @@ private void constructOneLBLocationMap(FileStatus fSta,
         final String srcGroup = renameNonLocal ? srcFile.getGroup() :
           fullDestStatus.getFileStatus().getGroup();
         if (null == pool) {
-          Path destPath = new Path(destf, srcP.getName());
-          try {
+          Path destPath = rename(srcP, destFs, destf, name, filetype, renameNonLocal,
+              isOverwrite, isSrcLocal, srcFs, conf);
 
-            if (renameNonLocal) {
-              if (isOverwrite && destFs.exists(destPath)) {
-                destFs.delete(destPath, false);
-              }
-              for (int counter = 1; !destFs.rename(srcP,destPath); counter++) {
-                destPath = new Path(destf, name + ("_copy_" + counter) + filetype);
-              }
-            } else {
-              destPath = mvFile(conf, srcP, destPath, isSrcLocal, srcFs, destFs, name, filetype, isOverwrite);
-            }
-
-            if (null != newFiles) {
-              newFiles.add(destPath);
-            }
-          } catch (IOException ioe) {
-            LOG.error("Failed to move: "+ ioe.getMessage());
-            throw new HiveException(ioe.getCause());
+          if (null != newFiles) {
+            newFiles.add(destPath);
           }
         } else {
           futures.add(pool.submit(new Callable<ObjectPair<Path, Path>>() {
@@ -2836,17 +2821,8 @@ private void constructOneLBLocationMap(FileStatus fSta,
             public ObjectPair<Path, Path> call() throws Exception {
               SessionState.setCurrentSessionState(parentSession);
               LOG.debug("copying file " + srcP);
-              Path destPath = new Path(destf, srcP.getName());
-              if (renameNonLocal) {
-                if (isOverwrite && destFs.exists(destPath)) {
-                  destFs.delete(destPath, false);
-                }
-                for (int counter = 1; !destFs.rename(srcP,destPath); counter++) {
-                  destPath = new Path(destf, name + ("_copy_" + counter) + filetype);
-                }
-              } else {
-                destPath = mvFile(conf, srcP, destPath, isSrcLocal, srcFs, destFs, name, filetype, isOverwrite);
-              }
+              Path destPath = rename(srcP, destFs, destf, name, filetype, renameNonLocal,
+                  isOverwrite, isSrcLocal, srcFs, conf);
 
               if (inheritPerms) {
                 ShimLoader.getHadoopShims().setFullFileStatus(conf, fullDestStatus, srcGroup, destFs, destPath, false);
@@ -2883,7 +2859,45 @@ private void constructOneLBLocationMap(FileStatus fSta,
       }
     }
   }
-
+  private static Path rename(Path srcP, FileSystem destFs, Path destf, String name,
+      String filetype, boolean renameNonLocal, boolean isOverwrite, boolean isSrcLocal,
+      FileSystem srcFs, HiveConf conf) {
+    Path destPath = new Path(destf, srcP.getName());
+    try {
+      if (renameNonLocal) {
+        if (isOverwrite && destFs.exists(destPath)) {
+          destFs.delete(destPath, false);
+        }
+        /**
+         * FileSystem.rename() doesn't provide a reason why it failed, just a boolean.  It makes
+         * sense to loop around if it fails because destPath already exists but not if srcP
+         * disappeared.  The later may actually happen due to query being cancelled and
+         * then clean up logic deleting temp artifacts.  Then relying solely on rename() return
+         * value will make this loop spin forever.
+         * Having a separate loop checking
+         * destFs.exists(destPath) until a unique file name is found creates a problem in
+         * case of 2 concurrent writes to the same partition (w/o Hive locking or acid)
+         * since then it makes generating new file name and actual rename() not atomic.
+         *
+         * A better solution is to make sure all ThreadPoolS are properly terminated (shutdownAll)
+         * on cancel but that should be a comprehensive change.
+         */
+        boolean success = false;
+        for (int counter = 1;
+             destFs.exists(srcP) && !(success = destFs.rename(srcP,destPath)); counter++) {
+          destPath = new Path(destf, name + ("_copy_" + counter) + filetype);
+        }
+        if(success) {
+          return destPath;
+        }
+      } else {
+        return mvFile(conf, srcP, destPath, isSrcLocal, srcFs, destFs, name, filetype, isOverwrite);
+      }
+    } catch (IOException ioe) {
+      LOG.error("Failed to move: " + srcP + " to " + destPath + " due to: " + ioe.getMessage());
+    }
+    return destPath;
+  }
   private static boolean destExists(List<List<Path[]>> result, Path proposed) {
     for (List<Path[]> sdpairs : result) {
       for (Path[] sdpair : sdpairs) {
