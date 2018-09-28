@@ -39,11 +39,14 @@ import org.apache.arrow.vector.complex.ListVector;
 import org.apache.arrow.vector.complex.NonNullableStructVector;
 import org.apache.arrow.vector.complex.StructVector;
 import org.apache.arrow.vector.holders.DecimalHolder;
+import org.apache.arrow.vector.holders.DecimalHolder;
 import org.apache.arrow.vector.types.TimeUnit;
 import org.apache.arrow.vector.types.Types;
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.FieldType;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.arrow.vector.util.DecimalUtility;
+import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.ColumnVector;
@@ -63,6 +66,7 @@ import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.StringExpr;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.SerDeException;
+import org.apache.hadoop.hive.serde2.io.HiveDecimalWritable;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
@@ -76,10 +80,10 @@ import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.UnionTypeInfo;
 import org.apache.arrow.memory.BufferAllocator;
-import org.apache.hadoop.hive.serde2.io.HiveDecimalWritable;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVE_ARROW_BATCH_SIZE;
@@ -276,7 +280,7 @@ public class Serializer {
     }
   }
 
-  private static void write(FieldVector arrowVector, ColumnVector hiveVector, TypeInfo typeInfo, int size,
+  private void write(FieldVector arrowVector, ColumnVector hiveVector, TypeInfo typeInfo, int size,
       VectorizedRowBatch vectorizedRowBatch, boolean isNative) {
     switch (typeInfo.getCategory()) {
       case PRIMITIVE:
@@ -299,7 +303,7 @@ public class Serializer {
       }
   }
 
-  private static void writeMap(ListVector arrowVector, MapColumnVector hiveVector, MapTypeInfo typeInfo,
+  private void writeMap(ListVector arrowVector, MapColumnVector hiveVector, MapTypeInfo typeInfo,
       int size, VectorizedRowBatch vectorizedRowBatch, boolean isNative) {
     final ListTypeInfo structListTypeInfo = toStructListTypeInfo(typeInfo);
     final ListColumnVector structListVector = toStructListVector(hiveVector);
@@ -315,7 +319,7 @@ public class Serializer {
     }
   }
 
-  private static void writeUnion(FieldVector arrowVector, ColumnVector hiveVector, TypeInfo typeInfo,
+  private void writeUnion(FieldVector arrowVector, ColumnVector hiveVector, TypeInfo typeInfo,
       int size, VectorizedRowBatch vectorizedRowBatch, boolean isNative) {
     final UnionTypeInfo unionTypeInfo = (UnionTypeInfo) typeInfo;
     final List<TypeInfo> objectTypeInfos = unionTypeInfo.getAllUnionObjectTypeInfos();
@@ -329,7 +333,7 @@ public class Serializer {
     write(arrowVector, hiveObjectVector, objectTypeInfo, size, vectorizedRowBatch, isNative);
   }
 
-  private static void writeStruct(NonNullableStructVector arrowVector, StructColumnVector hiveVector,
+  private void writeStruct(NonNullableStructVector arrowVector, StructColumnVector hiveVector,
       StructTypeInfo typeInfo, int size, VectorizedRowBatch vectorizedRowBatch, boolean isNative) {
     final List<String> fieldNames = typeInfo.getAllStructFieldNames();
     final List<TypeInfo> fieldTypeInfos = typeInfo.getAllStructFieldTypeInfos();
@@ -357,7 +361,7 @@ public class Serializer {
     }
   }
 
-  private static void writeList(ListVector arrowVector, ListColumnVector hiveVector, ListTypeInfo typeInfo, int size,
+  private void writeList(ListVector arrowVector, ListColumnVector hiveVector, ListTypeInfo typeInfo, int size,
       VectorizedRowBatch vectorizedRowBatch, boolean isNative) {
     final int OFFSET_WIDTH = 4;
     final TypeInfo elementTypeInfo = typeInfo.getListElementTypeInfo();
@@ -385,7 +389,7 @@ public class Serializer {
 
   //Handle cases for both internally constructed
   //and externally provided (isNative) VectorRowBatch
-  private static void writePrimitive(FieldVector arrowVector, ColumnVector hiveVector, TypeInfo typeInfo, int size,
+  private void writePrimitive(FieldVector arrowVector, ColumnVector hiveVector, TypeInfo typeInfo, int size,
       VectorizedRowBatch vectorizedRowBatch, boolean isNative) {
     final PrimitiveObjectInspector.PrimitiveCategory primitiveCategory =
         ((PrimitiveTypeInfo) typeInfo).getPrimitiveCategory();
@@ -850,11 +854,21 @@ public class Serializer {
   //decimal and decimal64
   private static final IntAndVectorsConsumer decimalNullSetter = (i, arrowVector, hiveVector)
       -> ((DecimalVector) arrowVector).setNull(i);
-  private static final IntIntAndVectorsConsumer decimalValueSetter = (i, j, arrowVector, hiveVector, typeInfo)
+  private final IntIntAndVectorsConsumer decimalValueSetter = (i, j, arrowVector, hiveVector, typeInfo)
       -> {
     final DecimalVector decimalVector = (DecimalVector) arrowVector;
     final int scale = decimalVector.getScale();
     decimalVector.set(i, ((DecimalColumnVector) hiveVector).vector[j].getHiveDecimal().bigDecimalValue().setScale(scale));
+
+    final HiveDecimalWritable writable = ((DecimalColumnVector) hiveVector).vector[i];
+    decimalHolder.precision = writable.precision();
+    decimalHolder.scale = scale;
+    try (ArrowBuf arrowBuf = allocator.buffer(DecimalHolder.WIDTH)) {
+      decimalHolder.buffer = arrowBuf;
+      final BigInteger bigInteger = new BigInteger(writable.getInternalStorage()).
+          multiply(BigInteger.TEN.pow(scale - writable.scale()));
+      decimalVector.set(i, new BigDecimal(bigInteger, scale));
+    }
   };
   private static final IntIntAndVectorsConsumer decimal64ValueSetter = (i, j, arrowVector, hiveVector, typeInfo)
       -> {
