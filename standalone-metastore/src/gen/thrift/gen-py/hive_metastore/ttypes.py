@@ -350,6 +350,26 @@ class GetTablesExtRequestFields:
     "ALL": 2147483647,
   }
 
+class TxnType:
+  DEFAULT = 0
+  REPL_CREATED = 1
+  READ_ONLY = 2
+  COMPACTION = 3
+
+  _VALUES_TO_NAMES = {
+    0: "DEFAULT",
+    1: "REPL_CREATED",
+    2: "READ_ONLY",
+    3: "COMPACTION",
+  }
+
+  _NAMES_TO_VALUES = {
+    "DEFAULT": 0,
+    "REPL_CREATED": 1,
+    "READ_ONLY": 2,
+    "COMPACTION": 3,
+  }
+
 class FileMetadataExprType:
   ORC_SARG = 1
 
@@ -11969,6 +11989,7 @@ class OpenTxnRequest:
    - agentInfo
    - replPolicy
    - replSrcTxnIds
+   - txn_type
   """
 
   thrift_spec = (
@@ -11979,15 +12000,17 @@ class OpenTxnRequest:
     (4, TType.STRING, 'agentInfo', None, "Unknown", ), # 4
     (5, TType.STRING, 'replPolicy', None, None, ), # 5
     (6, TType.LIST, 'replSrcTxnIds', (TType.I64,None), None, ), # 6
+    (7, TType.I32, 'txn_type', None,     0, ), # 7
   )
 
-  def __init__(self, num_txns=None, user=None, hostname=None, agentInfo=thrift_spec[4][4], replPolicy=None, replSrcTxnIds=None,):
+  def __init__(self, num_txns=None, user=None, hostname=None, agentInfo=thrift_spec[4][4], replPolicy=None, replSrcTxnIds=None, txn_type=thrift_spec[7][4],):
     self.num_txns = num_txns
     self.user = user
     self.hostname = hostname
     self.agentInfo = agentInfo
     self.replPolicy = replPolicy
     self.replSrcTxnIds = replSrcTxnIds
+    self.txn_type = txn_type
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -12033,6 +12056,11 @@ class OpenTxnRequest:
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
+      elif fid == 7:
+        if ftype == TType.I32:
+          self.txn_type = iprot.readI32()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -12070,6 +12098,10 @@ class OpenTxnRequest:
         oprot.writeI64(iter550)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
+    if self.txn_type is not None:
+      oprot.writeFieldBegin('txn_type', TType.I32, 7)
+      oprot.writeI32(self.txn_type)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -12091,6 +12123,7 @@ class OpenTxnRequest:
     value = (value * 31) ^ hash(self.agentInfo)
     value = (value * 31) ^ hash(self.replPolicy)
     value = (value * 31) ^ hash(self.replSrcTxnIds)
+    value = (value * 31) ^ hash(self.txn_type)
     return value
 
   def __repr__(self):
