@@ -213,6 +213,17 @@ struct GetTablesExtRequestFields {
 
 extern const std::map<int, const char*> _GetTablesExtRequestFields_VALUES_TO_NAMES;
 
+struct TxnType {
+  enum type {
+    DEFAULT = 0,
+    REPL_CREATED = 1,
+    READ_ONLY = 2,
+    COMPACTION = 3
+  };
+};
+
+extern const std::map<int, const char*> _TxnType_VALUES_TO_NAMES;
+
 struct FileMetadataExprType {
   enum type {
     ORC_SARG = 1
@@ -7280,10 +7291,11 @@ inline std::ostream& operator<<(std::ostream& out, const GetOpenTxnsResponse& ob
 }
 
 typedef struct _OpenTxnRequest__isset {
-  _OpenTxnRequest__isset() : agentInfo(true), replPolicy(false), replSrcTxnIds(false) {}
+  _OpenTxnRequest__isset() : agentInfo(true), replPolicy(false), replSrcTxnIds(false), txn_type(true) {}
   bool agentInfo :1;
   bool replPolicy :1;
   bool replSrcTxnIds :1;
+  bool txn_type :1;
 } _OpenTxnRequest__isset;
 
 class OpenTxnRequest {
@@ -7291,7 +7303,9 @@ class OpenTxnRequest {
 
   OpenTxnRequest(const OpenTxnRequest&);
   OpenTxnRequest& operator=(const OpenTxnRequest&);
-  OpenTxnRequest() : num_txns(0), user(), hostname(), agentInfo("Unknown"), replPolicy() {
+  OpenTxnRequest() : num_txns(0), user(), hostname(), agentInfo("Unknown"), replPolicy(), txn_type((TxnType::type)0) {
+    txn_type = (TxnType::type)0;
+
   }
 
   virtual ~OpenTxnRequest() throw();
@@ -7301,6 +7315,7 @@ class OpenTxnRequest {
   std::string agentInfo;
   std::string replPolicy;
   std::vector<int64_t>  replSrcTxnIds;
+  TxnType::type txn_type;
 
   _OpenTxnRequest__isset __isset;
 
@@ -7315,6 +7330,8 @@ class OpenTxnRequest {
   void __set_replPolicy(const std::string& val);
 
   void __set_replSrcTxnIds(const std::vector<int64_t> & val);
+
+  void __set_txn_type(const TxnType::type val);
 
   bool operator == (const OpenTxnRequest & rhs) const
   {
@@ -7335,6 +7352,10 @@ class OpenTxnRequest {
     if (__isset.replSrcTxnIds != rhs.__isset.replSrcTxnIds)
       return false;
     else if (__isset.replSrcTxnIds && !(replSrcTxnIds == rhs.replSrcTxnIds))
+      return false;
+    if (__isset.txn_type != rhs.__isset.txn_type)
+      return false;
+    else if (__isset.txn_type && !(txn_type == rhs.txn_type))
       return false;
     return true;
   }
