@@ -255,6 +255,11 @@ public final class Utilities {
 
   public static Random randGen = new Random();
 
+  @FunctionalInterface
+  public interface SupplierWithCheckedException<T, X extends Exception> {
+    T get() throws X;
+  }
+
   /**
    * ReduceField:
    * KEY: record key
@@ -4543,5 +4548,10 @@ public final class Utilities {
       }
     }
     return passwd;
+  }
+
+  public static SupplierWithCheckedException<FileSystem, IOException> getFsSupplier(final Path path,
+    final Configuration conf) {
+    return () -> path.getFileSystem(conf);
   }
 }
