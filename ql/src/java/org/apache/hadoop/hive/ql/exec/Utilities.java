@@ -255,6 +255,14 @@ public final class Utilities {
 
   public static Random randGen = new Random();
 
+  private static final Object INPUT_SUMMARY_LOCK = new Object();
+  private static final Object ROOT_HDFS_DIR_LOCK  = new Object();
+
+  @FunctionalInterface
+  public interface SupplierWithCheckedException<T, X extends Exception> {
+    T get() throws X;
+  }
+
   /**
    * ReduceField:
    * KEY: record key
@@ -2331,8 +2339,6 @@ public final class Utilities {
       }
     }
   }
-
-  private static final Object INPUT_SUMMARY_LOCK = new Object();
 
   /**
    * Returns the maximum number of executors required to get file information from several input locations.
@@ -4543,5 +4549,10 @@ public final class Utilities {
       }
     }
     return passwd;
+  }
+
+  public static SupplierWithCheckedException<FileSystem, IOException> getFsSupplier(final Path path,
+    final Configuration conf) {
+    return () -> path.getFileSystem(conf);
   }
 }
