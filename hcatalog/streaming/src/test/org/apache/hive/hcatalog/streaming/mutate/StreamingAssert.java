@@ -85,7 +85,7 @@ public class StreamingAssert {
 
     writeIds = metaStoreClient.getValidWriteIds(AcidUtils.getFullTableName(table.getDbName(), table.getTableName()));
     partitionLocation = getPartitionLocation();
-    dir = AcidUtils.getAcidState(partitionLocation, conf, writeIds, null, false, null, false);
+    dir = AcidUtils.getAcidState(null, partitionLocation, conf, writeIds, null, false, null, false);
     assertEquals(0, dir.getObsolete().size());
     assertEquals(0, dir.getOriginalFiles().size());
 
