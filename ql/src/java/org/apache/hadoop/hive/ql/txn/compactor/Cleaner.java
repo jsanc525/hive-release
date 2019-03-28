@@ -327,7 +327,7 @@ public class Cleaner extends CompactorThread {
   private void removeFiles(String location, ValidWriteIdList writeIdList, CompactionInfo ci)
           throws IOException, NoSuchObjectException {
     Path locPath = new Path(location);
-    AcidUtils.Directory dir = AcidUtils.getAcidState(locPath, conf, writeIdList, Ref.from(
+    AcidUtils.Directory dir = AcidUtils.getAcidState(null, locPath, conf, writeIdList, Ref.from(
         false), false, null, false);
     List<FileStatus> obsoleteDirs = dir.getObsolete();
     List<Path> filesToDelete = new ArrayList<Path>(obsoleteDirs.size());
