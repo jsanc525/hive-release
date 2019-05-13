@@ -22,12 +22,14 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore;
+import org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore.BehaviourInjection;
+import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.conf.MetastoreConf;
 import org.apache.hadoop.hive.metastore.messaging.json.gzip.GzipJSONMessageEncoder;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Partition;
-import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.parse.repl.PathBuilder;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.junit.BeforeClass;
@@ -44,6 +46,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 import static org.apache.hadoop.hive.ql.exec.repl.ReplExternalTables.FILE_NAME;
 import static org.apache.hadoop.hive.ql.exec.repl.util.ReplUtils.INC_BOOTSTRAP_ROOT_DIR_NAME;
@@ -190,10 +193,10 @@ public class TestReplicationScenariosExternalTables extends BaseReplicationAcros
   private void assertTablePartitionLocation(String sourceTableName, String replicaTableName)
       throws HiveException {
     Hive hiveForPrimary = Hive.get(primary.hiveConf);
-    Table sourceTable = hiveForPrimary.getTable(sourceTableName);
+    org.apache.hadoop.hive.ql.metadata.Table sourceTable = hiveForPrimary.getTable(sourceTableName);
     Path sourceLocation = sourceTable.getDataLocation();
     Hive hiveForReplica = Hive.get(replica.hiveConf);
-    Table replicaTable = hiveForReplica.getTable(replicaTableName);
+    org.apache.hadoop.hive.ql.metadata.Table replicaTable = hiveForReplica.getTable(replicaTableName);
     Path dataLocation = replicaTable.getDataLocation();
     assertEquals(REPLICA_EXTERNAL_BASE + sourceLocation.toUri().getPath(),
         dataLocation.toUri().getPath());
@@ -534,6 +537,64 @@ public class TestReplicationScenariosExternalTables extends BaseReplicationAcros
             .verifyResults(new String[] {"t4_tables"});
   }
 
+
+  @Test
+  public void testExternalTablesIncReplicationWithConcurrentDropTable() throws Throwable {
+    List<String> dumpWithClause = Collections.singletonList(
+            "'" + HiveConf.ConfVars.REPL_INCLUDE_EXTERNAL_TABLES.varname + "'='true'"
+    );
+    List<String> loadWithClause = externalTableBasePathWithClause();
+    WarehouseInstance.Tuple tupleBootstrap = primary.run("use " + primaryDbName)
+            .run("create external table t1 (id int)")
+            .run("insert into table t1 values (1)")
+            .dump(primaryDbName, null, dumpWithClause);
+
+    replica.load(replicatedDbName, tupleBootstrap.dumpLocation, loadWithClause);
+
+    // Insert a row into "t1" and create another external table using data from "t1".
+    primary.run("use " + primaryDbName)
+            .run("insert into table t1 values (2)")
+            .run("create external table t2 as select * from t1");
+
+    // Inject a behavior so that getTable returns null for table "t1". This ensures the table is
+    // skipped for data files listing.
+    BehaviourInjection<Table, Table> tableNuller = new BehaviourInjection<Table, Table>() {
+      @Nullable
+      @Override
+      public Table apply(@Nullable Table table) {
+        LOG.info("Performing injection on table " + table.getTableName());
+        if (table.getTableName().equalsIgnoreCase("t1")){
+          injectionPathCalled = true;
+          return null;
+        } else {
+          nonInjectedPathCalled = true;
+          return table;
+        }
+      }
+    };
+    InjectableBehaviourObjectStore.setGetTableBehaviour(tableNuller);
+    WarehouseInstance.Tuple tupleInc;
+    try {
+      // The t1 table will be skipped from data location listing.
+      tupleInc = primary.dump(primaryDbName, tupleBootstrap.lastReplicationId, dumpWithClause);
+      tableNuller.assertInjectionsPerformed(true, true);
+    } finally {
+      InjectableBehaviourObjectStore.resetGetTableBehaviour(); // reset the behaviour
+    }
+
+    // Only table t2 should exist in the data location list file.
+    assertExternalFileInfo(Collections.singletonList("t2"),
+            new Path(tupleInc.dumpLocation, FILE_NAME));
+
+    // The newly inserted data "2" should be missing in table "t1". But, table t2 should exist and have
+    // inserted data.
+    replica.load(replicatedDbName, tupleInc.dumpLocation, loadWithClause)
+            .run("use " + replicatedDbName)
+            .run("select id from t1 order by id")
+            .verifyResult("1")
+            .run("select id from t2 order by id")
+            .verifyResults(Arrays.asList("1", "2"));
+  }
 
   private List<String> externalTableBasePathWithClause() throws IOException, SemanticException {
     Path externalTableLocation = new Path(REPLICA_EXTERNAL_BASE);

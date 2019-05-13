@@ -203,13 +203,19 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
       Path dbRoot = getBootstrapDbRoot(dumpRoot, dbName, true);
       try (Writer writer = new Writer(dumpRoot, conf)) {
         for (String tableName : Utils.matchesTbl(hiveDb, dbName, work.tableNameOrPattern)) {
-          Table table = hiveDb.getTable(dbName, tableName);
-          if (TableType.EXTERNAL_TABLE.equals(table.getTableType())) {
-            writer.dataLocationDump(table);
-            if (conf.getBoolVar(HiveConf.ConfVars.REPL_BOOTSTRAP_EXTERNAL_TABLES)) {
-              HiveWrapper.Tuple<Table> tableTuple = new HiveWrapper(hiveDb, dbName).table(table);
-              dumpTable(dbName, tableName, null, dbRoot, 0, hiveDb, tableTuple);
+          try {
+            Table table = hiveDb.getTable(dbName, tableName);
+            if (TableType.EXTERNAL_TABLE.equals(table.getTableType())) {
+              writer.dataLocationDump(table);
+              if (conf.getBoolVar(HiveConf.ConfVars.REPL_BOOTSTRAP_EXTERNAL_TABLES)) {
+                HiveWrapper.Tuple<Table> tableTuple = new HiveWrapper(hiveDb, dbName).table(table);
+                dumpTable(dbName, tableName, null, dbRoot, 0, hiveDb, tableTuple);
+              }
             }
+          } catch (InvalidTableException te) {
+            // Repl dump shouldn't fail if the table is dropped/renamed while dumping it.
+            // Just log a debug message and skip it.
+            LOG.debug(te.getMessage());
           }
         }
       }
