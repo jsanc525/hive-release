@@ -488,6 +488,8 @@ STAGE PLANS:
           default serde name: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           like: src
           name: default.M1
+          table properties:
+            bucketing_version 2
 
 PREHOOK: query: EXPLAIN CREATE TABLE M1 LIKE M1
 PREHOOK: type: CREATETABLE
@@ -509,6 +511,8 @@ STAGE PLANS:
           default serde name: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           like: M1
           name: default.M1
+          table properties:
+            bucketing_version 2
 
 PREHOOK: query: EXPLAIN DROP TABLE M1
 PREHOOK: type: DROPTABLE
