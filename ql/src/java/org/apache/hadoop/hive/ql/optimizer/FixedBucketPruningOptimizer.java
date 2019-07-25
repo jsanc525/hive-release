@@ -257,7 +257,8 @@ public class FixedBucketPruningOptimizer extends Transform {
         return Date.ofEpochDay(
             DateWritable.millisToDays(sqlDate.getTime()));
       } else if (o instanceof java.sql.Timestamp) {
-        return Timestamp.valueOf(o.toString());
+        java.sql.Timestamp sqlTimestamp = (java.sql.Timestamp)o;
+        return Timestamp.ofEpochMilli(sqlTimestamp.getTime(), sqlTimestamp.getNanos());
       }
       return o;
     }
