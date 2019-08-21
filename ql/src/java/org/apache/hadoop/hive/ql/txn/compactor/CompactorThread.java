@@ -225,7 +225,11 @@ abstract class CompactorThread extends Thread implements MetaStoreThread {
 
   protected boolean replIsCompactionDisabledForTable(Table tbl) {
     // Compaction is disabled until after first successful incremental load. Check HIVE-21197 for more detail.
-    return ReplUtils.isFirstIncPending(tbl.getParameters());
+    boolean isCompactDisabled = ReplUtils.isFirstIncPending(tbl.getParameters());
+    if (isCompactDisabled) {
+      LOG.info("Compaction is disabled for table " + tbl.getTableName());
+    }
+    return isCompactDisabled;
   }
 
   protected boolean replIsCompactionDisabledForDatabase(String dbName) {
