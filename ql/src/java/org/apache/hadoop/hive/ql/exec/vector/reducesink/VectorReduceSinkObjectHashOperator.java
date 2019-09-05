@@ -144,8 +144,8 @@ public class VectorReduceSinkObjectHashOperator extends VectorReduceSinkCommonOp
   @Override
   protected void initializeOp(Configuration hconf) throws HiveException {
     super.initializeOp(hconf);
-    VectorExpression.doTransientInit(reduceSinkBucketExpressions);
-    VectorExpression.doTransientInit(reduceSinkPartitionExpressions);
+    VectorExpression.doTransientInit(reduceSinkBucketExpressions, hconf);
+    VectorExpression.doTransientInit(reduceSinkPartitionExpressions, hconf);
 
     if (!isEmptyKey) {
 
