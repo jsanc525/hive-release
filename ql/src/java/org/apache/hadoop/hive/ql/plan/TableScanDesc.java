@@ -471,9 +471,8 @@ public class TableScanDesc extends AbstractOperatorDesc implements IStatsGatherD
     return rtn;
   }
 
-  @Override
-  public Map<String, String> getOpProps() {
-   return opProps;
+  @Override public Map<String, String> getOpProps() {
+    return opProps;
   }
 
   @Explain(displayName = "properties", explainLevels = { Level.DEFAULT, Level.USER, Level.EXTENDED })

@@ -749,14 +749,10 @@ public class TestDruidSerDe {
     when(httpClient.go(anyObject(), any(HttpResponseHandler.class))).thenReturn(futureResult);
     DruidQueryRecordReader<?, ?> reader = DruidQueryBasedInputFormat.getDruidQueryReader(queryType);
 
-    final HiveDruidSplit split = new HiveDruidSplit(jsonQuery,
-            new Path("empty"),
-            new String[] { "testing_host" }
-    );
-
-    reader.initialize(split, new Configuration(), DruidStorageHandlerUtils.JSON_MAPPER,
-            DruidStorageHandlerUtils.SMILE_MAPPER, httpClient
-    );
+    final HiveDruidSplit split = new HiveDruidSplit(jsonQuery, new Path("empty"), new String[]{"testing_host"});
+    Configuration conf = new Configuration();
+    reader.initialize(split, DruidStorageHandlerUtils.JSON_MAPPER, DruidStorageHandlerUtils.SMILE_MAPPER, httpClient,
+        conf);
     StructObjectInspector oi = (StructObjectInspector) serDe.getObjectInspector();
     List<? extends StructField> fieldRefs = oi.getAllStructFieldRefs();
 
@@ -784,9 +780,8 @@ public class TestDruidSerDe {
     futureResult.set(new ByteArrayInputStream(resultString));
     when(httpClient.go(anyObject(), any(HttpResponseHandler.class))).thenReturn(futureResult);
     reader = DruidQueryBasedInputFormat.getDruidQueryReader(queryType);
-    reader.initialize(split, new Configuration(), DruidStorageHandlerUtils.JSON_MAPPER,
-            DruidStorageHandlerUtils.SMILE_MAPPER, httpClient
-    );
+    reader.initialize(split, DruidStorageHandlerUtils.JSON_MAPPER, DruidStorageHandlerUtils.SMILE_MAPPER, httpClient,
+        conf);
 
      pos = 0;
     while (reader.nextKeyValue()) {

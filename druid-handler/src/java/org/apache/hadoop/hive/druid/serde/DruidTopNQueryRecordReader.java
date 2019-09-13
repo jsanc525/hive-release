@@ -102,8 +102,7 @@ public class DruidTopNQueryRecordReader
     return false;
   }
 
-  @Override
-  public float getProgress() {
+  @Override public float getProgress() {
     return getQueryResultsIterator().hasNext() || values.hasNext() ? 0 : 1;
   }
 

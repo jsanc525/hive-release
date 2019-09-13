@@ -105,12 +105,12 @@
           </exclusions>
         </dependency>
         <dependency>
-          <groupId>io.druid.extensions</groupId>
+          <groupId>org.apache.druid.extensions</groupId>
           <artifactId>druid-bloom-filter</artifactId>
           <version>${druid.version}</version>
         </dependency>
         <dependency>
-          <groupId>io.druid.extensions</groupId>
+          <groupId>org.apache.druid.extensions</groupId>
           <artifactId>druid-kafka-indexing-service</artifactId>
           <version>${druid.version}</version>
         </dependency>
