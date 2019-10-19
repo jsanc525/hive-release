@@ -9959,6 +9959,7 @@ public class ObjectStore implements RawStore, Configurable {
   public void addNotificationEvent(NotificationEvent entry) throws MetaException {
     boolean commited = false;
     Query query = null;
+    pm.flush();
     try {
       openTransaction();
       lockForUpdate();
