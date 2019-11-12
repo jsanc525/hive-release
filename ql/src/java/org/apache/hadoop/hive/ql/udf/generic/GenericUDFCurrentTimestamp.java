@@ -28,6 +28,8 @@ import org.apache.hadoop.hive.serde2.io.TimestampWritableV2;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 
+import java.time.ZonedDateTime;
+
 // This function is not a deterministic function, but a runtime constant.
 // The return value is constant within a query but can be different between queries.
 @UDFType(deterministic = false, runtimeConstant = true)
@@ -49,9 +51,11 @@ public class GenericUDFCurrentTimestamp extends GenericUDF {
     }
 
     if (currentTimestamp == null) {
-      java.sql.Timestamp ts = SessionState.get().getQueryCurrentTimestamp();
+      SessionState ss = SessionState.get();
+      ZonedDateTime dateTime = ss.getQueryCurrentTimestamp().atZone(
+              ss.getConf().getLocalTimeZone());
       currentTimestamp = new TimestampWritableV2(
-          Timestamp.ofEpochMilli(ts.getTime(), ts.getNanos()));
+              Timestamp.valueOf(dateTime.toLocalDateTime().toString()));
     }
 
     return PrimitiveObjectInspectorFactory.writableTimestampObjectInspector;
