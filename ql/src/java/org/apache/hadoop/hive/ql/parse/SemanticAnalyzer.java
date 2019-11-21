@@ -12046,9 +12046,18 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
             basicInfos.put(new HivePrivilegeObject(table.getDbName(), table.getTableName(), colNames), null);
           }
         } else {
-          List<String> colNames = new ArrayList<>();
-          List<String> colTypes = new ArrayList<>();
-          extractColumnInfos(table, colNames, colTypes);
+          List<String> colNames;
+          List<String> colTypes;
+          if (isCBOExecuted() && this.columnAccessInfo != null &&
+              (colNames = this.columnAccessInfo.getTableToColumnAllAccessMap().get(table.getCompleteName())) != null) {
+            Map<String, String> colNameToType = table.getAllCols().stream()
+                .collect(Collectors.toMap(FieldSchema::getName, FieldSchema::getType));
+            colTypes = colNames.stream().map(colNameToType::get).collect(Collectors.toList());
+          } else {
+            colNames = new ArrayList<>();
+            colTypes = new ArrayList<>();
+            extractColumnInfos(table, colNames, colTypes);
+          }
 
           basicInfos.put(new HivePrivilegeObject(table.getDbName(), table.getTableName(), colNames),
               new MaskAndFilterInfo(colTypes, additionalTabInfo.toString(), alias, astNode, table.isView(), table.isNonNative()));
