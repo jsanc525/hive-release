@@ -254,6 +254,7 @@ POSTHOOK: type: QUERY
 POSTHOOK: Input: default@testdatediff
 #### A masked pattern was here ####
 2019-09-09T10:45:49+02:00
+2019-07-24
 PREHOOK: query: select cast(datetimecol as date), datetimecol from testdatediff
 PREHOOK: type: QUERY
 PREHOOK: Input: default@testdatediff
