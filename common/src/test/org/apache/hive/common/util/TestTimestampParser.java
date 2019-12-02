@@ -125,11 +125,17 @@ public class TestTimestampParser {
         new ValidTimestampCase("1945-12-31 23:59:59.1234",
             Timestamp.valueOf("1945-12-31 23:59:59.1234")),
         new ValidTimestampCase("1945-12-31T23:59:59.12345",
-            Timestamp.valueOf("1945-12-31 23:59:59.12345"))
+            Timestamp.valueOf("1945-12-31 23:59:59.12345")),
+        // sensitivity to less than 10+1+8 chars of the 'yyyy-MM-DD HH:mm:ss' format
+        new ValidTimestampCase("345-2-2 1:2:0",
+            Timestamp.valueOf("345-02-02 01:02:00")),
+        new ValidTimestampCase("345-01-23 insert typo here",
+          Timestamp.valueOf("345-01-23 00:00:00")),
+
     };
 
     String[] invalidCases = {
-        "1945-12-31-23:59:59",
+        "345-9-25-23:59:59",
         "12345",
     };
 
@@ -160,7 +166,7 @@ public class TestTimestampParser {
     };
 
     String[] invalidCases = {
-        "1945-12-31-23:59:59",
+        "345-9-25-23:59:59",
         "1420509274123-",
     };
 
