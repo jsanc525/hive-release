@@ -18,10 +18,6 @@
 
 package org.apache.hadoop.hive.ql.udf.generic;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-
-import java.text.ParseException;
 import java.time.LocalDateTime;
 
 import org.apache.hadoop.hive.common.type.Date;
@@ -36,26 +32,9 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 
-import org.junit.Test;
+import junit.framework.TestCase;
 
-public class TestGenericUDFDateDiff {
-
-  @Test
-  public void testStringToDateISOFormat() throws HiveException, ParseException {
-    GenericUDFDateDiff udf = new GenericUDFDateDiff();
-    ObjectInspector valueOI1 = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
-    ObjectInspector valueOI2 = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
-    ObjectInspector[] arguments = {valueOI1, valueOI2};
-
-    udf.initialize(arguments);
-    DeferredObject valueObj1 = new DeferredJavaObject(new Text("2019-09-09T10:45:49+02:00"));
-    DeferredObject valueObj2 = new DeferredJavaObject(new Text("2019-11-07 23:20:39.503"));
-    DeferredObject[] args = {valueObj1, valueObj2};
-    IntWritable output = udf.evaluate(args);
-    assertEquals("date_iff() test for STRING failed ", "-59", output.toString());
-  }
-
-  @Test
+public class TestGenericUDFDateDiff extends TestCase {
   public void testStringToDate() throws HiveException {
     GenericUDFDateDiff udf = new GenericUDFDateDiff();
     ObjectInspector valueOI1 = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
@@ -81,7 +60,6 @@ public class TestGenericUDFDateDiff {
     assertNull("date_add() both args null", udf.evaluate(args));
   }
 
-  @Test
   public void testTimestampToDate() throws HiveException {
     GenericUDFDateDiff udf = new GenericUDFDateDiff();
     ObjectInspector valueOI1 = PrimitiveObjectInspectorFactory.writableTimestampObjectInspector;
@@ -109,7 +87,6 @@ public class TestGenericUDFDateDiff {
     assertNull("date_add() both args null", udf.evaluate(args));
   }
 
-  @Test
   public void testDateWritablepToDate() throws HiveException {
     GenericUDFDateDiff udf = new GenericUDFDateDiff();
     ObjectInspector valueOI1 = PrimitiveObjectInspectorFactory.writableDateObjectInspector;
