@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -167,7 +168,8 @@ public class OrcEncodedDataReader extends CallableWithNdc<Void>
   private CompressionCodec codec;
   private Object fileKey;
   private final String cacheTag;
-  private FileSystem fs;
+
+  private Supplier<FileSystem> fsSupplier;
 
   /**
    * stripeRgs[stripeIx'] => boolean array (could be a bitmask) of rg-s that need to be read.
@@ -211,8 +213,8 @@ public class OrcEncodedDataReader extends CallableWithNdc<Void>
         ? LlapUtil.getDbAndTableNameForMetrics(split.getPath(), true) : null;
     // 1. Get file metadata from cache, or create the reader and read it.
     // Don't cache the filesystem object for now; Tez closes it and FS cache will fix all that
-    fs = split.getPath().getFileSystem(jobConf);
-    fileKey = determineFileId(fs, split,
+    fsSupplier = getFsSupplier(split.getPath(), jobConf);
+    fileKey = determineFileId(fsSupplier, split,
         HiveConf.getBoolVar(daemonConf, ConfVars.LLAP_CACHE_ALLOW_SYNTHETIC_FILEID),
         HiveConf.getBoolVar(daemonConf, ConfVars.LLAP_CACHE_DEFAULT_FS_FILE_ID),
         !HiveConf.getBoolVar(daemonConf, ConfVars.LLAP_IO_USE_FILEID_PATH)
@@ -266,6 +268,17 @@ public class OrcEncodedDataReader extends CallableWithNdc<Void>
         return performDataRead();
       }
     });
+  }
+
+  private static Supplier<FileSystem> getFsSupplier(final Path path,
+      final Configuration conf) {
+    return () -> {
+      try {
+        return path.getFileSystem(conf);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    };
   }
 
   protected Void performDataRead() throws IOException, InterruptedException {
@@ -465,7 +478,8 @@ public class OrcEncodedDataReader extends CallableWithNdc<Void>
     return true;
   }
 
-  private static Object determineFileId(FileSystem fs, FileSplit split,
+  private static Object determineFileId(Supplier<FileSystem> fsSupplier,
+    FileSplit split,
       boolean allowSynthetic, boolean checkDefaultFs, boolean forceSynthetic) throws IOException {
     if (split instanceof OrcSplit) {
       Object fileKey = ((OrcSplit)split).getFileKey();
@@ -474,7 +488,7 @@ public class OrcEncodedDataReader extends CallableWithNdc<Void>
       }
     }
     LOG.warn("Split for " + split.getPath() + " (" + split.getClass() + ") does not have file ID");
-    return HdfsUtils.getFileId(fs, split.getPath(), allowSynthetic, checkDefaultFs, forceSynthetic);
+    return HdfsUtils.getFileId(fsSupplier.get(), split.getPath(), allowSynthetic, checkDefaultFs, forceSynthetic);
   }
 
   /**
@@ -506,11 +520,11 @@ public class OrcEncodedDataReader extends CallableWithNdc<Void>
     path = split.getPath();
     if (fileKey instanceof Long && HiveConf.getBoolVar(
         daemonConf, ConfVars.LLAP_IO_USE_FILEID_PATH)) {
-      path = HdfsUtils.getFileIdPath(fs, path, (long)fileKey);
+      path = HdfsUtils.getFileIdPath(fsSupplier.get(), path, (long)fileKey);
     }
     LlapIoImpl.ORC_LOGGER.trace("Creating reader for {} ({})", path, split.getPath());
     long startTime = counters.startTimeCounter();
-    ReaderOptions opts = OrcFile.readerOptions(jobConf).filesystem(fs).fileMetadata(fileMetadata);
+    ReaderOptions opts = EncodedOrcFile.readerOptions(jobConf).filesystem(fsSupplier).fileMetadata(fileMetadata);
     if (split instanceof OrcSplit) {
       OrcTail orcTail = ((OrcSplit) split).getOrcTail();
       if (orcTail != null) {
@@ -725,7 +739,7 @@ public class OrcEncodedDataReader extends CallableWithNdc<Void>
     rawDataReader = RecordReaderUtils.createDefaultDataReader(
         DataReaderProperties.builder().withBufferSize(orcReader.getCompressionSize())
         .withCompression(orcReader.getCompressionKind())
-        .withFileSystem(fs).withPath(path)
+        .withFileSystemSupplier(fsSupplier).withPath(path)
         .withTypeCount(orcReader.getSchema().getMaximumId() + 1)
         .withZeroCopy(useZeroCopy)
         .build());
