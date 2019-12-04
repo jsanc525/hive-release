@@ -4550,9 +4550,4 @@ public final class Utilities {
     }
     return passwd;
   }
-
-  public static SupplierWithCheckedException<FileSystem, IOException> getFsSupplier(final Path path,
-    final Configuration conf) {
-    return () -> path.getFileSystem(conf);
-  }
 }
