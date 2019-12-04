@@ -137,9 +137,10 @@ public class VectorizedBatchUtil {
         case SHORT:
         case INT:
         case LONG:
-        case DATE:
         case INTERVAL_YEAR_MONTH:
           return new LongColumnVector(VectorizedRowBatch.DEFAULT_SIZE);
+        case DATE:
+          return new DateColumnVector(VectorizedRowBatch.DEFAULT_SIZE);
         case TIMESTAMP:
           return new TimestampColumnVector(VectorizedRowBatch.DEFAULT_SIZE);
         case INTERVAL_DAY_TIME:
