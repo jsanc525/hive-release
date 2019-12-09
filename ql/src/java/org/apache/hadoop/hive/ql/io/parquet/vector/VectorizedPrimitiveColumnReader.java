@@ -13,13 +13,16 @@
  */
 package org.apache.hadoop.hive.ql.io.parquet.vector;
 
-import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.ColumnVector;
+import org.apache.hadoop.hive.ql.exec.vector.DateColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DecimalColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DoubleColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
+import org.apache.hadoop.hive.common.type.CalendarUtils;
+import org.apache.hadoop.hive.serde.serdeConstants;
+import org.apache.hadoop.hive.serde2.typeinfo.DecimalTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.parquet.column.ColumnDescriptor;
@@ -44,10 +47,11 @@ public class VectorizedPrimitiveColumnReader extends BaseVectorizedColumnReader 
       PageReader pageReader,
       boolean skipTimestampConversion,
       ZoneId writerTimezone,
+      boolean skipProlepticConversion,
       Type type,
       TypeInfo hiveType)
       throws IOException {
-    super(descriptor, pageReader, skipTimestampConversion, writerTimezone, type, hiveType);
+    super(descriptor, pageReader, skipTimestampConversion, writerTimezone, skipProlepticConversion, type, hiveType);
   }
 
   @Override
@@ -93,6 +97,8 @@ public class VectorizedPrimitiveColumnReader extends BaseVectorizedColumnReader 
       readIntegers(num, (LongColumnVector) column, rowId);
       break;
     case DATE:
+      readDate(num, (DateColumnVector) column, rowId);
+      break;
     case INTERVAL_YEAR_MONTH:
     case LONG:
       readLongs(num, (LongColumnVector) column, rowId);
@@ -384,7 +390,34 @@ public class VectorizedPrimitiveColumnReader extends BaseVectorizedColumnReader 
     }
   }
 
+  private void readDate(
+      int total,
+      DateColumnVector c,
+      int rowId) throws IOException {
+    c.setUsingProlepticCalendar(true);
+    int left = total;
+    while (left > 0) {
+      readRepetitionAndDefinitionLevels();
+      if (definitionLevel >= maxDefLevel) {
+        c.vector[rowId] = skipProlepticConversion ?
+            dataColumn.readLong() : CalendarUtils.convertDateToProleptic((int) dataColumn.readLong());
+        if (dataColumn.isValid(c.vector[rowId])) {
+          c.isNull[rowId] = false;
+          c.isRepeating = c.isRepeating && (c.vector[0] == c.vector[rowId]);
+        } else {
+          c.vector[rowId] = 0;
+          setNullValue(c, rowId);
+        }
+      } else {
+        setNullValue(c, rowId);
+      }
+      rowId++;
+      left--;
+    }
+  }
+
   private void readTimestamp(int total, TimestampColumnVector c, int rowId) throws IOException {
+    c.setUsingProlepticCalendar(true);
     int left = total;
     while (left > 0) {
       readRepetitionAndDefinitionLevels();
@@ -440,6 +473,19 @@ public class VectorizedPrimitiveColumnReader extends BaseVectorizedColumnReader 
         }
       } break;
     case DATE:
+      DateColumnVector dc = (DateColumnVector) column;
+      dc.setUsingProlepticCalendar(true);
+      for (int i = rowId; i < rowId + num; ++i) {
+        dc.vector[i] =
+            skipProlepticConversion ?
+                dictionary.readLong((int) dictionaryIds.vector[i]) :
+                CalendarUtils.convertDateToProleptic((int) dictionary.readLong((int) dictionaryIds.vector[i]));
+        if (!dictionary.isValid(dc.vector[i])) {
+          setNullValue(column, i);
+          dc.vector[i] = 0;
+        }
+      }
+      break;
     case INTERVAL_YEAR_MONTH:
     case LONG:
       for (int i = rowId; i < rowId + num; ++i) {
@@ -513,9 +559,10 @@ public class VectorizedPrimitiveColumnReader extends BaseVectorizedColumnReader 
       }
       break;
     case TIMESTAMP:
+      TimestampColumnVector tsc = (TimestampColumnVector) column;
+      tsc.setUsingProlepticCalendar(true);
       for (int i = rowId; i < rowId + num; ++i) {
-        ((TimestampColumnVector) column)
-            .set(i, dictionary.readTimestamp((int) dictionaryIds.vector[i]).toSqlTimestamp());
+        tsc.set(i, dictionary.readTimestamp((int) dictionaryIds.vector[i]).toSqlTimestamp());
       }
       break;
     case INTERVAL_DAY_TIME:
