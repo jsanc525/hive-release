@@ -58,7 +58,7 @@ STAGE PLANS:
                 outputColumnNames: _col0, _col1, _col2, _col3
                 Statistics: Num rows: 1 Data size: 24 Basic stats: COMPLETE Column stats: NONE
                 Reduce Output Operator
-                  sort order:
+                  sort order: 
                   Reduce Sink Vectorization:
                       className: VectorReduceSinkOperator
                       native: false
@@ -228,7 +228,7 @@ STAGE PLANS:
                 outputColumnNames: _col0
                 Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: NONE
                 Reduce Output Operator
-                  sort order:
+                  sort order: 
                   Reduce Sink Vectorization:
                       className: VectorReduceSinkOperator
                       native: false
@@ -393,7 +393,7 @@ STAGE PLANS:
                 outputColumnNames: _col0, _col1, _col2, _col3
                 Statistics: Num rows: 1 Data size: 32 Basic stats: COMPLETE Column stats: NONE
                 Reduce Output Operator
-                  sort order:
+                  sort order: 
                   Statistics: Num rows: 1 Data size: 32 Basic stats: COMPLETE Column stats: NONE
                   value expressions: _col0 (type: bigint), _col1 (type: bigint), _col2 (type: double), _col3 (type: double)
       Execution mode: vectorized
@@ -558,7 +558,7 @@ STAGE PLANS:
                 outputColumnNames: _col0, _col1, _col2, _col3
                 Statistics: Num rows: 1 Data size: 32 Basic stats: COMPLETE Column stats: NONE
                 Reduce Output Operator
-                  sort order:
+                  sort order: 
                   Reduce Sink Vectorization:
                       className: VectorReduceSinkOperator
                       native: false
@@ -728,7 +728,7 @@ STAGE PLANS:
                 outputColumnNames: _col0
                 Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: NONE
                 Reduce Output Operator
-                  sort order:
+                  sort order: 
                   Reduce Sink Vectorization:
                       className: VectorReduceSinkOperator
                       native: false
@@ -893,7 +893,7 @@ STAGE PLANS:
                 outputColumnNames: _col0, _col1, _col2, _col3
                 Statistics: Num rows: 1 Data size: 32 Basic stats: COMPLETE Column stats: NONE
                 Reduce Output Operator
-                  sort order:
+                  sort order: 
                   Statistics: Num rows: 1 Data size: 32 Basic stats: COMPLETE Column stats: NONE
                   value expressions: _col0 (type: bigint), _col1 (type: bigint), _col2 (type: double), _col3 (type: double)
       Execution mode: vectorized
@@ -1058,7 +1058,7 @@ STAGE PLANS:
                 outputColumnNames: _col0, _col1, _col2, _col3
                 Statistics: Num rows: 1 Data size: 24 Basic stats: COMPLETE Column stats: NONE
                 Reduce Output Operator
-                  sort order:
+                  sort order: 
                   Reduce Sink Vectorization:
                       className: VectorReduceSinkOperator
                       native: false
@@ -1228,7 +1228,7 @@ STAGE PLANS:
                 outputColumnNames: _col0
                 Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: NONE
                 Reduce Output Operator
-                  sort order:
+                  sort order: 
                   Reduce Sink Vectorization:
                       className: VectorReduceSinkOperator
                       native: false
@@ -1393,7 +1393,7 @@ STAGE PLANS:
                 outputColumnNames: _col0, _col1, _col2, _col3
                 Statistics: Num rows: 1 Data size: 32 Basic stats: COMPLETE Column stats: NONE
                 Reduce Output Operator
-                  sort order:
+                  sort order: 
                   Statistics: Num rows: 1 Data size: 32 Basic stats: COMPLETE Column stats: NONE
                   value expressions: _col0 (type: double), _col1 (type: bigint), _col2 (type: double), _col3 (type: double)
       Execution mode: vectorized
@@ -1604,7 +1604,7 @@ STAGE PLANS:
                   outputColumnNames: _col0, _col1, _col2, _col3, _col4, _col5, _col6
                   Statistics: Num rows: 1 Data size: 52 Basic stats: COMPLETE Column stats: NONE
                   Reduce Output Operator
-                    sort order:
+                    sort order: 
                     Reduce Sink Vectorization:
                         className: VectorReduceSinkOperator
                         native: false
@@ -1755,8 +1755,8 @@ STAGE PLANS:
                   outputColumnNames: _col0
                   Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: NONE
                   Reduce Output Operator
-                    null sort order:
-                    sort order:
+                    null sort order: 
+                    sort order: 
                     Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: NONE
                     tag: -1
                     value expressions: _col0 (type: bigint)
@@ -1776,7 +1776,7 @@ STAGE PLANS:
               bucketing_version 2
               column.name.delimiter ,
               columns ctinyint,csmallint,cint,cbigint,cfloat,cdouble,cstring1,cstring2,ctimestamp1,ctimestamp2,cboolean1,cboolean2
-              columns.comments
+              columns.comments 
               columns.types tinyint:smallint:int:bigint:float:double:string:string:timestamp:timestamp:boolean:boolean
 #### A masked pattern was here ####
               name default.alltypesparquet
@@ -1786,10 +1786,10 @@ STAGE PLANS:
               serialization.ddl struct alltypesparquet { byte ctinyint, i16 csmallint, i32 cint, i64 cbigint, float cfloat, double cdouble, string cstring1, string cstring2, timestamp ctimestamp1, timestamp ctimestamp2, bool cboolean1, bool cboolean2}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-              totalSize 595134
+              totalSize 595177
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-
+          
               input format: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
               output format: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
               properties:
@@ -1798,7 +1798,7 @@ STAGE PLANS:
                 bucketing_version 2
                 column.name.delimiter ,
                 columns ctinyint,csmallint,cint,cbigint,cfloat,cdouble,cstring1,cstring2,ctimestamp1,ctimestamp2,cboolean1,cboolean2
-                columns.comments
+                columns.comments 
                 columns.types tinyint:smallint:int:bigint:float:double:string:string:timestamp:timestamp:boolean:boolean
 #### A masked pattern was here ####
                 name default.alltypesparquet
@@ -1808,7 +1808,7 @@ STAGE PLANS:
                 serialization.ddl struct alltypesparquet { byte ctinyint, i16 csmallint, i32 cint, i64 cbigint, float cfloat, double cdouble, string cstring1, string cstring2, timestamp ctimestamp1, timestamp ctimestamp2, bool cboolean1, bool cboolean2}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-                totalSize 595134
+                totalSize 595177
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
               name: default.alltypesparquet
@@ -30600,7 +30600,7 @@ STAGE PLANS:
               bucketing_version 2
               column.name.delimiter ,
               columns ctinyint,csmallint,cint,cbigint,cfloat,cdouble,cstring1,cstring2,ctimestamp1,ctimestamp2,cboolean1,cboolean2
-              columns.comments
+              columns.comments 
               columns.types tinyint:smallint:int:bigint:float:double:string:string:timestamp:timestamp:boolean:boolean
 #### A masked pattern was here ####
               name default.alltypesparquet
@@ -30610,10 +30610,10 @@ STAGE PLANS:
               serialization.ddl struct alltypesparquet { byte ctinyint, i16 csmallint, i32 cint, i64 cbigint, float cfloat, double cdouble, string cstring1, string cstring2, timestamp ctimestamp1, timestamp ctimestamp2, bool cboolean1, bool cboolean2}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-              totalSize 595134
+              totalSize 595177
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-
+          
               input format: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
               output format: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
               properties:
@@ -30622,7 +30622,7 @@ STAGE PLANS:
                 bucketing_version 2
                 column.name.delimiter ,
                 columns ctinyint,csmallint,cint,cbigint,cfloat,cdouble,cstring1,cstring2,ctimestamp1,ctimestamp2,cboolean1,cboolean2
-                columns.comments
+                columns.comments 
                 columns.types tinyint:smallint:int:bigint:float:double:string:string:timestamp:timestamp:boolean:boolean
 #### A masked pattern was here ####
                 name default.alltypesparquet
@@ -30632,7 +30632,7 @@ STAGE PLANS:
                 serialization.ddl struct alltypesparquet { byte ctinyint, i16 csmallint, i32 cint, i64 cbigint, float cfloat, double cdouble, string cstring1, string cstring2, timestamp ctimestamp1, timestamp ctimestamp2, bool cboolean1, bool cboolean2}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-                totalSize 595134
+                totalSize 595177
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
               name: default.alltypesparquet
@@ -30719,7 +30719,7 @@ STAGE PLANS:
               bucketing_version 2
               column.name.delimiter ,
               columns ctinyint,csmallint,cint,cbigint,cfloat,cdouble,cstring1,cstring2,ctimestamp1,ctimestamp2,cboolean1,cboolean2
-              columns.comments
+              columns.comments 
               columns.types tinyint:smallint:int:bigint:float:double:string:string:timestamp:timestamp:boolean:boolean
 #### A masked pattern was here ####
               name default.alltypesparquet
@@ -30729,10 +30729,10 @@ STAGE PLANS:
               serialization.ddl struct alltypesparquet { byte ctinyint, i16 csmallint, i32 cint, i64 cbigint, float cfloat, double cdouble, string cstring1, string cstring2, timestamp ctimestamp1, timestamp ctimestamp2, bool cboolean1, bool cboolean2}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-              totalSize 595134
+              totalSize 595177
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-
+          
               input format: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
               output format: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
               properties:
@@ -30741,7 +30741,7 @@ STAGE PLANS:
                 bucketing_version 2
                 column.name.delimiter ,
                 columns ctinyint,csmallint,cint,cbigint,cfloat,cdouble,cstring1,cstring2,ctimestamp1,ctimestamp2,cboolean1,cboolean2
-                columns.comments
+                columns.comments 
                 columns.types tinyint:smallint:int:bigint:float:double:string:string:timestamp:timestamp:boolean:boolean
 #### A masked pattern was here ####
                 name default.alltypesparquet
@@ -30751,7 +30751,7 @@ STAGE PLANS:
                 serialization.ddl struct alltypesparquet { byte ctinyint, i16 csmallint, i32 cint, i64 cbigint, float cfloat, double cdouble, string cstring1, string cstring2, timestamp ctimestamp1, timestamp ctimestamp2, bool cboolean1, bool cboolean2}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-                totalSize 595134
+                totalSize 595177
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
               name: default.alltypesparquet
@@ -30839,7 +30839,7 @@ STAGE PLANS:
               bucketing_version 2
               column.name.delimiter ,
               columns ctinyint,csmallint,cint,cbigint,cfloat,cdouble,cstring1,cstring2,ctimestamp1,ctimestamp2,cboolean1,cboolean2
-              columns.comments
+              columns.comments 
               columns.types tinyint:smallint:int:bigint:float:double:string:string:timestamp:timestamp:boolean:boolean
 #### A masked pattern was here ####
               name default.alltypesparquet
@@ -30849,10 +30849,10 @@ STAGE PLANS:
               serialization.ddl struct alltypesparquet { byte ctinyint, i16 csmallint, i32 cint, i64 cbigint, float cfloat, double cdouble, string cstring1, string cstring2, timestamp ctimestamp1, timestamp ctimestamp2, bool cboolean1, bool cboolean2}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-              totalSize 595134
+              totalSize 595177
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-
+          
               input format: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
               output format: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
               properties:
@@ -30861,7 +30861,7 @@ STAGE PLANS:
                 bucketing_version 2
                 column.name.delimiter ,
                 columns ctinyint,csmallint,cint,cbigint,cfloat,cdouble,cstring1,cstring2,ctimestamp1,ctimestamp2,cboolean1,cboolean2
-                columns.comments
+                columns.comments 
                 columns.types tinyint:smallint:int:bigint:float:double:string:string:timestamp:timestamp:boolean:boolean
 #### A masked pattern was here ####
                 name default.alltypesparquet
@@ -30871,7 +30871,7 @@ STAGE PLANS:
                 serialization.ddl struct alltypesparquet { byte ctinyint, i16 csmallint, i32 cint, i64 cbigint, float cfloat, double cdouble, string cstring1, string cstring2, timestamp ctimestamp1, timestamp ctimestamp2, bool cboolean1, bool cboolean2}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-                totalSize 595134
+                totalSize 595177
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
               name: default.alltypesparquet
@@ -30949,7 +30949,7 @@ STAGE PLANS:
               bucketing_version 2
               column.name.delimiter ,
               columns ctinyint,csmallint,cint,cbigint,cfloat,cdouble,cstring1,cstring2,ctimestamp1,ctimestamp2,cboolean1,cboolean2
-              columns.comments
+              columns.comments 
               columns.types tinyint:smallint:int:bigint:float:double:string:string:timestamp:timestamp:boolean:boolean
 #### A masked pattern was here ####
               name default.alltypesparquet
@@ -30959,10 +30959,10 @@ STAGE PLANS:
               serialization.ddl struct alltypesparquet { byte ctinyint, i16 csmallint, i32 cint, i64 cbigint, float cfloat, double cdouble, string cstring1, string cstring2, timestamp ctimestamp1, timestamp ctimestamp2, bool cboolean1, bool cboolean2}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-              totalSize 595134
+              totalSize 595177
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-
+          
               input format: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
               output format: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
               properties:
@@ -30971,7 +30971,7 @@ STAGE PLANS:
                 bucketing_version 2
                 column.name.delimiter ,
                 columns ctinyint,csmallint,cint,cbigint,cfloat,cdouble,cstring1,cstring2,ctimestamp1,ctimestamp2,cboolean1,cboolean2
-                columns.comments
+                columns.comments 
                 columns.types tinyint:smallint:int:bigint:float:double:string:string:timestamp:timestamp:boolean:boolean
 #### A masked pattern was here ####
                 name default.alltypesparquet
@@ -30981,7 +30981,7 @@ STAGE PLANS:
                 serialization.ddl struct alltypesparquet { byte ctinyint, i16 csmallint, i32 cint, i64 cbigint, float cfloat, double cdouble, string cstring1, string cstring2, timestamp ctimestamp1, timestamp ctimestamp2, bool cboolean1, bool cboolean2}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-                totalSize 595134
+                totalSize 595177
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
               name: default.alltypesparquet
@@ -31048,7 +31048,7 @@ STAGE PLANS:
               escape.delim \
               serialization.lib org.apache.hadoop.hive.serde2.lazybinary.LazyBinarySerDe
             serde: org.apache.hadoop.hive.serde2.lazybinary.LazyBinarySerDe
-
+          
               input format: org.apache.hadoop.mapred.SequenceFileInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
               properties:
