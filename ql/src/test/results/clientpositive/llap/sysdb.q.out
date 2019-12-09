@@ -3719,10 +3719,10 @@ POSTHOOK: type: QUERY
 POSTHOOK: Input: sys@columns_v2
 #### A masked pattern was here ####
 a	decimal(10,2)	0
+a	int	0
 action_expression	string	3
 add_time	int	1
 aint	int	0
-alloc_fraction	double	2
 PREHOOK: query: select param_key, param_value from database_params order by param_key, param_value limit 5
 PREHOOK: type: QUERY
 PREHOOK: Input: sys@database_params
