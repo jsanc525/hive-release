@@ -12174,9 +12174,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     }
   }
 
-  boolean genResolvedParseTree(ASTNode ast, PlannerContext plannerCtx) throws SemanticException {
+  boolean genResolvedParseTree(PlannerContext plannerCtx) throws SemanticException {
     ASTNode child = ast;
-    this.ast = ast;
     viewsExpanded = new ArrayList<String>();
     ctesExpanded = new ArrayList<String>();
 
@@ -12279,7 +12278,12 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     }
   }
 
-  Operator genOPTree(ASTNode ast, PlannerContext plannerCtx) throws SemanticException {
+  Operator genOPTree(PlannerContext plannerCtx) throws SemanticException {
+    // Parameters are not utilized when CBO is disabled.
+    return genOPTree();
+  }
+
+  Operator genOPTree() throws SemanticException {
     // fetch all the hints in qb
     List<ASTNode> hintsList = new ArrayList<>();
     getHintsFromQB(qb, hintsList);
@@ -12332,14 +12336,16 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     }
   }
 
-  void analyzeInternal(ASTNode ast, PlannerContextFactory pcf) throws SemanticException {
+  @SuppressWarnings("checkstyle:methodlength")
+  void analyzeInternal(final ASTNode ast, PlannerContextFactory pcf) throws SemanticException {
     LOG.info("Starting Semantic Analysis");
-    // 1. Generate Resolved Parse tree from syntax tree
     boolean needsTransform = needsTransform();
     //change the location of position alias process here
     processPositionAlias(ast);
     PlannerContext plannerCtx = pcf.create();
-    if (!genResolvedParseTree(ast, plannerCtx)) {
+    this.setAST(ast);
+    // 1. Generate Resolved Parse tree from syntax tree
+    if (!genResolvedParseTree(plannerCtx)) {
       return;
     }
 
@@ -12374,7 +12380,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     }
 
     // 2. Gen OP Tree from resolved Parse Tree
-    Operator sinkOp = genOPTree(ast, plannerCtx);
+    Operator sinkOp = genOPTree(plannerCtx);
 
     boolean usesMasking = false;
     if (!unparseTranslator.isEnabled() &&
@@ -12389,11 +12395,12 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         init(true);
         //change the location of position alias process here
         processPositionAlias(rewrittenAST);
-        genResolvedParseTree(rewrittenAST, plannerCtx);
+        this.setAST(rewrittenAST);
+        genResolvedParseTree(plannerCtx);
         if (this instanceof CalcitePlanner) {
           ((CalcitePlanner) this).resetCalciteConfiguration();
         }
-        sinkOp = genOPTree(rewrittenAST, plannerCtx);
+        sinkOp = genOPTree(plannerCtx);
       }
     }
 
