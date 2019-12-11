@@ -109,7 +109,7 @@ public class MetastoreDefaultTransformer implements IMetaStoreMetadataTransforme
       Map<String, String> params = table.getParameters();
       String tableType = table.getTableType();
       String tCapabilities = params.get(OBJCAPABILITIES);
-      int numBuckets = table.getSd().getNumBuckets();
+      int numBuckets = table.isSetSd()? table.getSd().getNumBuckets() : 0;
       boolean isBucketed = (numBuckets > 0) ? true : false;
 
       LOG.info("Table " + table.getTableName() + ",#bucket=" + numBuckets + ",isBucketed:" + isBucketed + ",tableType=" + tableType + ",tableCapabilities=" + tCapabilities);
@@ -463,6 +463,8 @@ public class MetastoreDefaultTransformer implements IMetaStoreMetadataTransforme
       if (partition.getSd() != null) {
         partBuckets = partition.getSd().getNumBuckets();
         LOG.info("Number of original part buckets=" + partBuckets);
+      } else {
+        partBuckets = 0;
       }
 
       if (tCapabilities == null) {
@@ -470,34 +472,34 @@ public class MetastoreDefaultTransformer implements IMetaStoreMetadataTransforme
 
         switch (tableType) {
           case "EXTERNAL_TABLE":
+          if (partBuckets > 0 && !processorCapabilities.contains(HIVEBUCKET2)) {
+            Partition newPartition = new Partition(partition);
+            StorageDescriptor newSd = new StorageDescriptor(partition.getSd());
+            newSd.setNumBuckets(-1); // remove bucketing info
+            newPartition.setSd(newSd);
+            ret.add(newPartition);
+          } else {
+            ret.add(partition);
+          }
+          break;
+          case "MANAGED_TABLE":
+          String txnal = params.get(TABLE_IS_TRANSACTIONAL);
+          if (txnal == null || "FALSE".equalsIgnoreCase(txnal)) { // non-ACID MANAGED table
             if (partBuckets > 0 && !processorCapabilities.contains(HIVEBUCKET2)) {
               Partition newPartition = new Partition(partition);
               StorageDescriptor newSd = new StorageDescriptor(partition.getSd());
               newSd.setNumBuckets(-1); // remove bucketing info
               newPartition.setSd(newSd);
               ret.add(newPartition);
-            } else {
-              ret.add(partition);
+              break;
             }
-            break;
-	  case "MANAGED_TABLE":
-            String txnal = params.get("transactional");
-            if (txnal == null || txnal.equalsIgnoreCase("FALSE")) { // non-ACID MANAGED table
-              if (partBuckets > 0 && !processorCapabilities.contains(HIVEBUCKET2)) {
-                Partition newPartition = new Partition(partition);
-                StorageDescriptor newSd = new StorageDescriptor(partition.getSd());
-                newSd.setNumBuckets(-1); // remove bucketing info
-                newPartition.setSd(newSd);
-                ret.add(newPartition);
-                break;
-              }
-            }
-            // INSERT or FULL ACID table, bucketing info to be retained
-            ret.add(partition);
-            break;
+          }
+          // INSERT or FULL ACID table, bucketing info to be retained
+          ret.add(partition);
+          break;
           default:
-            ret.add(partition);
-            break;
+          ret.add(partition);
+          break;
         }
       } else { // table has capabilities
         tCapabilities = tCapabilities.replaceAll("\\s","").toUpperCase(); // remove spaces between tCapabilities + toUppercase
@@ -575,7 +577,7 @@ public class MetastoreDefaultTransformer implements IMetaStoreMetadataTransforme
         params.put("TRANSLATED_TO_EXTERNAL", "TRUE");
         newTable.setParameters(params);
         LOG.info("Modified table params are:" + params.toString());
-        if (table.getSd().getLocation() == null) {
+        if (!table.isSetSd() || table.getSd().getLocation() == null) {
           try {
             Path newPath = hmsHandler.getWh().getDefaultTablePath(table.getDbName(), table.getTableName(), true);
             newTable.getSd().setLocation(newPath.toString());
