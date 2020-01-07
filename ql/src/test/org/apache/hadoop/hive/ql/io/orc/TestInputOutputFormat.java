@@ -3681,14 +3681,7 @@ public class TestInputOutputFormat {
         readOpsDelta = statistics.getReadOps() - readOpsBefore;
       }
     }
-    // call-1: open(mock:/mocktable7/0_0)
-    // call-2: open(mock:/mocktable7/0_0)
-    // call-3: listLocatedFileStatuses(mock:/mocktable7)
-    // call-4: getFileStatus(mock:/mocktable7/delta_0000001_0000001_0000/_metadata_acid)
-    // call-5: open(mock:/mocktable7/delta_0000001_0000001_0000/bucket_00001)
-    // call-6: getFileStatus(mock:/mocktable7/delta_0000001_0000001_0000/_metadata_acid)
-    // call-7: open(mock:/mocktable7/delta_0000001_0000001_0000/bucket_00001)
-    assertEquals(7, readOpsDelta);
+    assertEquals(6, readOpsDelta);
 
     // revert back to local fs
     conf.set("fs.defaultFS", "file:///");
@@ -3760,12 +3753,7 @@ public class TestInputOutputFormat {
         readOpsDelta = statistics.getReadOps() - readOpsBefore;
       }
     }
-    // call-1: open to read data - split 1 => mock:/mocktable8/0_0
-    // call-2: listLocatedFileStatus(mock:/mocktable8)
-    // call-3: getFileStatus(mock:/mocktable8/delta_0000001_0000001_0000/_metadata_acid)
-    // call-4: getFileStatus(mock:/mocktable8/delta_0000001_0000001_0000/_metadata_acid)
-    // call-5: open(mock:/mocktable8/delta_0000001_0000001_0000/bucket_00001)
-    assertEquals(5, readOpsDelta);
+    assertEquals(6, readOpsDelta);
 
     // revert back to local fs
     conf.set("fs.defaultFS", "file:///");
