@@ -2595,6 +2595,8 @@ private void constructOneLBLocationMap(FileStatus fSta,
     final PrintStream ps = (inPlaceEligible) ? SessionState.getConsole().getInfoStream() : null;
     final SessionState parentSession = SessionState.get();
 
+    boolean isTxnTable = AcidUtils.isTransactionalTable(tbl);
+
     final List<Future<Void>> futures = Lists.newLinkedList();
     // for each dynamically created DP directory, construct a full partition spec
     // and load the partition based on that
@@ -2672,14 +2674,14 @@ private void constructOneLBLocationMap(FileStatus fSta,
         future.cancel(true);
       }
       throw new HiveException("Exception when loading "
-          + partsToLoad + " in table " + tbl.getTableName()
+          + partsToLoad + " partitions in table " + tbl.getTableName()
           + " with loadPath=" + loadPath, e);
     } finally {
       rawStoreMap.forEach((k, rs) -> rs.shutdown());
     }
 
     try {
-      if (isAcid) {
+      if (isTxnTable) {
         List<String> partNames = new ArrayList<>(partitionsMap.size());
         for (Partition p : partitionsMap.values()) {
           partNames.add(p.getName());
