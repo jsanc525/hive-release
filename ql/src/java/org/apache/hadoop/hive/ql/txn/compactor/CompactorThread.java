@@ -36,6 +36,10 @@ import org.apache.hadoop.hive.metastore.txn.TxnStore;
 import org.apache.hadoop.hive.metastore.txn.TxnUtils;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.thrift.TException;
+import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.ql.exec.repl.util.ReplUtils;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +50,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static org.apache.hadoop.hive.metastore.HiveMetaStore.HMSHandler.getMSForConf;
 import static org.apache.hadoop.hive.metastore.utils.MetaStoreUtils.getDefaultCatalog;
 
 /**
@@ -218,5 +223,29 @@ abstract class CompactorThread extends Thread implements MetaStoreThread {
 
   protected String tableName(Table t) {
     return Warehouse.getQualifiedName(t);
+  }
+
+  protected boolean replIsCompactionDisabledForDatabase(String dbName) throws TException {
+    try {
+      Database database = getMSForConf(conf).getDatabase(getDefaultCatalog(conf), dbName);
+      // Compaction is disabled until after first successful incremental load. Check HIVE-21197 for more detail.
+      boolean isReplCompactDisabled = ReplUtils.isFirstIncPending(database.getParameters());
+      if (isReplCompactDisabled) {
+        LOG.info("Compaction is disabled for database " + dbName);
+      }
+      return isReplCompactDisabled;
+    } catch (NoSuchObjectException e) {
+      LOG.info("Unable to find database " + dbName);
+      return true;
+    }
+  }
+
+  protected boolean replIsCompactionDisabledForTable(Table tbl) {
+    // Compaction is disabled until after first successful incremental load. Check HIVE-21197 for more detail.
+    boolean isCompactDisabled = ReplUtils.isFirstIncPending(tbl.getParameters());
+    if (isCompactDisabled) {
+      LOG.info("Compaction is disabled for table " + tbl.getTableName());
+    }
+    return isCompactDisabled;
   }
 }

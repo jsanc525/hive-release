@@ -55,6 +55,7 @@ import static org.apache.hadoop.hive.ql.util.HiveStrictManagedMigration.TableMig
 public class ReplUtils {
 
   public static final String REPL_CHECKPOINT_KEY = "hive.repl.ckpt.key";
+  public static final String REPL_FIRST_INC_PENDING_FLAG = "hive.repl.first.inc.pending";
 
   /**
    * Bootstrap REPL LOAD operation type on the examined object based on ckpt state.
@@ -155,5 +156,15 @@ public class ReplUtils {
       }
     }
     return taskList;
+  }
+
+  public static boolean isFirstIncPending(Map<String, String> parameters) {
+    if (parameters == null) {
+      return false;
+    }
+    String firstIncPendFlag = parameters.get(ReplUtils.REPL_FIRST_INC_PENDING_FLAG);
+    // If flag is not set, then we assume first incremental load is done as the database/table may be created by user
+    // and not through replication.
+    return firstIncPendFlag != null && !firstIncPendFlag.isEmpty() && "true".equalsIgnoreCase(firstIncPendFlag);
   }
 }
