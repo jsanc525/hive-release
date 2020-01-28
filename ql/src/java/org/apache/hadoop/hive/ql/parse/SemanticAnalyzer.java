@@ -570,7 +570,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         opToSamplePruner, globalLimitCtx, nameToSplitSample, inputs, rootTasks,
         opToPartToSkewedPruner, viewAliasToInput, reduceSinkOperatorsAddedByEnforceBucketingSorting,
         analyzeRewrite, tableDesc, createVwDesc, materializedViewUpdateDesc,
-        queryProperties, viewProjectToTableSchema, acidFileSinks);
+        queryProperties, viewProjectToTableSchema);
   }
 
   public CompilationOpContext getOpContext() {
@@ -6879,9 +6879,14 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     }
 
     if (enforceBucketing) {
+      Operation acidOp = AcidUtils.isFullAcidTable(dest_tab) ? getAcidType(table_desc.getOutputFileFormatClass(),
+              dest) : Operation.NOT_ACID;
       int maxReducers = conf.getIntVar(HiveConf.ConfVars.MAXREDUCERS);
       if (conf.getIntVar(HiveConf.ConfVars.HADOOPNUMREDUCERS) > 0) {
         maxReducers = conf.getIntVar(HiveConf.ConfVars.HADOOPNUMREDUCERS);
+      }
+      if (acidOp == Operation.UPDATE || acidOp == Operation.DELETE) {
+        maxReducers = 1;
       }
       int numBuckets = dest_tab.getNumBuckets();
       if (numBuckets > maxReducers) {
@@ -6897,7 +6902,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
           numFiles = totalFiles / maxReducers;
         }
       }
-      else {
+      else if (acidOp == Operation.NOT_ACID || acidOp == Operation.INSERT) {
         maxReducers = numBuckets;
       }
 
@@ -6908,9 +6913,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         nullOrder.append(sortOrder == BaseSemanticAnalyzer.HIVE_COLUMN_ORDER_ASC ? 'a' : 'z');
       }
       input = genReduceSinkPlan(input, partnCols, sortCols, order.toString(), nullOrder.toString(),
-          maxReducers,
-          (AcidUtils.isFullAcidTable(dest_tab) ? getAcidType(table_desc.getOutputFileFormatClass(),
-              dest, AcidUtils.isInsertOnlyTable(dest_tab)) : AcidUtils.Operation.NOT_ACID));
+          maxReducers, acidOp);
       reduceSinkOperatorsAddedByEnforceBucketingSorting.add((ReduceSinkOperator)input.getParentOperators().get(0));
       ctx.setMultiFileSpray(multiFileSpray);
       ctx.setNumFiles(numFiles);
@@ -12446,7 +12449,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         globalLimitCtx, nameToSplitSample, inputs, rootTasks, opToPartToSkewedPruner,
         viewAliasToInput, reduceSinkOperatorsAddedByEnforceBucketingSorting,
         analyzeRewrite, tableDesc, createVwDesc, materializedViewUpdateDesc,
-        queryProperties, viewProjectToTableSchema, acidFileSinks);
+        queryProperties, viewProjectToTableSchema);
 
     // Set the semijoin hints in parse context
     pCtx.setSemiJoinHints(parseSemiJoinHint(getQB().getParseInfo().getHintList()));
@@ -14872,6 +14875,16 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     return deleting(destination) ? AcidUtils.Operation.DELETE :
         (updating(destination) ? AcidUtils.Operation.UPDATE :
             AcidUtils.Operation.INSERT);
+  }
+
+  private AcidUtils.Operation getAcidType(Class<? extends OutputFormat> of, String dest) {
+    if (SessionState.get() == null || !getTxnMgr().supportsAcid()) {
+      return AcidUtils.Operation.NOT_ACID;
+    } else if (isAcidOutputFormat(of)) {
+      return getAcidType(dest);
+    } else {
+      return AcidUtils.Operation.NOT_ACID;
+    }
   }
 
   private AcidUtils.Operation getAcidType(Class<? extends OutputFormat> of, String dest,

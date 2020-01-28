@@ -46,7 +46,6 @@ import org.apache.hadoop.hive.ql.parse.BaseSemanticAnalyzer.AnalyzeRewriteContex
 import org.apache.hadoop.hive.ql.plan.CreateTableDesc;
 import org.apache.hadoop.hive.ql.plan.CreateViewDesc;
 import org.apache.hadoop.hive.ql.plan.ExprNodeDesc;
-import org.apache.hadoop.hive.ql.plan.FileSinkDesc;
 import org.apache.hadoop.hive.ql.plan.FilterDesc.SampleDesc;
 import org.apache.hadoop.hive.ql.plan.LoadFileDesc;
 import org.apache.hadoop.hive.ql.plan.LoadTableDesc;
@@ -56,7 +55,6 @@ import org.apache.hadoop.hive.ql.plan.TableDesc;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -127,7 +125,6 @@ public class ParseContext {
   private Map<SelectOperator, Table> viewProjectToViewSchema;
   private ColumnAccessInfo columnAccessInfo;
   private boolean needViewColumnAuthorization;
-  private Set<FileSinkDesc> acidFileSinks = Collections.emptySet();
 
   private Map<ReduceSinkOperator, RuntimeValuesInfo> rsToRuntimeValuesInfo =
           new HashMap<ReduceSinkOperator, RuntimeValuesInfo>();
@@ -199,7 +196,7 @@ public class ParseContext {
       List<ReduceSinkOperator> reduceSinkOperatorsAddedByEnforceBucketingSorting,
       AnalyzeRewriteContext analyzeRewrite, CreateTableDesc createTableDesc,
       CreateViewDesc createViewDesc, MaterializedViewDesc materializedViewUpdateDesc, QueryProperties queryProperties,
-      Map<SelectOperator, Table> viewProjectToTableSchema, Set<FileSinkDesc> acidFileSinks) {
+      Map<SelectOperator, Table> viewProjectToTableSchema) {
     this.queryState = queryState;
     this.conf = queryState.getConf();
     this.opToPartPruner = opToPartPruner;
@@ -239,17 +236,8 @@ public class ParseContext {
       // authorization info.
       this.columnAccessInfo = new ColumnAccessInfo();
     }
-    if(acidFileSinks != null && !acidFileSinks.isEmpty()) {
-      this.acidFileSinks = new HashSet<>();
-      this.acidFileSinks.addAll(acidFileSinks);
-    }
   }
-  public Set<FileSinkDesc> getAcidSinks() {
-    return acidFileSinks;
-  }
-  public boolean hasAcidWrite() {
-    return !acidFileSinks.isEmpty();
-  }
+
   /**
    * @return the context
    */
