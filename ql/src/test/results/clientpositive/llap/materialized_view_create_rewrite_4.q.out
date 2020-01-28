@@ -87,8 +87,9 @@ STAGE PLANS:
     Tez
 #### A masked pattern was here ####
       Edges:
-        Reducer 2 <- Map 1 (SIMPLE_EDGE), Map 4 (SIMPLE_EDGE)
+        Reducer 2 <- Map 1 (SIMPLE_EDGE), Map 5 (SIMPLE_EDGE)
         Reducer 3 <- Reducer 2 (SIMPLE_EDGE)
+        Reducer 4 <- Reducer 3 (CUSTOM_SIMPLE_EDGE)
 #### A masked pattern was here ####
       Vertices:
         Map 1 
@@ -110,7 +111,7 @@ STAGE PLANS:
                         Statistics: Num rows: 5 Data size: 20 Basic stats: COMPLETE Column stats: COMPLETE
             Execution mode: llap
             LLAP IO: may be used (ACID table)
-        Map 4 
+        Map 5 
             Map Operator Tree:
                 TableScan
                   alias: cmv_basetable_2_n2
@@ -177,20 +178,28 @@ STAGE PLANS:
                   Statistics: Num rows: 1 Data size: 124 Basic stats: COMPLETE Column stats: COMPLETE
                   Group By Operator
                     aggregations: compute_stats(col1, 'hll'), compute_stats(col2, 'hll'), compute_stats(col3, 'hll')
-                    mode: complete
+                    mode: hash
                     outputColumnNames: _col0, _col1, _col2
                     Statistics: Num rows: 1 Data size: 1480 Basic stats: COMPLETE Column stats: COMPLETE
-                    Select Operator
-                      expressions: _col0 (type: struct<columntype:string,min:bigint,max:bigint,countnulls:bigint,numdistinctvalues:bigint,ndvbitvector:binary>), _col1 (type: struct<columntype:string,min:decimal(10,2),max:decimal(10,2),countnulls:bigint,numdistinctvalues:bigint,ndvbitvector:binary>), _col2 (type: struct<columntype:string,min:bigint,max:bigint,countnulls:bigint,numdistinctvalues:bigint,ndvbitvector:binary>)
-                      outputColumnNames: _col0, _col1, _col2
+                    Reduce Output Operator
+                      sort order: 
                       Statistics: Num rows: 1 Data size: 1480 Basic stats: COMPLETE Column stats: COMPLETE
-                      File Output Operator
-                        compressed: false
-                        Statistics: Num rows: 1 Data size: 1480 Basic stats: COMPLETE Column stats: COMPLETE
-                        table:
-                            input format: org.apache.hadoop.mapred.SequenceFileInputFormat
-                            output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
-                            serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                      value expressions: _col0 (type: struct<columntype:string,min:bigint,max:bigint,countnulls:bigint,bitvector:binary>), _col1 (type: struct<columntype:string,min:decimal(10,2),max:decimal(10,2),countnulls:bigint,bitvector:binary>), _col2 (type: struct<columntype:string,min:bigint,max:bigint,countnulls:bigint,bitvector:binary>)
+        Reducer 4 
+            Execution mode: llap
+            Reduce Operator Tree:
+              Group By Operator
+                aggregations: compute_stats(VALUE._col0), compute_stats(VALUE._col1), compute_stats(VALUE._col2)
+                mode: mergepartial
+                outputColumnNames: _col0, _col1, _col2
+                Statistics: Num rows: 1 Data size: 1528 Basic stats: COMPLETE Column stats: COMPLETE
+                File Output Operator
+                  compressed: false
+                  Statistics: Num rows: 1 Data size: 1528 Basic stats: COMPLETE Column stats: COMPLETE
+                  table:
+                      input format: org.apache.hadoop.mapred.SequenceFileInputFormat
+                      output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
+                      serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
 
   Stage: Stage-2
     Dependency Collection
@@ -269,10 +278,10 @@ Table Type:         	MATERIALIZED_VIEW
 Table Parameters:	 	 
 	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\",\"COLUMN_STATS\":{\"_c2\":\"true\",\"a\":\"true\",\"c\":\"true\"}}
 	bucketing_version   	2                   
-	numFiles            	1                   
+	numFiles            	2                   
 	numRows             	2                   
 	rawDataSize         	0                   
-	totalSize           	809                 
+	totalSize           	1548                
 	transactional       	true                
 	transactional_properties	default             
 #### A masked pattern was here ####
@@ -497,10 +506,10 @@ Table Type:         	MATERIALIZED_VIEW
 Table Parameters:	 	 
 	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\",\"COLUMN_STATS\":{\"_c2\":\"true\",\"a\":\"true\",\"c\":\"true\"}}
 	bucketing_version   	2                   
-	numFiles            	1                   
+	numFiles            	2                   
 	numRows             	2                   
 	rawDataSize         	0                   
-	totalSize           	809                 
+	totalSize           	1548                
 	transactional       	true                
 	transactional_properties	default             
 #### A masked pattern was here ####
@@ -960,10 +969,10 @@ Table Type:         	MATERIALIZED_VIEW
 Table Parameters:	 	 
 	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
 	bucketing_version   	2                   
-	numFiles            	2                   
+	numFiles            	3                   
 	numRows             	3                   
 	rawDataSize         	0                   
-	totalSize           	1573                
+	totalSize           	2312                
 	transactional       	true                
 	transactional_properties	default             
 #### A masked pattern was here ####
@@ -1078,8 +1087,9 @@ STAGE PLANS:
     Tez
 #### A masked pattern was here ####
       Edges:
-        Reducer 2 <- Map 1 (SIMPLE_EDGE), Map 4 (SIMPLE_EDGE)
+        Reducer 2 <- Map 1 (SIMPLE_EDGE), Map 5 (SIMPLE_EDGE)
         Reducer 3 <- Reducer 2 (SIMPLE_EDGE)
+        Reducer 4 <- Reducer 3 (CUSTOM_SIMPLE_EDGE)
 #### A masked pattern was here ####
       Vertices:
         Map 1 
@@ -1101,7 +1111,7 @@ STAGE PLANS:
                         Statistics: Num rows: 5 Data size: 20 Basic stats: COMPLETE Column stats: COMPLETE
             Execution mode: llap
             LLAP IO: may be used (ACID table)
-        Map 4 
+        Map 5 
             Map Operator Tree:
                 TableScan
                   alias: cmv_basetable_2_n2
@@ -1168,20 +1178,28 @@ STAGE PLANS:
                   Statistics: Num rows: 1 Data size: 124 Basic stats: COMPLETE Column stats: COMPLETE
                   Group By Operator
                     aggregations: compute_stats(a, 'hll'), compute_stats(c, 'hll'), compute_stats(_c2, 'hll')
-                    mode: complete
+                    mode: hash
                     outputColumnNames: _col0, _col1, _col2
                     Statistics: Num rows: 1 Data size: 1480 Basic stats: COMPLETE Column stats: COMPLETE
-                    Select Operator
-                      expressions: _col0 (type: struct<columntype:string,min:bigint,max:bigint,countnulls:bigint,numdistinctvalues:bigint,ndvbitvector:binary>), _col1 (type: struct<columntype:string,min:decimal(10,2),max:decimal(10,2),countnulls:bigint,numdistinctvalues:bigint,ndvbitvector:binary>), _col2 (type: struct<columntype:string,min:bigint,max:bigint,countnulls:bigint,numdistinctvalues:bigint,ndvbitvector:binary>)
-                      outputColumnNames: _col0, _col1, _col2
+                    Reduce Output Operator
+                      sort order: 
                       Statistics: Num rows: 1 Data size: 1480 Basic stats: COMPLETE Column stats: COMPLETE
-                      File Output Operator
-                        compressed: false
-                        Statistics: Num rows: 1 Data size: 1480 Basic stats: COMPLETE Column stats: COMPLETE
-                        table:
-                            input format: org.apache.hadoop.mapred.SequenceFileInputFormat
-                            output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
-                            serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                      value expressions: _col0 (type: struct<columntype:string,min:bigint,max:bigint,countnulls:bigint,bitvector:binary>), _col1 (type: struct<columntype:string,min:decimal(10,2),max:decimal(10,2),countnulls:bigint,bitvector:binary>), _col2 (type: struct<columntype:string,min:bigint,max:bigint,countnulls:bigint,bitvector:binary>)
+        Reducer 4 
+            Execution mode: llap
+            Reduce Operator Tree:
+              Group By Operator
+                aggregations: compute_stats(VALUE._col0), compute_stats(VALUE._col1), compute_stats(VALUE._col2)
+                mode: mergepartial
+                outputColumnNames: _col0, _col1, _col2
+                Statistics: Num rows: 1 Data size: 1528 Basic stats: COMPLETE Column stats: COMPLETE
+                File Output Operator
+                  compressed: false
+                  Statistics: Num rows: 1 Data size: 1528 Basic stats: COMPLETE Column stats: COMPLETE
+                  table:
+                      input format: org.apache.hadoop.mapred.SequenceFileInputFormat
+                      output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
+                      serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
 
   Stage: Stage-2
     Dependency Collection
@@ -1241,10 +1259,10 @@ Table Type:         	MATERIALIZED_VIEW
 Table Parameters:	 	 
 	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\",\"COLUMN_STATS\":{\"_c2\":\"true\",\"a\":\"true\",\"c\":\"true\"}}
 	bucketing_version   	2                   
-	numFiles            	1                   
+	numFiles            	2                   
 	numRows             	3                   
 	rawDataSize         	0                   
-	totalSize           	814                 
+	totalSize           	1046                
 	transactional       	true                
 	transactional_properties	default             
 #### A masked pattern was here ####
@@ -1359,8 +1377,9 @@ STAGE PLANS:
     Tez
 #### A masked pattern was here ####
       Edges:
-        Reducer 2 <- Map 1 (SIMPLE_EDGE), Map 4 (SIMPLE_EDGE)
+        Reducer 2 <- Map 1 (SIMPLE_EDGE), Map 5 (SIMPLE_EDGE)
         Reducer 3 <- Reducer 2 (SIMPLE_EDGE)
+        Reducer 4 <- Reducer 3 (CUSTOM_SIMPLE_EDGE)
 #### A masked pattern was here ####
       Vertices:
         Map 1 
@@ -1382,7 +1401,7 @@ STAGE PLANS:
                         Statistics: Num rows: 5 Data size: 20 Basic stats: COMPLETE Column stats: COMPLETE
             Execution mode: llap
             LLAP IO: may be used (ACID table)
-        Map 4 
+        Map 5 
             Map Operator Tree:
                 TableScan
                   alias: cmv_basetable_2_n2
@@ -1449,20 +1468,28 @@ STAGE PLANS:
                   Statistics: Num rows: 1 Data size: 124 Basic stats: COMPLETE Column stats: COMPLETE
                   Group By Operator
                     aggregations: compute_stats(a, 'hll'), compute_stats(c, 'hll'), compute_stats(_c2, 'hll')
-                    mode: complete
+                    mode: hash
                     outputColumnNames: _col0, _col1, _col2
                     Statistics: Num rows: 1 Data size: 1480 Basic stats: COMPLETE Column stats: COMPLETE
-                    Select Operator
-                      expressions: _col0 (type: struct<columntype:string,min:bigint,max:bigint,countnulls:bigint,numdistinctvalues:bigint,ndvbitvector:binary>), _col1 (type: struct<columntype:string,min:decimal(10,2),max:decimal(10,2),countnulls:bigint,numdistinctvalues:bigint,ndvbitvector:binary>), _col2 (type: struct<columntype:string,min:bigint,max:bigint,countnulls:bigint,numdistinctvalues:bigint,ndvbitvector:binary>)
-                      outputColumnNames: _col0, _col1, _col2
+                    Reduce Output Operator
+                      sort order: 
                       Statistics: Num rows: 1 Data size: 1480 Basic stats: COMPLETE Column stats: COMPLETE
-                      File Output Operator
-                        compressed: false
-                        Statistics: Num rows: 1 Data size: 1480 Basic stats: COMPLETE Column stats: COMPLETE
-                        table:
-                            input format: org.apache.hadoop.mapred.SequenceFileInputFormat
-                            output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
-                            serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                      value expressions: _col0 (type: struct<columntype:string,min:bigint,max:bigint,countnulls:bigint,bitvector:binary>), _col1 (type: struct<columntype:string,min:decimal(10,2),max:decimal(10,2),countnulls:bigint,bitvector:binary>), _col2 (type: struct<columntype:string,min:bigint,max:bigint,countnulls:bigint,bitvector:binary>)
+        Reducer 4 
+            Execution mode: llap
+            Reduce Operator Tree:
+              Group By Operator
+                aggregations: compute_stats(VALUE._col0), compute_stats(VALUE._col1), compute_stats(VALUE._col2)
+                mode: mergepartial
+                outputColumnNames: _col0, _col1, _col2
+                Statistics: Num rows: 1 Data size: 1528 Basic stats: COMPLETE Column stats: COMPLETE
+                File Output Operator
+                  compressed: false
+                  Statistics: Num rows: 1 Data size: 1528 Basic stats: COMPLETE Column stats: COMPLETE
+                  table:
+                      input format: org.apache.hadoop.mapred.SequenceFileInputFormat
+                      output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
+                      serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
 
   Stage: Stage-2
     Dependency Collection
@@ -1522,10 +1549,10 @@ Table Type:         	MATERIALIZED_VIEW
 Table Parameters:	 	 
 	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\",\"COLUMN_STATS\":{\"_c2\":\"true\",\"a\":\"true\",\"c\":\"true\"}}
 	bucketing_version   	2                   
-	numFiles            	1                   
+	numFiles            	2                   
 	numRows             	2                   
 	rawDataSize         	0                   
-	totalSize           	812                 
+	totalSize           	1043                
 	transactional       	true                
 	transactional_properties	default             
 #### A masked pattern was here ####
@@ -1917,10 +1944,10 @@ Table Type:         	MATERIALIZED_VIEW
 Table Parameters:	 	 
 	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
 	bucketing_version   	2                   
-	numFiles            	2                   
+	numFiles            	3                   
 	numRows             	3                   
 	rawDataSize         	0                   
-	totalSize           	1573                
+	totalSize           	1804                
 	transactional       	true                
 	transactional_properties	default             
 #### A masked pattern was here ####
