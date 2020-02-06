@@ -261,7 +261,7 @@ public class HiveAlterHandler implements AlterHandler {
               }
               // check that src exists and also checks permissions necessary, rename src to dest
               if (srcFs.exists(srcPath) && wh.renameDir(srcPath, destPath,
-                      ReplChangeManager.isSourceOfReplication(olddb))) {
+                      ReplChangeManager.shouldEnableCm(olddb, oldt))) {
                 dataWasMoved = true;
               }
             } catch (IOException | MetaException e) {
@@ -416,7 +416,8 @@ public class HiveAlterHandler implements AlterHandler {
           Path deleteOldDataLoc = new Path(oldt.getSd().getLocation());
           boolean isAutoPurge = "true".equalsIgnoreCase(oldt.getParameters().get("auto.purge"));
           try {
-            wh.deleteDir(deleteOldDataLoc, true, isAutoPurge, olddb);
+            wh.deleteDir(deleteOldDataLoc, true, isAutoPurge,
+                    ReplChangeManager.shouldEnableCm(olddb, oldt));
             LOG.info("Deleted the old data location: {} for the table: {}",
                     deleteOldDataLoc, dbname + "." + name);
           } catch (MetaException ex) {
@@ -640,7 +641,7 @@ public class HiveAlterHandler implements AlterHandler {
               }
 
               //rename the data directory
-              wh.renameDir(srcPath, destPath, ReplChangeManager.isSourceOfReplication(db));
+              wh.renameDir(srcPath, destPath, ReplChangeManager.shouldEnableCm(db, tbl));
               LOG.info("Partition directory rename from " + srcPath + " to " + destPath + " done.");
               dataWasMoved = true;
             }
