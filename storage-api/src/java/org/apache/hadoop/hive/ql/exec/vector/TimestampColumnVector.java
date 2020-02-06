@@ -41,23 +41,28 @@ import org.apache.hadoop.io.Writable;
  * using the scratch timestamp, and then perhaps update the column vector row with a result.
  */
 public class TimestampColumnVector extends ColumnVector {
-  private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
-  private static final GregorianCalendar PROLEPTIC_GREGORIAN_CALENDAR_UTC =
-      new GregorianCalendar(UTC);
-  private static final GregorianCalendar GREGORIAN_CALENDAR_UTC =
-      new GregorianCalendar(UTC);
 
-  private static final SimpleDateFormat PROLEPTIC_GREGORIAN_TIMESTAMP_FORMATTER_UTC =
-      new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-  private static final SimpleDateFormat GREGORIAN_TIMESTAMP_FORMATTER_UTC =
-      new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-  static {
-    PROLEPTIC_GREGORIAN_CALENDAR_UTC.setGregorianChange(new java.util.Date(Long.MIN_VALUE));
-
-    PROLEPTIC_GREGORIAN_TIMESTAMP_FORMATTER_UTC.setCalendar(PROLEPTIC_GREGORIAN_CALENDAR_UTC);
-    GREGORIAN_TIMESTAMP_FORMATTER_UTC.setCalendar(GREGORIAN_CALENDAR_UTC);
-  }
+  private static final ThreadLocal<SimpleDateFormat> PROLEPTIC_GREGORIAN_TIMESTAMP_FORMATTER = new ThreadLocal<SimpleDateFormat>() {
+    @Override
+    protected SimpleDateFormat initialValue() {
+      SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+      GregorianCalendar prolepticGregorianCalendar =
+          new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+      prolepticGregorianCalendar.setGregorianChange(new java.util.Date(Long.MIN_VALUE));
+      simpleDateFormat.setCalendar(prolepticGregorianCalendar);
+      return simpleDateFormat;
+    }
+  };
+  private static final ThreadLocal<SimpleDateFormat> GREGORIAN_TIMESTAMP_FORMATTER = new ThreadLocal<SimpleDateFormat>() {
+    @Override
+    protected SimpleDateFormat initialValue() {
+      SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+      GregorianCalendar gregorianCalendar =
+          new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+      simpleDateFormat.setCalendar(gregorianCalendar);
+      return simpleDateFormat;
+    }
+  };
 
   // it's 1582-10-15 in both calendars
   private static final int CUTOVER_MILLIS_EPOCH = -141427 * 24 * 60 * 60 * 1000;
@@ -600,12 +605,12 @@ public class TimestampColumnVector extends ColumnVector {
       asScratchTimestamp(i);
       long offset = 0;
       String formatted =
-          usingProlepticCalendar ? GREGORIAN_TIMESTAMP_FORMATTER_UTC.format(scratchTimestamp)
-            : PROLEPTIC_GREGORIAN_TIMESTAMP_FORMATTER_UTC.format(scratchTimestamp);
+          usingProlepticCalendar ? GREGORIAN_TIMESTAMP_FORMATTER.get().format(scratchTimestamp)
+            : PROLEPTIC_GREGORIAN_TIMESTAMP_FORMATTER.get().format(scratchTimestamp);
 
       long millis = usingProlepticCalendar
-        ? PROLEPTIC_GREGORIAN_TIMESTAMP_FORMATTER_UTC.parse(formatted).getTime()
-        : GREGORIAN_TIMESTAMP_FORMATTER_UTC.parse(formatted).getTime();
+        ? PROLEPTIC_GREGORIAN_TIMESTAMP_FORMATTER.get().parse(formatted).getTime()
+        : GREGORIAN_TIMESTAMP_FORMATTER.get().parse(formatted).getTime();
 
       Timestamp newTimeStamp = Timestamp.from(Instant.ofEpochMilli(millis));
 
