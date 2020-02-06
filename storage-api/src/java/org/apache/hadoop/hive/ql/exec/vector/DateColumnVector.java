@@ -27,27 +27,34 @@ import java.util.concurrent.TimeUnit;
  * DateColumnVector, the elements of vector[] represent the days since 1970-01-01
  */
 public class DateColumnVector extends LongColumnVector {
-  private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
-  private static final GregorianCalendar PROLEPTIC_GREGORIAN_CALENDAR = new GregorianCalendar(UTC);
-  private static final GregorianCalendar GREGORIAN_CALENDAR = new GregorianCalendar(UTC);
 
-  private static final SimpleDateFormat PROLEPTIC_GREGORIAN_DATE_FORMATTER =
-      new SimpleDateFormat("yyyy-MM-dd");
-  private static final SimpleDateFormat GREGORIAN_DATE_FORMATTER =
-      new SimpleDateFormat("yyyy-MM-dd");
+  private static final ThreadLocal<SimpleDateFormat> PROLEPTIC_GREGORIAN_DATE_FORMATTER = new ThreadLocal<SimpleDateFormat>() {
+    @Override
+    protected SimpleDateFormat initialValue() {
+      SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+      GregorianCalendar prolepticGregorianCalendar =
+          new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+      prolepticGregorianCalendar.setGregorianChange(new java.util.Date(Long.MIN_VALUE));
+      simpleDateFormat.setCalendar(prolepticGregorianCalendar);
+      return simpleDateFormat;
+    }
+  };
+  private static final ThreadLocal<SimpleDateFormat> GREGORIAN_DATE_FORMATTER = new ThreadLocal<SimpleDateFormat>() {
+    @Override
+    protected SimpleDateFormat initialValue() {
+      SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+      GregorianCalendar gregorianCalendar =
+          new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+      simpleDateFormat.setCalendar(gregorianCalendar);
+      return simpleDateFormat;
+    }
+  };
 
   /**
   * -141427: hybrid: 1582-10-15 proleptic: 1582-10-15
   * -141428: hybrid: 1582-10-04 proleptic: 1582-10-14
   */
   private static final int CUTOVER_DAY_EPOCH = -141427; // it's 1582-10-15 in both calendars
-
-  static {
-    PROLEPTIC_GREGORIAN_CALENDAR.setGregorianChange(new java.util.Date(Long.MIN_VALUE));
-
-    PROLEPTIC_GREGORIAN_DATE_FORMATTER.setCalendar(PROLEPTIC_GREGORIAN_CALENDAR);
-    GREGORIAN_DATE_FORMATTER.setCalendar(GREGORIAN_CALENDAR);
-  }
 
   private boolean usingProlepticCalendar = false;
 
@@ -80,11 +87,11 @@ public class DateColumnVector extends LongColumnVector {
         continue;
       }
       long millis = TimeUnit.DAYS.toMillis(vector[i]);
-      String originalFormatted = usingProlepticCalendar ? GREGORIAN_DATE_FORMATTER.format(millis)
-        : PROLEPTIC_GREGORIAN_DATE_FORMATTER.format(millis);
+      String originalFormatted = usingProlepticCalendar ? GREGORIAN_DATE_FORMATTER.get().format(millis)
+        : PROLEPTIC_GREGORIAN_DATE_FORMATTER.get().format(millis);
 
-      millis = (usingProlepticCalendar ? PROLEPTIC_GREGORIAN_DATE_FORMATTER.parse(originalFormatted)
-        : GREGORIAN_DATE_FORMATTER.parse(originalFormatted)).getTime();
+      millis = (usingProlepticCalendar ? PROLEPTIC_GREGORIAN_DATE_FORMATTER.get().parse(originalFormatted)
+        : GREGORIAN_DATE_FORMATTER.get().parse(originalFormatted)).getTime();
 
       vector[i] = TimeUnit.MILLISECONDS.toDays(millis);
     }
@@ -92,8 +99,8 @@ public class DateColumnVector extends LongColumnVector {
 
   public String formatDate(int i) {
     long millis = TimeUnit.DAYS.toMillis(vector[i]);
-    return usingProlepticCalendar ? PROLEPTIC_GREGORIAN_DATE_FORMATTER.format(millis)
-      : GREGORIAN_DATE_FORMATTER.format(millis);
+    return usingProlepticCalendar ? PROLEPTIC_GREGORIAN_DATE_FORMATTER.get().format(millis)
+      : GREGORIAN_DATE_FORMATTER.get().format(millis);
   }
 
   public DateColumnVector setUsingProlepticCalendar(boolean usingProlepticCalendar) {
