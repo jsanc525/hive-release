@@ -275,14 +275,14 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
       Exception caught = null;
       boolean shouldWriteExternalTableLocationInfo =
               conf.getBoolVar(HiveConf.ConfVars.REPL_INCLUDE_EXTERNAL_TABLES)
-                      && !conf.getBoolVar(HiveConf.ConfVars.REPL_DUMP_METADATA_ONLY);
+              && (!conf.getBoolVar(HiveConf.ConfVars.REPL_DUMP_METADATA_ONLY)
+                  && !conf.getBoolVar(HiveConf.ConfVars.REPL_DUMP_METADATA_ONLY_FOR_EXTERNAL_TABLE));
       try (Writer writer = new Writer(dbRoot, conf)) {
         for (String tblName : Utils.matchesTbl(hiveDb, dbName, work.tableNameOrPattern)) {
           LOG.debug(
               "analyzeReplDump dumping table: " + tblName + " to db root " + dbRoot.toUri());
           try {
-            HiveWrapper.Tuple<Table> tableTuple = new HiveWrapper(hiveDb, dbName).table(tblName,
-                                                                                        conf);
+            HiveWrapper.Tuple<Table> tableTuple = new HiveWrapper(hiveDb, dbName).table(tblName, conf);
             if (shouldWriteExternalTableLocationInfo
                     && TableType.EXTERNAL_TABLE.equals(tableTuple.object.getTableType())) {
               LOG.debug("Adding table {} to external tables list", tblName);
@@ -362,6 +362,7 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
       tableSpec.tableHandle.getTTable().unsetColStats();
     }
     MmContext mmCtx = MmContext.createIfNeeded(tableSpec.tableHandle);
+    tuple.replicationSpec.setRepl(true);
     new TableExport(
         exportPaths, tableSpec, tuple.replicationSpec, hiveDb, distCpDoAsUser, conf, mmCtx).write();
 

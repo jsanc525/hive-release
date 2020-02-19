@@ -49,6 +49,8 @@ public class ReplicationSpec {
   private Type specType = Type.DEFAULT; // DEFAULT means REPL_LOAD or BOOTSTRAP_DUMP or EXPORT
   private boolean isMigratingToTxnTable = false;
   private boolean isMigratingToExternalTable = false;
+  //Determine if replication is done using repl or export-import
+  private boolean isRepl = false;
 
   // Key definitions related to replication
   public enum KEY {
@@ -418,5 +420,13 @@ public class ReplicationSpec {
 
   public void setMigratingToExternalTable() {
     isMigratingToExternalTable = true;
+  }
+
+  public boolean isRepl() {
+    return isRepl;
+  }
+
+  public void setRepl(boolean repl) {
+    isRepl = repl;
   }
 }
