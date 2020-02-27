@@ -276,7 +276,7 @@ Table Parameters:
 	numFiles            	2                   
 	numRows             	2                   
 	rawDataSize         	0                   
-	totalSize           	736                 
+	totalSize           	811                 
 	transactional       	true                
 	transactional_properties	default             
 #### A masked pattern was here ####
@@ -514,7 +514,7 @@ Table Parameters:
 	numFiles            	2                   
 	numRows             	2                   
 	rawDataSize         	0                   
-	totalSize           	736                 
+	totalSize           	811                 
 	transactional       	true                
 	transactional_properties	default             
 #### A masked pattern was here ####
@@ -977,7 +977,7 @@ Table Parameters:
 	numFiles            	3                   
 	numRows             	3                   
 	rawDataSize         	0                   
-	totalSize           	1500                
+	totalSize           	1577                
 	transactional       	true                
 	transactional_properties	default             
 #### A masked pattern was here ####
@@ -1235,6 +1235,54 @@ POSTHOOK: Output: default@cmv_mat_view_n5
 POSTHOOK: Lineage: cmv_mat_view_n5._c2 EXPRESSION [(cmv_basetable_2_n2)cmv_basetable_2_n2.FieldSchema(name:d, type:int, comment:null), ]
 POSTHOOK: Lineage: cmv_mat_view_n5.a SIMPLE [(cmv_basetable_n5)cmv_basetable_n5.FieldSchema(name:a, type:int, comment:null), ]
 POSTHOOK: Lineage: cmv_mat_view_n5.c SIMPLE [(cmv_basetable_2_n2)cmv_basetable_2_n2.FieldSchema(name:c, type:decimal(10,2), comment:null), ]
+PREHOOK: query: DESCRIBE FORMATTED cmv_mat_view_n5
+PREHOOK: type: DESCTABLE
+PREHOOK: Input: default@cmv_mat_view_n5
+POSTHOOK: query: DESCRIBE FORMATTED cmv_mat_view_n5
+POSTHOOK: type: DESCTABLE
+POSTHOOK: Input: default@cmv_mat_view_n5
+# col_name            	data_type           	comment             
+a                   	int                 	                    
+c                   	decimal(10,2)       	                    
+_c2                 	bigint              	                    
+	 	 
+# Detailed Table Information	 	 
+Database:           	default             	 
+#### A masked pattern was here ####
+Retention:          	0                   	 
+#### A masked pattern was here ####
+Table Type:         	MATERIALIZED_VIEW   	 
+Table Parameters:	 	 
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\",\"COLUMN_STATS\":{\"_c2\":\"true\",\"a\":\"true\",\"c\":\"true\"}}
+	bucketing_version   	2                   
+	numFiles            	1                   
+	numRows             	3                   
+	rawDataSize         	0                   
+	totalSize           	816                 
+	transactional       	true                
+	transactional_properties	default             
+#### A masked pattern was here ####
+	 	 
+# Storage Information	 	 
+SerDe Library:      	org.apache.hadoop.hive.ql.io.orc.OrcSerde	 
+InputFormat:        	org.apache.hadoop.hive.ql.io.orc.OrcInputFormat	 
+OutputFormat:       	org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat	 
+Compressed:         	No                  	 
+Num Buckets:        	-1                  	 
+Bucket Columns:     	[]                  	 
+Sort Columns:       	[]                  	 
+	 	 
+# Materialized View Information	 	 
+Original Query:     	SELECT cmv_basetable_n5.a, cmv_basetable_2_n2.c, sum(cmv_basetable_2_n2.d)	 
+	                    	  FROM cmv_basetable_n5 JOIN cmv_basetable_2_n2 ON (cmv_basetable_n5.a = cmv_basetable_2_n2.a)
+	                    	  WHERE cmv_basetable_2_n2.c > 10.0
+	                    	  GROUP BY cmv_basetable_n5.a, cmv_basetable_2_n2.c
+Expanded Query:     	SELECT `cmv_basetable_n5`.`a`, `cmv_basetable_2_n2`.`c`, sum(`cmv_basetable_2_n2`.`d`)	 
+	                    	  FROM `default`.`cmv_basetable_n5` JOIN `default`.`cmv_basetable_2_n2` ON (`cmv_basetable_n5`.`a` = `cmv_basetable_2_n2`.`a`)
+	                    	  WHERE `cmv_basetable_2_n2`.`c` > 10.0
+	                    	  GROUP BY `cmv_basetable_n5`.`a`, `cmv_basetable_2_n2`.`c`
+Rewrite Enabled:    	Yes                 	 
+Outdated for Rewriting:	No                  	 
 PREHOOK: query: EXPLAIN
 SELECT cmv_basetable_n5.a, sum(cmv_basetable_2_n2.d)
 FROM cmv_basetable_n5 join cmv_basetable_2_n2 ON (cmv_basetable_n5.a = cmv_basetable_2_n2.a)
@@ -1468,6 +1516,54 @@ POSTHOOK: Output: default@cmv_mat_view_n5
 POSTHOOK: Lineage: cmv_mat_view_n5._c2 EXPRESSION [(cmv_basetable_2_n2)cmv_basetable_2_n2.FieldSchema(name:d, type:int, comment:null), ]
 POSTHOOK: Lineage: cmv_mat_view_n5.a SIMPLE [(cmv_basetable_n5)cmv_basetable_n5.FieldSchema(name:a, type:int, comment:null), ]
 POSTHOOK: Lineage: cmv_mat_view_n5.c SIMPLE [(cmv_basetable_2_n2)cmv_basetable_2_n2.FieldSchema(name:c, type:decimal(10,2), comment:null), ]
+PREHOOK: query: DESCRIBE FORMATTED cmv_mat_view_n5
+PREHOOK: type: DESCTABLE
+PREHOOK: Input: default@cmv_mat_view_n5
+POSTHOOK: query: DESCRIBE FORMATTED cmv_mat_view_n5
+POSTHOOK: type: DESCTABLE
+POSTHOOK: Input: default@cmv_mat_view_n5
+# col_name            	data_type           	comment             
+a                   	int                 	                    
+c                   	decimal(10,2)       	                    
+_c2                 	bigint              	                    
+	 	 
+# Detailed Table Information	 	 
+Database:           	default             	 
+#### A masked pattern was here ####
+Retention:          	0                   	 
+#### A masked pattern was here ####
+Table Type:         	MATERIALIZED_VIEW   	 
+Table Parameters:	 	 
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\",\"COLUMN_STATS\":{\"_c2\":\"true\",\"a\":\"true\",\"c\":\"true\"}}
+	bucketing_version   	2                   
+	numFiles            	1                   
+	numRows             	2                   
+	rawDataSize         	0                   
+	totalSize           	814                 
+	transactional       	true                
+	transactional_properties	default             
+#### A masked pattern was here ####
+	 	 
+# Storage Information	 	 
+SerDe Library:      	org.apache.hadoop.hive.ql.io.orc.OrcSerde	 
+InputFormat:        	org.apache.hadoop.hive.ql.io.orc.OrcInputFormat	 
+OutputFormat:       	org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat	 
+Compressed:         	No                  	 
+Num Buckets:        	-1                  	 
+Bucket Columns:     	[]                  	 
+Sort Columns:       	[]                  	 
+	 	 
+# Materialized View Information	 	 
+Original Query:     	SELECT cmv_basetable_n5.a, cmv_basetable_2_n2.c, sum(cmv_basetable_2_n2.d)	 
+	                    	  FROM cmv_basetable_n5 JOIN cmv_basetable_2_n2 ON (cmv_basetable_n5.a = cmv_basetable_2_n2.a)
+	                    	  WHERE cmv_basetable_2_n2.c > 10.0
+	                    	  GROUP BY cmv_basetable_n5.a, cmv_basetable_2_n2.c
+Expanded Query:     	SELECT `cmv_basetable_n5`.`a`, `cmv_basetable_2_n2`.`c`, sum(`cmv_basetable_2_n2`.`d`)	 
+	                    	  FROM `default`.`cmv_basetable_n5` JOIN `default`.`cmv_basetable_2_n2` ON (`cmv_basetable_n5`.`a` = `cmv_basetable_2_n2`.`a`)
+	                    	  WHERE `cmv_basetable_2_n2`.`c` > 10.0
+	                    	  GROUP BY `cmv_basetable_n5`.`a`, `cmv_basetable_2_n2`.`c`
+Rewrite Enabled:    	Yes                 	 
+Outdated for Rewriting:	No                  	 
 PREHOOK: query: EXPLAIN
 SELECT cmv_basetable_n5.a, sum(cmv_basetable_2_n2.d)
 FROM cmv_basetable_n5 join cmv_basetable_2_n2 ON (cmv_basetable_n5.a = cmv_basetable_2_n2.a)
@@ -1815,6 +1911,54 @@ POSTHOOK: Output: default@cmv_mat_view_n5
 POSTHOOK: Lineage: cmv_mat_view_n5._c2 EXPRESSION [(cmv_mat_view_n5)default.cmv_mat_view_n5.FieldSchema(name:a, type:int, comment:null), (cmv_mat_view_n5)default.cmv_mat_view_n5.FieldSchema(name:c, type:decimal(10,2), comment:null), (cmv_basetable_2_n2)cmv_basetable_2_n2.FieldSchema(name:d, type:int, comment:null), (cmv_mat_view_n5)default.cmv_mat_view_n5.FieldSchema(name:_c2, type:bigint, comment:null), ]
 POSTHOOK: Lineage: cmv_mat_view_n5.a SIMPLE [(cmv_basetable_n5)cmv_basetable_n5.FieldSchema(name:a, type:int, comment:null), ]
 POSTHOOK: Lineage: cmv_mat_view_n5.c SIMPLE [(cmv_basetable_2_n2)cmv_basetable_2_n2.FieldSchema(name:c, type:decimal(10,2), comment:null), ]
+PREHOOK: query: DESCRIBE FORMATTED cmv_mat_view_n5
+PREHOOK: type: DESCTABLE
+PREHOOK: Input: default@cmv_mat_view_n5
+POSTHOOK: query: DESCRIBE FORMATTED cmv_mat_view_n5
+POSTHOOK: type: DESCTABLE
+POSTHOOK: Input: default@cmv_mat_view_n5
+# col_name            	data_type           	comment             
+a                   	int                 	                    
+c                   	decimal(10,2)       	                    
+_c2                 	bigint              	                    
+	 	 
+# Detailed Table Information	 	 
+Database:           	default             	 
+#### A masked pattern was here ####
+Retention:          	0                   	 
+#### A masked pattern was here ####
+Table Type:         	MATERIALIZED_VIEW   	 
+Table Parameters:	 	 
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	bucketing_version   	2                   
+	numFiles            	2                   
+	numRows             	3                   
+	rawDataSize         	0                   
+	totalSize           	1577                
+	transactional       	true                
+	transactional_properties	default             
+#### A masked pattern was here ####
+	 	 
+# Storage Information	 	 
+SerDe Library:      	org.apache.hadoop.hive.ql.io.orc.OrcSerde	 
+InputFormat:        	org.apache.hadoop.hive.ql.io.orc.OrcInputFormat	 
+OutputFormat:       	org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat	 
+Compressed:         	No                  	 
+Num Buckets:        	-1                  	 
+Bucket Columns:     	[]                  	 
+Sort Columns:       	[]                  	 
+	 	 
+# Materialized View Information	 	 
+Original Query:     	SELECT cmv_basetable_n5.a, cmv_basetable_2_n2.c, sum(cmv_basetable_2_n2.d)	 
+	                    	  FROM cmv_basetable_n5 JOIN cmv_basetable_2_n2 ON (cmv_basetable_n5.a = cmv_basetable_2_n2.a)
+	                    	  WHERE cmv_basetable_2_n2.c > 10.0
+	                    	  GROUP BY cmv_basetable_n5.a, cmv_basetable_2_n2.c
+Expanded Query:     	SELECT `cmv_basetable_n5`.`a`, `cmv_basetable_2_n2`.`c`, sum(`cmv_basetable_2_n2`.`d`)	 
+	                    	  FROM `default`.`cmv_basetable_n5` JOIN `default`.`cmv_basetable_2_n2` ON (`cmv_basetable_n5`.`a` = `cmv_basetable_2_n2`.`a`)
+	                    	  WHERE `cmv_basetable_2_n2`.`c` > 10.0
+	                    	  GROUP BY `cmv_basetable_n5`.`a`, `cmv_basetable_2_n2`.`c`
+Rewrite Enabled:    	Yes                 	 
+Outdated for Rewriting:	No                  	 
 PREHOOK: query: EXPLAIN
 SELECT cmv_basetable_n5.a, sum(cmv_basetable_2_n2.d)
 FROM cmv_basetable_n5 join cmv_basetable_2_n2 ON (cmv_basetable_n5.a = cmv_basetable_2_n2.a)
