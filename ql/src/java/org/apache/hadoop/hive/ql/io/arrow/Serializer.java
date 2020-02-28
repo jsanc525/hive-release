@@ -274,7 +274,7 @@ public class Serializer {
     }
   }
 
-  private static void write(FieldVector arrowVector, ColumnVector hiveVector, TypeInfo typeInfo, int size,
+  private void write(FieldVector arrowVector, ColumnVector hiveVector, TypeInfo typeInfo, int size,
       VectorizedRowBatch vectorizedRowBatch, boolean isNative) {
     switch (typeInfo.getCategory()) {
       case PRIMITIVE:
@@ -297,7 +297,7 @@ public class Serializer {
       }
   }
 
-  private static void writeMap(ListVector arrowVector, MapColumnVector hiveVector, MapTypeInfo typeInfo,
+  private void writeMap(ListVector arrowVector, MapColumnVector hiveVector, MapTypeInfo typeInfo,
       int size, VectorizedRowBatch vectorizedRowBatch, boolean isNative) {
     final ListTypeInfo structListTypeInfo = toStructListTypeInfo(typeInfo);
     final ListColumnVector structListVector = toStructListVector(hiveVector);
@@ -314,7 +314,7 @@ public class Serializer {
     }
   }
 
-  private static void writeUnion(FieldVector arrowVector, ColumnVector hiveVector, TypeInfo typeInfo,
+  private void writeUnion(FieldVector arrowVector, ColumnVector hiveVector, TypeInfo typeInfo,
       int size, VectorizedRowBatch vectorizedRowBatch, boolean isNative) {
     final UnionTypeInfo unionTypeInfo = (UnionTypeInfo) typeInfo;
     final List<TypeInfo> objectTypeInfos = unionTypeInfo.getAllUnionObjectTypeInfos();
@@ -328,7 +328,7 @@ public class Serializer {
     write(arrowVector, hiveObjectVector, objectTypeInfo, size, vectorizedRowBatch, isNative);
   }
 
-  private static void writeStruct(MapVector arrowVector, StructColumnVector hiveVector,
+  private void writeStruct(MapVector arrowVector, StructColumnVector hiveVector,
       StructTypeInfo typeInfo, int size, VectorizedRowBatch vectorizedRowBatch, boolean isNative) {
     final List<String> fieldNames = typeInfo.getAllStructFieldNames();
     final List<TypeInfo> fieldTypeInfos = typeInfo.getAllStructFieldTypeInfos();
@@ -357,7 +357,7 @@ public class Serializer {
     }
   }
 
-  private static void writeList(ListVector arrowVector, ListColumnVector hiveVector, ListTypeInfo typeInfo, int size,
+  private void writeList(ListVector arrowVector, ListColumnVector hiveVector, ListTypeInfo typeInfo, int size,
       VectorizedRowBatch vectorizedRowBatch, boolean isNative) {
     final int OFFSET_WIDTH = 4;
     final TypeInfo elementTypeInfo = typeInfo.getListElementTypeInfo();
@@ -386,7 +386,7 @@ public class Serializer {
 
   //Handle cases for both internally constructed
   //and externally provided (isNative) VectorRowBatch
-  private static void writePrimitive(FieldVector arrowVector, ColumnVector hiveVector, TypeInfo typeInfo, int size,
+  private void writePrimitive(FieldVector arrowVector, ColumnVector hiveVector, TypeInfo typeInfo, int size,
       VectorizedRowBatch vectorizedRowBatch, boolean isNative) {
     final PrimitiveObjectInspector.PrimitiveCategory primitiveCategory =
         ((PrimitiveTypeInfo) typeInfo).getPrimitiveCategory();

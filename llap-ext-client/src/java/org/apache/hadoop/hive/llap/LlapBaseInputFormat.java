@@ -116,7 +116,7 @@ public class LlapBaseInputFormat<V extends WritableComparable<?>>
   public static final String PWD_KEY = "llap.if.pwd";
   public static final String HANDLE_ID = "llap.if.handleid";
   public static final String DB_KEY = "llap.if.database";
-
+  public static final String USE_NEW_SPLIT_FORMAT = "llap.if.use.new.split.format";
   public final String SPLIT_QUERY = "select get_splits(\"%s\",%d)";
   public static final LlapServiceInstance[] serviceInstanceArray = new LlapServiceInstance[0];
 
