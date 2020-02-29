@@ -1262,7 +1262,7 @@ public class FileSinkOperator extends TerminalOperator<FileSinkDesc> implements
         Class<?> clazz = conf.getTableInfo().getOutputFileFormatClass();
         skipFiles = !StreamingOutputFormat.class.isAssignableFrom(clazz);
       }
-      if (!skipFiles) {
+      if (!skipFiles || (conf.isMmTable() || conf.isFullAcidTable())) {
         createBucketFiles(fsp);
       }
     }
