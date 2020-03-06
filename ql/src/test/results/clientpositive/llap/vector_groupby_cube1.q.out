@@ -540,7 +540,7 @@ STAGE PLANS:
                 enabled: true
                 enabledConditionsMet: hive.vectorized.use.vector.serde.deserialize IS true
                 inputFileFormats: org.apache.hadoop.mapred.TextInputFormat
-                notVectorizedReason: Aggregation Function expression for GROUPBY operator: DISTINCT not supported
+                notVectorizedReason: Aggregation Function expression for GROUPBY operator: DISTINCT with Groupingsets not supported
                 vectorized: false
         Reducer 2 
             Execution mode: llap
@@ -854,7 +854,7 @@ STAGE PLANS:
                 enabled: true
                 enabledConditionsMet: hive.vectorized.use.vector.serde.deserialize IS true
                 inputFileFormats: org.apache.hadoop.mapred.TextInputFormat
-                notVectorizedReason: Aggregation Function expression for GROUPBY operator: DISTINCT not supported
+                notVectorizedReason: Aggregation Function expression for GROUPBY operator: DISTINCT with Groupingsets not supported
                 vectorized: false
         Reducer 2 
             Execution mode: llap

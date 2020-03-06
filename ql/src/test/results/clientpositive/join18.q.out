@@ -1,14 +1,14 @@
 PREHOOK: query: EXPLAIN
  SELECT a.key, a.value, b.key, b.value
- FROM 
+ FROM
   (
   SELECT src1.key as key, count(src1.value) AS value FROM src src1 group by src1.key
   ) a
- FULL OUTER JOIN 
+ FULL OUTER JOIN
  (
-  SELECT src2.key as key, count(distinct(src2.value)) AS value 
+  SELECT src2.key as key, count(distinct(src2.value)) AS value
   FROM src1 src2 group by src2.key
- ) b 
+ ) b
  ON (a.key = b.key)
 PREHOOK: type: QUERY
 PREHOOK: Input: default@src
@@ -16,15 +16,15 @@ PREHOOK: Input: default@src1
 #### A masked pattern was here ####
 POSTHOOK: query: EXPLAIN
  SELECT a.key, a.value, b.key, b.value
- FROM 
+ FROM
   (
   SELECT src1.key as key, count(src1.value) AS value FROM src src1 group by src1.key
   ) a
- FULL OUTER JOIN 
+ FULL OUTER JOIN
  (
-  SELECT src2.key as key, count(distinct(src2.value)) AS value 
+  SELECT src2.key as key, count(distinct(src2.value)) AS value
   FROM src1 src2 group by src2.key
- ) b 
+ ) b
  ON (a.key = b.key)
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@src
@@ -128,7 +128,8 @@ STAGE PLANS:
                   key expressions: _col0 (type: string), _col1 (type: string)
                   sort order: ++
                   Map-reduce partition columns: _col0 (type: string)
-                  Statistics: Num rows: 25 Data size: 191 Basic stats: COMPLETE Column stats: NONE
+                  Statistics: Num rows: 12 Data size: 2196 Basic stats: COMPLETE Column stats: COMPLETE
+      Execution mode: vectorized
       Reduce Operator Tree:
         Group By Operator
           aggregations: count(DISTINCT KEY._col1:0._col0)
@@ -150,30 +151,30 @@ STAGE PLANS:
         ListSink
 
 PREHOOK: query: SELECT a.key, a.value, b.key, b.value
- FROM 
+ FROM
   (
   SELECT src1.key as key, count(src1.value) AS value FROM src src1 group by src1.key
   ) a
- FULL OUTER JOIN 
+ FULL OUTER JOIN
  (
-  SELECT src2.key as key, count(distinct(src2.value)) AS value 
+  SELECT src2.key as key, count(distinct(src2.value)) AS value
   FROM src1 src2 group by src2.key
- ) b 
+ ) b
  ON (a.key = b.key)
 PREHOOK: type: QUERY
 PREHOOK: Input: default@src
 PREHOOK: Input: default@src1
 #### A masked pattern was here ####
 POSTHOOK: query: SELECT a.key, a.value, b.key, b.value
- FROM 
+ FROM
   (
   SELECT src1.key as key, count(src1.value) AS value FROM src src1 group by src1.key
   ) a
- FULL OUTER JOIN 
+ FULL OUTER JOIN
  (
-  SELECT src2.key as key, count(distinct(src2.value)) AS value 
+  SELECT src2.key as key, count(distinct(src2.value)) AS value
   FROM src1 src2 group by src2.key
- ) b 
+ ) b
  ON (a.key = b.key)
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@src
