@@ -1,13 +1,13 @@
 PREHOOK: query: CREATE TABLE tmp1 ( v1 string , v2 string , v3 string ) 
-ROW FORMAT DELIMITED 
-FIELDS TERMINATED BY '\t' 
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
 LINES TERMINATED BY '\n'
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
 PREHOOK: Output: default@tmp1
-POSTHOOK: query: CREATE TABLE tmp1 ( v1 string , v2 string , v3 string ) 
-ROW FORMAT DELIMITED 
-FIELDS TERMINATED BY '\t' 
+POSTHOOK: query: CREATE TABLE tmp1 ( v1 string , v2 string , v3 string )
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
 LINES TERMINATED BY '\n'
 POSTHOOK: type: CREATETABLE
 POSTHOOK: Output: database:default
@@ -23,38 +23,38 @@ POSTHOOK: Output: default@tmp1
 POSTHOOK: Lineage: tmp1.v1 SCRIPT []
 POSTHOOK: Lineage: tmp1.v2 SCRIPT []
 POSTHOOK: Lineage: tmp1.v3 SCRIPT []
-PREHOOK: query: CREATE TABLE tmp_grouped_by_all_col ( v1 string , v2 string , v3 string ) 
+PREHOOK: query: CREATE TABLE tmp_grouped_by_all_col ( v1 string , v2 string , v3 string )
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' LINES TERMINATED BY '\n'
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
 PREHOOK: Output: default@tmp_grouped_by_all_col
-POSTHOOK: query: CREATE TABLE tmp_grouped_by_all_col ( v1 string , v2 string , v3 string ) 
+POSTHOOK: query: CREATE TABLE tmp_grouped_by_all_col ( v1 string , v2 string , v3 string )
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' LINES TERMINATED BY '\n'
 POSTHOOK: type: CREATETABLE
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@tmp_grouped_by_all_col
-PREHOOK: query: CREATE TABLE tmp_grouped_by_one_col  ( v1 string , cnt__v2 int , cnt__v3 int ) 
+PREHOOK: query: CREATE TABLE tmp_grouped_by_one_col  ( v1 string , cnt__v2 int , cnt__v3 int )
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' LINES TERMINATED BY '\n'
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
 PREHOOK: Output: default@tmp_grouped_by_one_col
-POSTHOOK: query: CREATE TABLE tmp_grouped_by_one_col  ( v1 string , cnt__v2 int , cnt__v3 int ) 
+POSTHOOK: query: CREATE TABLE tmp_grouped_by_one_col  ( v1 string , cnt__v2 int , cnt__v3 int )
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' LINES TERMINATED BY '\n'
 POSTHOOK: type: CREATETABLE
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@tmp_grouped_by_one_col
-PREHOOK: query: CREATE TABLE tmp_grouped_by_two_col  ( v1 string , v2 string , cnt__v3 int ) 
+PREHOOK: query: CREATE TABLE tmp_grouped_by_two_col  ( v1 string , v2 string , cnt__v3 int )
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' LINES TERMINATED BY '\n'
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
 PREHOOK: Output: default@tmp_grouped_by_two_col
-POSTHOOK: query: CREATE TABLE tmp_grouped_by_two_col  ( v1 string , v2 string , cnt__v3 int ) 
+POSTHOOK: query: CREATE TABLE tmp_grouped_by_two_col  ( v1 string , v2 string , cnt__v3 int )
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' LINES TERMINATED BY '\n'
 POSTHOOK: type: CREATETABLE
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@tmp_grouped_by_two_col
 PREHOOK: query: explain FROM tmp1
-INSERT INTO tmp_grouped_by_one_col 
+INSERT INTO tmp_grouped_by_one_col
 SELECT v1, count(distinct v2), count(distinct v3) GROUP BY v1
 INSERT INTO tmp_grouped_by_two_col
 SELECT v1, v2, count(distinct v3) GROUP BY v1, v2
@@ -63,7 +63,7 @@ PREHOOK: Input: default@tmp1
 PREHOOK: Output: default@tmp_grouped_by_one_col
 PREHOOK: Output: default@tmp_grouped_by_two_col
 POSTHOOK: query: explain FROM tmp1
-INSERT INTO tmp_grouped_by_one_col 
+INSERT INTO tmp_grouped_by_one_col
 SELECT v1, count(distinct v2), count(distinct v3) GROUP BY v1
 INSERT INTO tmp_grouped_by_two_col
 SELECT v1, v2, count(distinct v3) GROUP BY v1, v2
@@ -115,6 +115,7 @@ STAGE PLANS:
                       input format: org.apache.hadoop.mapred.SequenceFileInputFormat
                       output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
                       serde: org.apache.hadoop.hive.serde2.lazybinary.LazyBinarySerDe
+      Execution mode: vectorized
       Reduce Operator Tree:
         Group By Operator
           aggregations: count(DISTINCT KEY._col1:0._col0), count(DISTINCT KEY._col1:1._col0)
@@ -186,7 +187,7 @@ STAGE PLANS:
               name: default.tmp_grouped_by_two_col
 
 PREHOOK: query: FROM tmp1
-INSERT INTO tmp_grouped_by_one_col 
+INSERT INTO tmp_grouped_by_one_col
 SELECT v1, count(distinct v2), count(distinct v3) GROUP BY v1
 INSERT INTO tmp_grouped_by_two_col
 SELECT v1, v2, count(distinct v3) GROUP BY v1, v2
@@ -195,7 +196,7 @@ PREHOOK: Input: default@tmp1
 PREHOOK: Output: default@tmp_grouped_by_one_col
 PREHOOK: Output: default@tmp_grouped_by_two_col
 POSTHOOK: query: FROM tmp1
-INSERT INTO tmp_grouped_by_one_col 
+INSERT INTO tmp_grouped_by_one_col
 SELECT v1, count(distinct v2), count(distinct v3) GROUP BY v1
 INSERT INTO tmp_grouped_by_two_col
 SELECT v1, v2, count(distinct v3) GROUP BY v1, v2
@@ -225,7 +226,7 @@ POSTHOOK: query: truncate table tmp_grouped_by_two_col
 POSTHOOK: type: TRUNCATETABLE
 POSTHOOK: Output: default@tmp_grouped_by_two_col
 PREHOOK: query: explain FROM tmp1
-INSERT INTO tmp_grouped_by_one_col 
+INSERT INTO tmp_grouped_by_one_col
 SELECT v1, count(distinct v2), count(distinct v3) GROUP BY v1
 INSERT INTO tmp_grouped_by_two_col
 SELECT v1, v2, count(v3) GROUP BY v1, v2
@@ -234,7 +235,7 @@ PREHOOK: Input: default@tmp1
 PREHOOK: Output: default@tmp_grouped_by_one_col
 PREHOOK: Output: default@tmp_grouped_by_two_col
 POSTHOOK: query: explain FROM tmp1
-INSERT INTO tmp_grouped_by_one_col 
+INSERT INTO tmp_grouped_by_one_col
 SELECT v1, count(distinct v2), count(distinct v3) GROUP BY v1
 INSERT INTO tmp_grouped_by_two_col
 SELECT v1, v2, count(v3) GROUP BY v1, v2
@@ -286,6 +287,7 @@ STAGE PLANS:
                       input format: org.apache.hadoop.mapred.SequenceFileInputFormat
                       output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
                       serde: org.apache.hadoop.hive.serde2.lazybinary.LazyBinarySerDe
+      Execution mode: vectorized
       Reduce Operator Tree:
         Group By Operator
           aggregations: count(DISTINCT KEY._col1:0._col0), count(DISTINCT KEY._col1:1._col0)
@@ -358,7 +360,7 @@ STAGE PLANS:
               name: default.tmp_grouped_by_two_col
 
 PREHOOK: query: FROM tmp1
-INSERT INTO tmp_grouped_by_one_col 
+INSERT INTO tmp_grouped_by_one_col
 SELECT v1, count(distinct v2), count(distinct v3) GROUP BY v1
 INSERT INTO tmp_grouped_by_two_col
 SELECT v1, v2, count(v3) GROUP BY v1, v2
@@ -367,7 +369,7 @@ PREHOOK: Input: default@tmp1
 PREHOOK: Output: default@tmp_grouped_by_one_col
 PREHOOK: Output: default@tmp_grouped_by_two_col
 POSTHOOK: query: FROM tmp1
-INSERT INTO tmp_grouped_by_one_col 
+INSERT INTO tmp_grouped_by_one_col
 SELECT v1, count(distinct v2), count(distinct v3) GROUP BY v1
 INSERT INTO tmp_grouped_by_two_col
 SELECT v1, v2, count(v3) GROUP BY v1, v2
@@ -391,7 +393,7 @@ POSTHOOK: Input: default@tmp_grouped_by_two_col
 #### A masked pattern was here ####
 v1	v2	2
 PREHOOK: query: explain FROM tmp1
-INSERT INTO tmp_grouped_by_one_col 
+INSERT INTO tmp_grouped_by_one_col
 SELECT v1, count(distinct v2), count(distinct v3) GROUP BY v1
 INSERT INTO tmp_grouped_by_all_col
 SELECT v1, v2, v3 GROUP BY v1, v2, v3
@@ -400,7 +402,7 @@ PREHOOK: Input: default@tmp1
 PREHOOK: Output: default@tmp_grouped_by_all_col
 PREHOOK: Output: default@tmp_grouped_by_one_col
 POSTHOOK: query: explain FROM tmp1
-INSERT INTO tmp_grouped_by_one_col 
+INSERT INTO tmp_grouped_by_one_col
 SELECT v1, count(distinct v2), count(distinct v3) GROUP BY v1
 INSERT INTO tmp_grouped_by_all_col
 SELECT v1, v2, v3 GROUP BY v1, v2, v3
@@ -451,6 +453,7 @@ STAGE PLANS:
                       input format: org.apache.hadoop.mapred.SequenceFileInputFormat
                       output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
                       serde: org.apache.hadoop.hive.serde2.lazybinary.LazyBinarySerDe
+      Execution mode: vectorized
       Reduce Operator Tree:
         Group By Operator
           aggregations: count(DISTINCT KEY._col1:0._col0), count(DISTINCT KEY._col1:1._col0)
@@ -517,7 +520,7 @@ STAGE PLANS:
               name: default.tmp_grouped_by_all_col
 
 PREHOOK: query: FROM tmp1
-INSERT INTO tmp_grouped_by_one_col 
+INSERT INTO tmp_grouped_by_one_col
 SELECT v1, count(distinct v2), count(distinct v3) GROUP BY v1
 INSERT INTO tmp_grouped_by_all_col
 SELECT v1, v2, v3 GROUP BY v1, v2, v3
@@ -526,7 +529,7 @@ PREHOOK: Input: default@tmp1
 PREHOOK: Output: default@tmp_grouped_by_all_col
 PREHOOK: Output: default@tmp_grouped_by_one_col
 POSTHOOK: query: FROM tmp1
-INSERT INTO tmp_grouped_by_one_col 
+INSERT INTO tmp_grouped_by_one_col
 SELECT v1, count(distinct v2), count(distinct v3) GROUP BY v1
 INSERT INTO tmp_grouped_by_all_col
 SELECT v1, v2, v3 GROUP BY v1, v2, v3

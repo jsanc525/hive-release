@@ -26,12 +26,12 @@ POSTHOOK: type: ANALYZE_TABLE
 POSTHOOK: Input: default@t1_n11
 POSTHOOK: Output: default@t1_n11
 #### A masked pattern was here ####
-PREHOOK: query: explain 
+PREHOOK: query: explain
 select count(distinct b) from t1_n11 group by a
 PREHOOK: type: QUERY
 PREHOOK: Input: default@t1_n11
 #### A masked pattern was here ####
-POSTHOOK: query: explain 
+POSTHOOK: query: explain
 select count(distinct b) from t1_n11 group by a
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@t1_n11
@@ -61,7 +61,8 @@ STAGE PLANS:
                   key expressions: _col0 (type: string), _col1 (type: string)
                   sort order: ++
                   Map-reduce partition columns: _col0 (type: string)
-                  Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
+                  Statistics: Num rows: 250 Data size: 46500 Basic stats: COMPLETE Column stats: COMPLETE
+      Execution mode: vectorized
       Reduce Operator Tree:
         Group By Operator
           aggregations: count(DISTINCT KEY._col1:0._col0)
@@ -87,12 +88,12 @@ STAGE PLANS:
       Processor Tree:
         ListSink
 
-PREHOOK: query: explain 
+PREHOOK: query: explain
 select distinct(b) from t1_n11
 PREHOOK: type: QUERY
 PREHOOK: Input: default@t1_n11
 #### A masked pattern was here ####
-POSTHOOK: query: explain 
+POSTHOOK: query: explain
 select distinct(b) from t1_n11
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@t1_n11
@@ -143,12 +144,12 @@ STAGE PLANS:
       Processor Tree:
         ListSink
 
-PREHOOK: query: explain 
+PREHOOK: query: explain
 select a, count(*) from t1_n11 group by a
 PREHOOK: type: QUERY
 PREHOOK: Input: default@t1_n11
 #### A masked pattern was here ####
-POSTHOOK: query: explain 
+POSTHOOK: query: explain
 select a, count(*) from t1_n11 group by a
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@t1_n11
