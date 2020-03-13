@@ -167,7 +167,8 @@ public class TestReplicationScenariosExternalTablesMetaDataOnly extends BaseRepl
         .run("select country from t2 where country = 'us'")
         .verifyResult(null)
         .run("select country from t2 where country = 'france'")
-        .verifyResult(null);
+        .verifyResult(null)
+        .run("show partitions t2").verifyResults(new String[] {"country=france", "country=india", "country=us"});
 
     // Ckpt should be set on bootstrapped db.
     replica.verifyIfCkptSet(replicatedDbName, tuple.dumpLocation);
@@ -278,7 +279,8 @@ public class TestReplicationScenariosExternalTablesMetaDataOnly extends BaseRepl
         .run("show tables like 't2'")
         .verifyResults(new String[] {"t2"})
         .run("select place from t2")
-        .verifyResults(new String[] {});
+        .verifyResults(new String[] {})
+        .run("show partitions t2");
 
     // add new  data externally, to a partition, but under the table level top directory
     Path partitionDir = new Path(externalTableLocation, "country=india");
@@ -300,7 +302,9 @@ public class TestReplicationScenariosExternalTablesMetaDataOnly extends BaseRepl
         .run("select place from t2 where country='india'")
         .verifyResults(new String[] {})
         .run("select place from t2 where country='australia'")
-        .verifyResults(new String[] {});
+        .verifyResults(new String[] {})
+        .run("show partitions t2")
+        .verifyResults(new String[] {"country=australia", "country=india"});
 
     Path customPartitionLocation =
         new Path("/" + testName.getMethodName() + "/partition_data/t2/country=france");
@@ -320,7 +324,9 @@ public class TestReplicationScenariosExternalTablesMetaDataOnly extends BaseRepl
     replica.load(replicatedDbName, tuple.dumpLocation, loadWithClause)
         .run("use " + replicatedDbName)
         .run("select place from t2 where country='france'")
-        .verifyResults(new String[] {});
+        .verifyResults(new String[] {})
+        .run("show partitions t2")
+        .verifyResults(new String[] {"country=australia", "country=france", "country=india"});
 
     // change the location of the partition via alter command
     String tmpLocation = "/tmp/" + System.nanoTime();
