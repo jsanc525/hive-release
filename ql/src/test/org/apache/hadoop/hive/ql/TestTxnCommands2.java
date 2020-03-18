@@ -2012,40 +2012,54 @@ public class TestTxnCommands2 {
   }
 
   /**
-   * Test compaction for Micro-managed table
-   * 1. Regular compaction shouldn't impact any valid subdirectories of MM tables
-   * 2. Compactions will only remove subdirectories for aborted transactions of MM tables, if any
-   * @throws Exception
+   * Create a table with schema evolution, and verify that no data is lost during (MR major)
+   * compaction.
+   *
+   * @throws Exception if a query fails
    */
   @Test
-  public void testMmTableCompaction() throws Exception {
-    // 1. Insert some rows into MM table
-    runStatementOnDriver("insert into " + Table.MMTBL + "(a,b) values(1,2)");
-    runStatementOnDriver("insert into " + Table.MMTBL + "(a,b) values(3,4)");
-    // There should be 2 delta directories
-    verifyDirAndResult(2);
+  public void testSchemaEvolutionCompaction() throws Exception {
+    String tblName = "schemaevolutioncompaction";
+    runStatementOnDriver("drop table if exists " + tblName);
+    runStatementOnDriver("CREATE TABLE " + tblName + "(a INT) " +
+        " PARTITIONED BY(part string)" +
+        " STORED AS ORC TBLPROPERTIES ('transactional'='true')");
 
-    // 2. Perform a MINOR compaction. Since nothing was aborted, subdirs should stay.
-    runStatementOnDriver("alter table "+ Table.MMTBL + " compact 'MINOR'");
+    // First INSERT round.
+    runStatementOnDriver("insert into " + tblName + " partition (part='aa') values (1)");
+
+    // ALTER TABLE ... ADD COLUMNS
+    runStatementOnDriver("ALTER TABLE " + tblName + " ADD COLUMNS(b int)");
+
+    // Second INSERT round.
+    runStatementOnDriver("insert into " + tblName + " partition (part='aa') values (2, 2000)");
+
+    // Validate data
+    List<String> res = runStatementOnDriver("SELECT * FROM " + tblName + " ORDER BY a");
+    Assert.assertEquals(2, res.size());
+    Assert.assertEquals("1\tNULL\taa", res.get(0));
+    Assert.assertEquals("2\t2000\taa", res.get(1));
+
+    // Compact
+    TxnStore txnHandler = TxnUtils.getTxnStore(hiveConf);
+    CompactionRequest compactionRequest =
+        new CompactionRequest("default", tblName, CompactionType.MAJOR);
+    compactionRequest.setPartitionname("part=aa");
+    txnHandler.compact(compactionRequest);
     runWorker(hiveConf);
-    verifyDirAndResult(2);
-
-    // 3. Let a transaction be aborted
-    hiveConf.setBoolVar(HiveConf.ConfVars.HIVETESTMODEROLLBACKTXN, true);
-    runStatementOnDriver("insert into " + Table.MMTBL + "(a,b) values(5,6)");
-    hiveConf.setBoolVar(HiveConf.ConfVars.HIVETESTMODEROLLBACKTXN, false);
-    // There should be 3 delta directories. The new one is the aborted one.
-    verifyDirAndResult(3);
-
-    // 4. Perform a MINOR compaction again. This time it will remove the subdir for aborted transaction.
-    runStatementOnDriver("alter table "+ Table.MMTBL + " compact 'MINOR'");
-    runWorker(hiveConf);
-    // The worker should remove the subdir for aborted transaction
-    verifyDirAndResult(2);
-
-    // 5. Run Cleaner. Shouldn't impact anything.
     runCleaner(hiveConf);
-    verifyDirAndResult(2);
+
+    // Verify successful compaction
+    List<ShowCompactResponseElement> compacts =
+        txnHandler.showCompact(new ShowCompactRequest()).getCompacts();
+    Assert.assertEquals(1, compacts.size());
+    Assert.assertEquals(TxnStore.SUCCEEDED_RESPONSE, compacts.get(0).getState());
+
+    // Validate data after compaction
+    res = runStatementOnDriver("SELECT * FROM " + tblName + " ORDER BY a");
+    Assert.assertEquals(2, res.size());
+    Assert.assertEquals("1\tNULL\taa", res.get(0));
+    Assert.assertEquals("2\t2000\taa", res.get(1));
   }
 
   /**
