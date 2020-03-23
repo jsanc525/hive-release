@@ -139,7 +139,7 @@ import static org.apache.hadoop.hive.metastore.utils.StringUtils.normalizeIdenti
  * It's imperative that any operation on a txn (e.g. commit), ensure (atomically) that this txn is
  * still valid and active.  In the code this is usually achieved at the same time the txn record
  * is locked for some operation.
- * 
+ *
  * Note on retry logic:
  * Metastore has retry logic in both {@link org.apache.hadoop.hive.metastore.RetryingMetaStoreClient}
  * and {@link org.apache.hadoop.hive.metastore.RetryingHMSHandler}.  The retry logic there is very
@@ -202,7 +202,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
   static private boolean doRetryOnConnPool = false;
 
   private List<TransactionalMetaStoreEventListener> transactionalListeners;
-  
+
   private enum OpertaionType {
     SELECT('s'), INSERT('i'), UPDATE('u'), DELETE('d');
     private final char sqlConst;
@@ -630,31 +630,46 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
       }
 
       // Need to register minimum open txnid for current transactions into MIN_HISTORY table.
-      s = "select min(txn_id) from TXNS where txn_state = " + quoteChar(TXN_OPEN);
-      LOG.debug("Going to execute query <" + s + ">");
-      rs = stmt.executeQuery(s);
-      if (!rs.next()) {
-        throw new IllegalStateException("Scalar query returned no rows?!?!!");
-      }
+      // For a single txn we can do it in a single insert. With multiple txns calculating the
+      // minOpenTxnId for every insert is not cost effective, so caching the value
+      if (txnIds.size() == 1) {
+        s = "INSERT INTO \"MIN_HISTORY_LEVEL\" (\"MHL_TXNID\",\"MHL_MIN_OPEN_TXNID\") " +
+                "SELECT ?, MIN(\"TXN_ID\") FROM \"TXNS\" WHERE \"TXN_STATE\" = " + quoteChar(TXN_OPEN);
+        LOG.debug("Going to execute query <" + s + ">");
+        try (PreparedStatement pstmt = dbConn.prepareStatement(s)) {
+          pstmt.setLong(1, txnIds.get(0));
+          pstmt.execute();
+        }
+        LOG.info("Added entries to MIN_HISTORY_LEVEL with a single query for current txn: " + txnIds);
+      } else {
+        s = "SELECT MIN(\"TXN_ID\") FROM \"TXNS\" WHERE \"TXN_STATE\" = " + quoteChar(TXN_OPEN);
+        LOG.debug("Going to execute query <" + s + ">");
+        long minOpenTxnId = -1L;
+        try(ResultSet minOpenTxnIdRs = stmt.executeQuery(s)) {
+          if (!minOpenTxnIdRs.next()) {
+            throw new IllegalStateException("Scalar query returned no rows?!?!!");
+          }
+          // TXNS table should have at least one entry because we just inserted the newly opened txns.
+          // So, min(txn_id) would be a non-zero txnid.
+          minOpenTxnId = minOpenTxnIdRs.getLong(1);
+        }
 
-      // TXNS table should have atleast one entry because we just inserted the newly opened txns.
-      // So, min(txn_id) would be a non-zero txnid.
-      long minOpenTxnId = rs.getLong(1);
-      assert (minOpenTxnId > 0);
-      rows.clear();
-      for (long txnId = first; txnId < first + numTxns; txnId++) {
-        rows.add(txnId + ", " + minOpenTxnId);
-      }
+        assert (minOpenTxnId > 0);
+        rows.clear();
+        for (long txnId = first; txnId < first + numTxns; txnId++) {
+          rows.add(txnId + ", " + minOpenTxnId);
+        }
 
-      // Insert transaction entries into MIN_HISTORY_LEVEL.
-      List<String> inserts = sqlGenerator.createInsertValuesStmt(
-              "MIN_HISTORY_LEVEL (mhl_txnid, mhl_min_open_txnid)", rows);
-      for (String insert : inserts) {
-        LOG.debug("Going to execute insert <" + insert + ">");
-        stmt.execute(insert);
+        // Insert transaction entries into MIN_HISTORY_LEVEL.
+        List<String> inserts = sqlGenerator.createInsertValuesStmt(
+            "\"MIN_HISTORY_LEVEL\" (\"MHL_TXNID\", \"MHL_MIN_OPEN_TXNID\")", rows);
+        for (String insert : inserts) {
+          LOG.debug("Going to execute insert <" + insert + ">");
+          stmt.execute(insert);
+        }
+        LOG.info("Added entries to MIN_HISTORY_LEVEL for current txns: (" + txnIds
+                     + ") with min_open_txn: " + minOpenTxnId);
       }
-      LOG.info("Added entries to MIN_HISTORY_LEVEL for current txns: (" + txnIds
-              + ") with min_open_txn: " + minOpenTxnId);
 
       if (rqst.isSetReplPolicy()) {
         List<String> rowsRepl = new ArrayList<>();
@@ -975,27 +990,27 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
   /**
    * Concurrency/isolation notes:
    * This is mutexed with {@link #openTxns(OpenTxnRequest)} and other {@link #commitTxn(CommitTxnRequest)}
-   * operations using select4update on NEXT_TXN_ID.  Also, mutexes on TXNX table for specific txnid:X
+   * operations using select4update on NEXT_TXN_ID. Also, mutexes on TXNS table for specific txnid:X
    * see more notes below.
    * In order to prevent lost updates, we need to determine if any 2 transactions overlap.  Each txn
    * is viewed as an interval [M,N]. M is the txnid and N is taken from the same NEXT_TXN_ID sequence
    * so that we can compare commit time of txn T with start time of txn S.  This sequence can be thought of
-   * as a logical time counter.  If S.commitTime < T.startTime, T and S do NOT overlap.
+   * as a logical time counter. If S.commitTime < T.startTime, T and S do NOT overlap.
    *
    * Motivating example:
    * Suppose we have multi-statment transactions T and S both of which are attempting x = x + 1
-   * In order to prevent lost update problem, the the non-overlapping txns must lock in the snapshot
-   * that they read appropriately.  In particular, if txns do not overlap, then one follows the other
-   * (assumig they write the same entity), and thus the 2nd must see changes of the 1st.  We ensure
-   * this by locking in snapshot after 
+   * In order to prevent lost update problem, then the non-overlapping txns must lock in the snapshot
+   * that they read appropriately. In particular, if txns do not overlap, then one follows the other
+   * (assuming they write the same entity), and thus the 2nd must see changes of the 1st.  We ensure
+   * this by locking in snapshot after
    * {@link #openTxns(OpenTxnRequest)} call is made (see org.apache.hadoop.hive.ql.Driver.acquireLocksAndOpenTxn)
-   * and mutexing openTxn() with commit().  In other words, once a S.commit() starts we must ensure
+   * and mutexing openTxn() with commit(). In other words, once a S.commit() starts we must ensure
    * that txn T which will be considered a later txn, locks in a snapshot that includes the result
    * of S's commit (assuming no other txns).
    * As a counter example, suppose we have S[3,3] and T[4,4] (commitId=txnid means no other transactions
-   * were running in parallel).  If T and S both locked in the same snapshot (for example commit of
+   * were running in parallel). If T and S both locked in the same snapshot (for example commit of
    * txnid:2, which is possible if commitTxn() and openTxnx() is not mutexed)
-   * 'x' would be updated to the same value by both, i.e. lost update. 
+   * 'x' would be updated to the same value by both, i.e. lost update.
    */
   @Override
   @RetrySemantics.Idempotent("No-op if already committed")
@@ -1077,7 +1092,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
           close(rs);
           //if here it means currently committing txn performed update/delete and we should check WW conflict
           /**
-           * This S4U will mutex with other commitTxn() and openTxns(). 
+           * This S4U will mutex with other commitTxn() and openTxns().
            * -1 below makes txn intervals look like [3,3] [4,4] if all txns are serial
            * Note: it's possible to have several txns have the same commit id.  Suppose 3 txns start
            * at the same time and no new txns start until all 3 commit.
@@ -1883,7 +1898,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
         //the +1 is there because "delete ..." below has < (which is correct for the case when
         //there is an open txn
         //Concurrency: even if new txn starts (or starts + commits) it is still true that
-        //there are no currently open txns that overlap with any committed txn with 
+        //there are no currently open txns that overlap with any committed txn with
         //commitId <= commitHighWaterMark (as set on next line).  So plain READ_COMMITTED is enough.
         commitHighWaterMark = highestAllocatedTxnId + 1;
       }
@@ -2150,9 +2165,9 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
    * connection (but separate transactions).  This avoid some flakiness in BONECP where if you
    * perform an operation on 1 connection and immediately get another from the pool, the 2nd one
    * doesn't see results of the first.
-   * 
+   *
    * Retry-by-caller note: If the call to lock is from a transaction, then in the worst case
-   * there will be a duplicate set of locks but both sets will belong to the same txn so they 
+   * there will be a duplicate set of locks but both sets will belong to the same txn so they
    * will not conflict with each other.  For locks w/o txn context (i.e. read-only query), this
    * may lead to deadlock (at least a long wait).  (e.g. 1st call creates locks in {@code LOCK_WAITING}
    * mode and response gets lost.  Then {@link org.apache.hadoop.hive.metastore.RetryingMetaStoreClient}
@@ -2298,7 +2313,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
                   updateTxnComponents = false;
                   break;
                 default:
-                  //since we have an open transaction, only 4 values above are expected 
+                  //since we have an open transaction, only 4 values above are expected
                   throw new IllegalStateException("Unexpected DataOperationType: " + lc.getOperationType()
                     + " agentInfo=" + rqst.getAgentInfo() + " " + JavaUtils.txnIdToString(txnid));
               }
@@ -2490,7 +2505,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
    * {@link #checkLock(java.sql.Connection, long)}  must run at SERIALIZABLE (make sure some lock we are checking
    * against doesn't move from W to A in another txn) but this method can heartbeat in
    * separate txn at READ_COMMITTED.
-   * 
+   *
    * Retry-by-caller note:
    * Retryable because {@link #checkLock(Connection, long)} is
    */
@@ -4676,7 +4691,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
    * Used to raise an informative error when the caller expected a txn in a particular TxnStatus
    * but found it in some other status
    */
-  private static void raiseTxnUnexpectedState(TxnStatus actualStatus, long txnid) 
+  private static void raiseTxnUnexpectedState(TxnStatus actualStatus, long txnid)
     throws NoSuchTxnException, TxnAbortedException {
     switch (actualStatus) {
       case ABORTED:
@@ -5318,7 +5333,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
       //would need a list of (stmt,rs) pairs - 1 for each key
       throw new NotImplementedException();
     }
-    
+
     @Override
     public void releaseLocks() {
       rollbackDBConn(dbConn);
