@@ -1348,7 +1348,7 @@ public class DagUtils {
    * Creates and initializes a JobConf object that can be used to execute
    * the DAG. This can skip the configs which are already included in AM configs.
    * @param hiveConf Current conf for the execution
-   * @param skipAMConf Skip the configs where are already set across all DAGs 
+   * @param skipAMConf Skip the configs where are already set across all DAGs
    * @return JobConf base configuration for job execution
    * @throws IOException
    */
@@ -1484,7 +1484,7 @@ public class DagUtils {
     if (!hasChildren) {
       v.addDataSink("out_"+work.getName(), new DataSinkDescriptor(
           OutputDescriptor.create(MROutput.class.getName())
-          .setUserPayload(TezUtils.createUserPayloadFromConf(conf)), null, null));
+          .setUserPayload(v.getProcessorDescriptor().getUserPayload()), null, null));
     }
 
     return v;
