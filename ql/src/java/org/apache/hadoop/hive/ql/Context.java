@@ -23,6 +23,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -626,6 +627,10 @@ public class Context {
     for (Map.Entry<String, Path> entry : fsScratchDirs.entrySet()) {
       try {
         Path p = entry.getValue();
+        if (p.toUri().getPath().contains(stagingDir) && subDirOf(p, fsScratchDirs.values())  ) {
+          LOG.debug("Skip deleting stagingDir: " + p);
+          continue; // staging dir is deleted when deleting the scratch dir
+        }
         FileSystem fs = p.getFileSystem(conf);
         LOG.debug("Deleting scratch dir: {}",  p);
         fs.delete(p, true);
@@ -636,6 +641,15 @@ public class Context {
       }
     }
     fsScratchDirs.clear();
+  }
+
+  private boolean subDirOf(Path path, Collection<Path> parents) {
+    for (Path each : parents) {
+      if (!path.equals(each) && FileUtils.isPathWithinSubtree(path, each)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -775,17 +789,17 @@ public class Context {
       subContext.clear();
     }
     // Then clear this context
-    if (resDir != null) {
-      try {
-        FileSystem fs = resDir.getFileSystem(conf);
-        LOG.debug("Deleting result dir: {}",  resDir);
-        fs.delete(resDir, true);
-      } catch (IOException e) {
-        LOG.info("Context clear error: " + StringUtils.stringifyException(e));
-      }
+      if (resDir != null && !isInScratchDir(resDir)) { // resDir is inside the scratch dir, removeScratchDir will take care of removing it
+        try {
+          FileSystem fs = resDir.getFileSystem(conf);
+          LOG.debug("Deleting result dir: {}", resDir);
+          fs.delete(resDir, true);
+        } catch (IOException e) {
+          LOG.info("Context clear error: " + StringUtils.stringifyException(e));
+        }
     }
 
-    if (resFile != null) {
+    if (resFile != null && !isInScratchDir(resFile.getParent())) { // resFile is inside the scratch dir, removeScratchDir will take care of removing it
       try {
         FileSystem fs = resFile.getFileSystem(conf);
         LOG.debug("Deleting result file: {}",  resFile);
@@ -798,6 +812,11 @@ public class Context {
     removeScratchDir();
     originalTracker = null;
     setNeedLockMgr(false);
+  }
+
+  private boolean isInScratchDir(Path path) {
+    return path.toUri().getPath().startsWith(localScratchDir)
+      || path.toUri().getPath().startsWith(nonLocalScratchPath.toUri().getPath());
   }
 
   public DataInput getStream() {
