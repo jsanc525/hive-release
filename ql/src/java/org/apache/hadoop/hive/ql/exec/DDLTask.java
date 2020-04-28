@@ -3442,34 +3442,42 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
           cols.addAll(tbl.getPartCols());
         }
 
-        if (tbl.isPartitioned() && part == null) {
-          // No partitioned specified for partitioned table, lets fetch all.
-          Map<String,String> tblProps = tbl.getParameters() == null ? new HashMap<String,String>() : tbl.getParameters();
-          Map<String, Long> valueMap = new HashMap<>();
-          Map<String, Boolean> stateMap = new HashMap<>();
-          for (String stat : StatsSetupConst.supportedStats) {
-            valueMap.put(stat, 0L);
-            stateMap.put(stat, true);
-          }
-          PartitionIterable parts = new PartitionIterable(db, tbl, null, conf.getIntVar(HiveConf.ConfVars.METASTORE_BATCH_RETRIEVE_MAX));
-          int numParts = 0;
-          for (Partition partition : parts) {
-            Map<String, String> props = partition.getParameters();
-            Boolean state = StatsSetupConst.areBasicStatsUptoDate(props);
+        // Fetch partition statistics only for describe extended or formatted.
+        if (descTbl.isExt() || descTbl.isFormatted()) {
+          if (tbl.isPartitioned() && part == null) {
+            // No partition specified for partitioned table, lets fetch all.
+            Map<String, String> tblProps = tbl.getParameters() == null ?
+                    new HashMap<String, String>() : tbl.getParameters();
+
+            Map<String, Long> valueMap = new HashMap<>();
+            Map<String, Boolean> stateMap = new HashMap<>();
             for (String stat : StatsSetupConst.supportedStats) {
-              stateMap.put(stat, stateMap.get(stat) && state);
-              if (props != null && props.get(stat) != null) {
-                valueMap.put(stat, valueMap.get(stat) + Long.parseLong(props.get(stat)));
-              }
+              valueMap.put(stat, 0L);
+              stateMap.put(stat, true);
             }
-            numParts++;
+
+            PartitionIterable partitions = new PartitionIterable(db, tbl, null,
+                    conf.getIntVar(HiveConf.ConfVars.METASTORE_BATCH_RETRIEVE_MAX));
+            int numParts = 0;
+            for (Partition p : partitions) {
+              Map<String, String> partitionProps = p.getParameters();
+              Boolean state = StatsSetupConst.areBasicStatsUptoDate(partitionProps);
+              for (String stat : StatsSetupConst.supportedStats) {
+                stateMap.put(stat, stateMap.get(stat) && state);
+                if (partitionProps != null && partitionProps.get(stat) != null) {
+                  valueMap.put(stat, valueMap.get(stat) + Long.parseLong(partitionProps.get(stat)));
+                }
+              }
+              numParts++;
+            }
+            tblProps.put(StatsSetupConst.NUM_PARTITIONS, Integer.toString(numParts));
+
+            for (String stat : StatsSetupConst.supportedStats) {
+              StatsSetupConst.setBasicStatsState(tblProps, Boolean.toString(stateMap.get(stat)));
+              tblProps.put(stat, valueMap.get(stat).toString());
+            }
+            tbl.setParameters(tblProps);
           }
-          for (String stat : StatsSetupConst.supportedStats) {
-            StatsSetupConst.setBasicStatsState(tblProps, Boolean.toString(stateMap.get(stat)));
-            tblProps.put(stat, valueMap.get(stat).toString());
-          }
-          tblProps.put(StatsSetupConst.NUM_PARTITIONS, Integer.toString(numParts));
-          tbl.setParameters(tblProps);
         }
       } else {
         if (descTbl.isFormatted()) {
