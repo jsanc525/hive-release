@@ -398,7 +398,7 @@ public class Msck {
     }.run();
   }
 
-  private static String makePartExpr(Map<String, String> spec)
+  public static String makePartExpr(Map<String, String> spec)
     throws MetaException {
     StringBuilder suffixBuf = new StringBuilder();
     int i = 0;
