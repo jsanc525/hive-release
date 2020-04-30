@@ -33,6 +33,8 @@ import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 
 import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.hive.llap.LlapArrowRowInputFormat;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * TestJdbcWithMiniLlap for Arrow format with vectorized output sink
@@ -232,4 +234,3 @@ public class TestJdbcWithMiniLlapVectorArrow extends BaseJdbcWithMiniLlap {
   }
 
 }
-

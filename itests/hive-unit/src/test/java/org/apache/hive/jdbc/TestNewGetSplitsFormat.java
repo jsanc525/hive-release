@@ -28,6 +28,7 @@ import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 
 import java.util.ArrayList;
 import java.util.List;

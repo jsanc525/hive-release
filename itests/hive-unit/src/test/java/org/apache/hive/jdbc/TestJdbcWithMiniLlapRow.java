@@ -48,4 +48,3 @@ public class TestJdbcWithMiniLlapRow extends BaseJdbcWithMiniLlap {
   }
 
 }
-
