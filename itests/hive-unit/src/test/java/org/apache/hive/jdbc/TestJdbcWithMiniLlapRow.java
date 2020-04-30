@@ -46,6 +46,5 @@ public class TestJdbcWithMiniLlapRow extends BaseJdbcWithMiniLlap {
   protected InputFormat<NullWritable, Row> getInputFormat() {
     return new LlapRowInputFormat();
   }
-
 }
 
