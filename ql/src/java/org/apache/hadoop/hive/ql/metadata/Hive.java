@@ -2603,8 +2603,13 @@ private void constructOneLBLocationMap(FileStatus fSta,
       for(final Path partPath : validPartitions) {
         // generate a full partition specification
         final LinkedHashMap<String, String> fullPartSpec = Maps.newLinkedHashMap(partSpec);
+        String staticParts =  Warehouse.makeDynamicPartName(partSpec);
+        Path computedPath = partPath;
+        if (!staticParts.isEmpty() ) {
+          computedPath = new Path(new Path(partPath.getParent(), staticParts), partPath.getName());
+        }
         if (!Warehouse.makeSpecFromName(
-            fullPartSpec, partPath, new HashSet<String>(partSpec.keySet()))) {
+            fullPartSpec, computedPath, new HashSet<String>(partSpec.keySet()))) {
           Utilities.FILE_OP_LOGGER.warn("Ignoring invalid DP directory " + partPath);
           continue;
         }
