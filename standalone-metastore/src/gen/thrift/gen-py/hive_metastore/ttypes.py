@@ -12567,22 +12567,55 @@ class ReplTblWriteIdStateRequest:
 class GetValidWriteIdsRequest:
   """
   Attributes:
-   - fullTableNames
-   - validTxnList
-   - writeId
+   - id
+   - dbname
+   - tablename
+   - partitionname
+   - type
+   - runas
+   - properties
+   - toomanyaborts
+   - state
+   - workerId
+   - start
+   - highestWriteId
+   - errorMessage
+   - hasoldabort
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.LIST, 'fullTableNames', (TType.STRING,None), None, ), # 1
-    (2, TType.STRING, 'validTxnList', None, None, ), # 2
-    (3, TType.I64, 'writeId', None, None, ), # 3
+    (1, TType.I64, 'id', None, None, ), # 1
+    (2, TType.STRING, 'dbname', None, None, ), # 2
+    (3, TType.STRING, 'tablename', None, None, ), # 3
+    (4, TType.STRING, 'partitionname', None, None, ), # 4
+    (5, TType.I32, 'type', None, None, ), # 5
+    (6, TType.STRING, 'runas', None, None, ), # 6
+    (7, TType.STRING, 'properties', None, None, ), # 7
+    (8, TType.BOOL, 'toomanyaborts', None, None, ), # 8
+    (9, TType.STRING, 'state', None, None, ), # 9
+    (10, TType.STRING, 'workerId', None, None, ), # 10
+    (11, TType.I64, 'start', None, None, ), # 11
+    (12, TType.I64, 'highestWriteId', None, None, ), # 12
+    (13, TType.STRING, 'errorMessage', None, None, ), # 13
+    (14, TType.BOOL, 'hasoldabort', None, None, ), # 14
   )
 
-  def __init__(self, fullTableNames=None, validTxnList=None, writeId=None,):
-    self.fullTableNames = fullTableNames
-    self.validTxnList = validTxnList
-    self.writeId = writeId
+  def __init__(self, id=None, dbname=None, tablename=None, partitionname=None, type=None, runas=None, properties=None, toomanyaborts=None, state=None, workerId=None, start=None, highestWriteId=None, errorMessage=None, hasoldabort=None,):
+    self.id = id
+    self.dbname = dbname
+    self.tablename = tablename
+    self.partitionname = partitionname
+    self.type = type
+    self.runas = runas
+    self.properties = properties
+    self.toomanyaborts = toomanyaborts
+    self.state = state
+    self.workerId = workerId
+    self.start = start
+    self.highestWriteId = highestWriteId
+    self.errorMessage = errorMessage
+    self.hasoldabort = hasoldabort
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -12613,6 +12646,11 @@ class GetValidWriteIdsRequest:
           self.writeId = iprot.readI64()
         else:
           iprot.skip(ftype)
+      elif fid == 14:
+        if ftype == TType.BOOL:
+          self.hasoldabort = iprot.readBool()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -12638,6 +12676,10 @@ class GetValidWriteIdsRequest:
       oprot.writeFieldBegin('writeId', TType.I64, 3)
       oprot.writeI64(self.writeId)
       oprot.writeFieldEnd()
+    if self.hasoldabort is not None:
+      oprot.writeFieldBegin('hasoldabort', TType.BOOL, 14)
+      oprot.writeBool(self.hasoldabort)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -12649,9 +12691,20 @@ class GetValidWriteIdsRequest:
 
   def __hash__(self):
     value = 17
-    value = (value * 31) ^ hash(self.fullTableNames)
-    value = (value * 31) ^ hash(self.validTxnList)
-    value = (value * 31) ^ hash(self.writeId)
+    value = (value * 31) ^ hash(self.id)
+    value = (value * 31) ^ hash(self.dbname)
+    value = (value * 31) ^ hash(self.tablename)
+    value = (value * 31) ^ hash(self.partitionname)
+    value = (value * 31) ^ hash(self.type)
+    value = (value * 31) ^ hash(self.runas)
+    value = (value * 31) ^ hash(self.properties)
+    value = (value * 31) ^ hash(self.toomanyaborts)
+    value = (value * 31) ^ hash(self.state)
+    value = (value * 31) ^ hash(self.workerId)
+    value = (value * 31) ^ hash(self.start)
+    value = (value * 31) ^ hash(self.highestWriteId)
+    value = (value * 31) ^ hash(self.errorMessage)
+    value = (value * 31) ^ hash(self.hasoldabort)
     return value
 
   def __repr__(self):

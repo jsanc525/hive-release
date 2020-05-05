@@ -23,7 +23,6 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.hive.common.ValidTxnList;
-import org.apache.hadoop.hive.common.ValidWriteIdList;
 import org.apache.hadoop.hive.common.classification.RetrySemantics;
 import org.apache.hadoop.hive.metastore.api.*;
 import org.apache.hadoop.hive.metastore.events.AcidWriteEvent;
@@ -31,7 +30,6 @@ import org.apache.hadoop.hive.metastore.events.AcidWriteEvent;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -311,14 +309,17 @@ public interface TxnStore extends Configurable {
    * that may be ready for compaction.  Also, look through txns and txn_components tables for
    * aborted transactions that we should add to the list.
    * @param abortedThreshold  number of aborted queries forming a potential compaction request.
+   * @param abortedTimeThreshold age of an aborted txn in milliseconds that will trigger a
+   *                             potential compaction request.
    * @return list of CompactionInfo structs.  These will not have id, type,
    * or runAs set since these are only potential compactions not actual ones.
    */
   @RetrySemantics.ReadOnly
-  Set<CompactionInfo> findPotentialCompactions(int abortedThreshold) throws MetaException;
+  Set<CompactionInfo> findPotentialCompactions(int abortedThreshold, long abortedTimeThreshold) throws MetaException;
 
   @RetrySemantics.ReadOnly
-  Set<CompactionInfo> findPotentialCompactions(int abortedThreshold, long checkInterval) throws MetaException;
+  Set<CompactionInfo> findPotentialCompactions(int abortedThreshold, long abortedTimeThreshold, long checkInterval)
+      throws MetaException;
 
   /**
    * Sets the user to run as.  This is for the case
@@ -357,7 +358,7 @@ public interface TxnStore extends Configurable {
   /**
    * This will remove an entry from the queue after
    * it has been compacted.
-   * 
+   *
    * @param info info on the compaction entry to remove
    */
   @RetrySemantics.CannotRetry
@@ -439,8 +440,8 @@ public interface TxnStore extends Configurable {
   void purgeCompactionHistory() throws MetaException;
 
   /**
-   * WriteSet tracking is used to ensure proper transaction isolation.  This method deletes the 
-   * transaction metadata once it becomes unnecessary.  
+   * WriteSet tracking is used to ensure proper transaction isolation.  This method deletes the
+   * transaction metadata once it becomes unnecessary.
    */
   @RetrySemantics.SafeToRetry
   void performWriteSetGC();
@@ -467,9 +468,9 @@ public interface TxnStore extends Configurable {
 
   /**
    * This is primarily designed to provide coarse grained mutex support to operations running
-   * inside the Metastore (of which there could be several instances).  The initial goal is to 
+   * inside the Metastore (of which there could be several instances).  The initial goal is to
    * ensure that various sub-processes of the Compactor don't step on each other.
-   * 
+   *
    * In RDMBS world each {@code LockHandle} uses a java.sql.Connection so use it sparingly.
    */
   interface MutexAPI {
@@ -480,7 +481,7 @@ public interface TxnStore extends Configurable {
     LockHandle acquireLock(String key) throws MetaException;
 
     /**
-     * Same as {@link #acquireLock(String)} but takes an already existing handle as input.  This 
+     * Same as {@link #acquireLock(String)} but takes an already existing handle as input.  This
      * will associate the lock on {@code key} with the same handle.  All locks associated with
      * the same handle will be released together.
      * @param handle not NULL

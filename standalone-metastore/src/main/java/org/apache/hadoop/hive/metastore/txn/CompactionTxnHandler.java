@@ -59,13 +59,15 @@ class CompactionTxnHandler extends TxnHandler {
    */
   @Override
   @RetrySemantics.ReadOnly
-  public Set<CompactionInfo> findPotentialCompactions(int abortedThreshold) throws MetaException {
-    return findPotentialCompactions(abortedThreshold, -1);
+  public Set<CompactionInfo> findPotentialCompactions(int abortedThreshold, long abortedTimeThreshold)
+      throws MetaException {
+    return findPotentialCompactions(abortedThreshold, abortedTimeThreshold, -1);
   }
 
   @Override
   @RetrySemantics.ReadOnly
-  public Set<CompactionInfo> findPotentialCompactions(int abortedThreshold, long checkInterval) throws MetaException {
+  public Set<CompactionInfo> findPotentialCompactions(int abortedThreshold,
+      long abortedTimeThreshold, long checkInterval) throws MetaException {
     Connection dbConn = null;
     Set<CompactionInfo> response = new HashSet<>();
     Statement stmt = null;
@@ -75,20 +77,21 @@ class CompactionTxnHandler extends TxnHandler {
         dbConn = getDbConn(Connection.TRANSACTION_READ_COMMITTED);
         stmt = dbConn.createStatement();
         // Check for completed transactions
-        String s = "select distinct tc.ctc_database, tc.ctc_table, tc.ctc_partition " +
-          "from COMPLETED_TXN_COMPONENTS tc " + (checkInterval > 0 ?
-          "left join ( " +
-          "  select c1.* from COMPLETED_COMPACTIONS c1 " +
-          "  inner join ( " +
-          "    select max(cc_id) cc_id from COMPLETED_COMPACTIONS " +
-          "    group by cc_database, cc_table, cc_partition" +
-          "  ) c2 " +
-          "  on c1.cc_id = c2.cc_id " +
-          "  where c1.cc_state IN (" + quoteChar(ATTEMPTED_STATE) + "," + quoteChar(FAILED_STATE) + ")" +
-          ") c " +
-          "on tc.ctc_database = c.cc_database and tc.ctc_table = c.cc_table " +
-          "  and (tc.ctc_partition = c.cc_partition or (tc.ctc_partition is null and c.cc_partition is null)) " +
-          "where c.cc_id is not null or " + isWithinCheckInterval("tc.ctc_timestamp", checkInterval) : "");
+        final String s = "SELECT DISTINCT \"TC\".\"CTC_DATABASE\", \"TC\".\"CTC_TABLE\", \"TC\"" +
+            ".\"CTC_PARTITION\" " +
+          "FROM \"COMPLETED_TXN_COMPONENTS\" \"TC\" " + (checkInterval > 0 ?
+          "LEFT JOIN ( " +
+          "  SELECT \"C1\".* FROM \"COMPLETED_COMPACTIONS\" \"C1\" " +
+          "  INNER JOIN ( " +
+          "    SELECT MAX(\"CC_ID\") \"CC_ID\" FROM \"COMPLETED_COMPACTIONS\" " +
+          "    GROUP BY \"CC_DATABASE\", \"CC_TABLE\", \"CC_PARTITION\"" +
+          "  ) \"C2\" " +
+          "  ON \"C1\".\"CC_ID\" = \"C2\".\"CC_ID\" " +
+          "  WHERE \"C1\".\"CC_STATE\" IN (" + quoteChar(ATTEMPTED_STATE) + "," + quoteChar(FAILED_STATE) + ")" +
+          ") \"C\" " +
+          "ON \"TC\".\"CTC_DATABASE\" = \"C\".\"CC_DATABASE\" AND \"TC\".\"CTC_TABLE\" = \"C\".\"CC_TABLE\" " +
+          "  AND (\"TC\".\"CTC_PARTITION\" = \"C\".\"CC_PARTITION\" OR (\"TC\".\"CTC_PARTITION\" IS NULL AND \"C\".\"CC_PARTITION\" IS NULL)) " +
+          "WHERE \"C\".\"CC_ID\" IS NOT NULL OR " + isWithinCheckInterval("\"TC\".\"CTC_TIMESTAMP\"", checkInterval) : "");
 
         LOG.debug("Going to execute query <" + s + ">");
         rs = stmt.executeQuery(s);
@@ -101,75 +104,48 @@ class CompactionTxnHandler extends TxnHandler {
         }
         rs.close();
 
-        // Check for aborted txns
-        s = "select tc_database, tc_table, tc_partition " +
-          "from TXNS, TXN_COMPONENTS " +
-          "where txn_id = tc_txnid and txn_state = '" + TXN_ABORTED + "' " +
-          "group by tc_database, tc_table, tc_partition " +
-          "having count(*) > " + abortedThreshold;
+        // Check for aborted txns: number of aborted txns past threshold and age of aborted txns
+        // past time threshold
+        boolean checkAbortedTimeThreshold = abortedTimeThreshold >= 0;
+        final String sCheckAborted = "SELECT \"TC_DATABASE\", \"TC_TABLE\", \"TC_PARTITION\","
+            + "MIN(\"TXN_STARTED\"), COUNT(*)"
+            + "FROM \"TXNS\", \"TXN_COMPONENTS\" "
+            + "WHERE \"TXN_ID\" = \"TC_TXNID\" AND \"TXN_STATE\" = '" + TXN_ABORTED + "' "
+            + "GROUP BY \"TC_DATABASE\", \"TC_TABLE\", \"TC_PARTITION\""
+            + (checkAbortedTimeThreshold ? "" : " HAVING COUNT(*) > " + abortedThreshold);
 
-        LOG.debug("Going to execute query <" + s + ">");
-        rs = stmt.executeQuery(s);
+        LOG.debug("Going to execute query <" + sCheckAborted + ">");
+        rs = stmt.executeQuery(sCheckAborted);
+        long systemTime = System.currentTimeMillis();
         while (rs.next()) {
-          CompactionInfo info = new CompactionInfo();
-          info.dbname = rs.getString(1);
-          info.tableName = rs.getString(2);
-          info.partName = rs.getString(3);
-          info.tooManyAborts = true;
-          response.add(info);
+          boolean pastTimeThreshold =
+              checkAbortedTimeThreshold && rs.getLong(4) + abortedTimeThreshold < systemTime;
+          int numAbortedTxns = rs.getInt(5);
+          if (numAbortedTxns > abortedThreshold || pastTimeThreshold) {
+            CompactionInfo info = new CompactionInfo();
+            info.dbname = rs.getString(1);
+            info.tableName = rs.getString(2);
+            info.partName = rs.getString(3);
+            info.tooManyAborts = numAbortedTxns > abortedThreshold;
+            info.hasOldAbort = pastTimeThreshold;
+            response.add(info);
+          }
         }
 
         LOG.debug("Going to rollback");
         dbConn.rollback();
       } catch (SQLException e) {
         LOG.error("Unable to connect to transaction database " + e.getMessage());
-        checkRetryable(dbConn, e, "findPotentialCompactions(maxAborted:" + abortedThreshold + ")");
+        checkRetryable(dbConn, e,
+            "findPotentialCompactions(maxAborted:" + abortedThreshold
+                + ", abortedTimeThreshold:" + abortedTimeThreshold + ")");
       } finally {
         close(rs, stmt, dbConn);
       }
       return response;
     }
     catch (RetryException e) {
-      return findPotentialCompactions(abortedThreshold, checkInterval);
-    }
-  }
-
-  /**
-   * Sets the user to run as.  This is for the case
-   * where the request was generated by the user and so the worker must set this value later.
-   * @param cq_id id of this entry in the queue
-   * @param user user to run the jobs as
-   */
-  @Override
-  @RetrySemantics.Idempotent
-  public void setRunAs(long cq_id, String user) throws MetaException {
-    try {
-      Connection dbConn = null;
-      Statement stmt = null;
-      try {
-        dbConn = getDbConn(Connection.TRANSACTION_READ_COMMITTED);
-        stmt = dbConn.createStatement();
-        String s = "update COMPACTION_QUEUE set cq_run_as = '" + user + "' where cq_id = " + cq_id;
-        LOG.debug("Going to execute update <" + s + ">");
-        int updCnt = stmt.executeUpdate(s);
-        if (updCnt != 1) {
-          LOG.error("Unable to set cq_run_as=" + user + " for compaction record with cq_id=" + cq_id + ".  updCnt=" + updCnt);
-          LOG.debug("Going to rollback");
-          dbConn.rollback();
-        }
-        LOG.debug("Going to commit");
-        dbConn.commit();
-      } catch (SQLException e) {
-        LOG.error("Unable to update compaction queue, " + e.getMessage());
-        LOG.debug("Going to rollback");
-        rollbackDBConn(dbConn);
-        checkRetryable(dbConn, e, "setRunAs(cq_id:" + cq_id + ",user:" + user +")");
-      } finally {
-        closeDbConn(dbConn);
-        closeStmt(stmt);
-      }
-    } catch (RetryException e) {
-      setRunAs(cq_id, user);
+      return findPotentialCompactions(abortedThreshold, abortedTimeThreshold, checkInterval);
     }
   }
 
@@ -1090,6 +1066,46 @@ class CompactionTxnHandler extends TxnHandler {
       markFailed(ci);
     }
   }
+
+  /**
+   * Sets the user to run as.  This is for the case
+   * where the request was generated by the user and so the worker must set this value later.
+   * @param cq_id id of this entry in the queue
+   * @param user user to run the jobs as
+   */
+  @Override
+  @RetrySemantics.Idempotent
+  public void setRunAs(long cq_id, String user) throws MetaException {
+    try {
+      Connection dbConn = null;
+      Statement stmt = null;
+      try {
+        dbConn = getDbConn(Connection.TRANSACTION_READ_COMMITTED);
+        stmt = dbConn.createStatement();
+        String s = "update COMPACTION_QUEUE set cq_run_as = '" + user + "' where cq_id = " + cq_id;
+        LOG.debug("Going to execute update <" + s + ">");
+        int updCnt = stmt.executeUpdate(s);
+        if (updCnt != 1) {
+          LOG.error("Unable to set cq_run_as=" + user + " for compaction record with cq_id=" + cq_id + ".  updCnt=" + updCnt);
+          LOG.debug("Going to rollback");
+          dbConn.rollback();
+        }
+        LOG.debug("Going to commit");
+        dbConn.commit();
+      } catch (SQLException e) {
+        LOG.error("Unable to update compaction queue, " + e.getMessage());
+        LOG.debug("Going to rollback");
+        rollbackDBConn(dbConn);
+        checkRetryable(dbConn, e, "setRunAs(cq_id:" + cq_id + ",user:" + user +")");
+      } finally {
+        closeDbConn(dbConn);
+        closeStmt(stmt);
+      }
+    } catch (RetryException e) {
+      setRunAs(cq_id, user); 
+    }
+  }
+
   @Override
   @RetrySemantics.Idempotent
   public void setHadoopJobId(String hadoopJobId, long id) {
@@ -1124,5 +1140,3 @@ class CompactionTxnHandler extends TxnHandler {
     }
   }
 }
-
-
