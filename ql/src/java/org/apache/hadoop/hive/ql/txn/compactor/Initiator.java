@@ -87,6 +87,9 @@ public class Initiator extends CompactorThread {
 
       int abortedThreshold = HiveConf.getIntVar(conf,
           HiveConf.ConfVars.HIVE_COMPACTOR_ABORTEDTXN_THRESHOLD);
+      long abortedTimeThreshold = HiveConf
+          .getTimeVar(conf, HiveConf.ConfVars.HIVE_COMPACTOR_ABORTEDTXN_TIME_THRESHOLD,
+              TimeUnit.MILLISECONDS);
 
       // Make sure we run through the loop once before checking to stop as this makes testing
       // much easier.  The stop value is only for testing anyway and not used when called from
@@ -103,7 +106,8 @@ public class Initiator extends CompactorThread {
           //todo: add method to only get current i.e. skip history - more efficient
           ShowCompactResponse currentCompactions = txnHandler.showCompact(new ShowCompactRequest());
 
-          Set<CompactionInfo> potentials = txnHandler.findPotentialCompactions(abortedThreshold)
+          Set<CompactionInfo> potentials = txnHandler.findPotentialCompactions(abortedThreshold,
+              abortedTimeThreshold)
               .stream().filter(ci -> checkCompactionElig(ci, currentCompactions)).collect(Collectors.toSet());
           LOG.debug("Found " + potentials.size() + " potential compactions, " +
               "checking to see if we should compact any of them");
@@ -262,6 +266,16 @@ public class Initiator extends CompactorThread {
       LOG.debug("Found too many aborted transactions for " + ci.getFullPartitionName() + ", " +
           "initiating major compaction");
       return CompactionType.MAJOR;
+    }
+
+    if (ci.hasOldAbort) {
+      HiveConf.ConfVars oldAbortedTimeoutProp =
+          HiveConf.ConfVars.HIVE_COMPACTOR_ABORTEDTXN_TIME_THRESHOLD;
+      LOG.debug("Found an aborted transaction for " + ci.getFullPartitionName()
+          + " with age older than threshold " + oldAbortedTimeoutProp + ": " + conf
+          .getTimeVar(oldAbortedTimeoutProp, TimeUnit.HOURS) + " hours. "
+          + "Initiating minor compaction.");
+      return CompactionType.MINOR;
     }
 
     if (runJobAsSelf(runAs)) {

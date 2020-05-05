@@ -1092,6 +1092,27 @@ struct CompactionRequest {
     6: optional map<string, string> properties
 }
 
+struct CompactionInfoStruct {
+    1: required i64 id,
+    2: required string dbname,
+    3: required string tablename,
+    4: optional string partitionname,
+    5: required CompactionType type,
+    6: optional string runas,
+    7: optional string properties
+    8: optional bool toomanyaborts
+    9: optional string state
+    10: optional string workerId
+    11: optional i64 start
+    12: optional i64 highestWriteId
+    13: optional string errorMessage
+    14: optional bool hasoldabort
+}
+
+struct OptionalCompactionInfoStruct {
+    1: optional CompactionInfoStruct ci,
+}
+
 struct CompactionResponse {
     1: required i64 id,
     2: required string state,

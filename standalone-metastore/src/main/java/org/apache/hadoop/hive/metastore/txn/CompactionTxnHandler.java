@@ -60,7 +60,16 @@ class CompactionTxnHandler extends TxnHandler {
    */
   @Override
   @RetrySemantics.ReadOnly
-  public Set<CompactionInfo> findPotentialCompactions(int maxAborted) throws MetaException {
+  // public Set<CompactionInfo> findPotentialCompactions(int maxAborted) throws MetaException {
+  public Set<CompactionInfo> findPotentialCompactions(int abortedThreshold, long abortedTimeThreshold)
+      throws MetaException {
+    return findPotentialCompactions(abortedThreshold, abortedTimeThreshold, -1);
+  }
+
+  @Override
+  @RetrySemantics.ReadOnly
+  public Set<CompactionInfo> findPotentialCompactions(int abortedThreshold,
+      long abortedTimeThreshold, long checkInterval) throws MetaException {
     Connection dbConn = null;
     Set<CompactionInfo> response = new HashSet<>();
     Statement stmt = null;
@@ -70,8 +79,24 @@ class CompactionTxnHandler extends TxnHandler {
         dbConn = getDbConn(Connection.TRANSACTION_READ_COMMITTED);
         stmt = dbConn.createStatement();
         // Check for completed transactions
-        String s = "select distinct ctc_database, ctc_table, " +
-          "ctc_partition from COMPLETED_TXN_COMPONENTS";
+        // String s = "select distinct ctc_database, ctc_table, " +
+        //   "ctc_partition from COMPLETED_TXN_COMPONENTS";
+        final String s = "SELECT DISTINCT \"TC\".\"CTC_DATABASE\", \"TC\".\"CTC_TABLE\", \"TC\"" +
+            ".\"CTC_PARTITION\" " +
+          "FROM \"COMPLETED_TXN_COMPONENTS\" \"TC\" " + (checkInterval > 0 ?
+          "LEFT JOIN ( " +
+          "  SELECT \"C1\".* FROM \"COMPLETED_COMPACTIONS\" \"C1\" " +
+          "  INNER JOIN ( " +
+          "    SELECT MAX(\"CC_ID\") \"CC_ID\" FROM \"COMPLETED_COMPACTIONS\" " +
+          "    GROUP BY \"CC_DATABASE\", \"CC_TABLE\", \"CC_PARTITION\"" +
+          "  ) \"C2\" " +
+          "  ON \"C1\".\"CC_ID\" = \"C2\".\"CC_ID\" " +
+          "  WHERE \"C1\".\"CC_STATE\" IN (" + quoteChar(ATTEMPTED_STATE) + "," + quoteChar(FAILED_STATE) + ")" +
+          ") \"C\" " +
+          "ON \"TC\".\"CTC_DATABASE\" = \"C\".\"CC_DATABASE\" AND \"TC\".\"CTC_TABLE\" = \"C\".\"CC_TABLE\" " +
+          "  AND (\"TC\".\"CTC_PARTITION\" = \"C\".\"CC_PARTITION\" OR (\"TC\".\"CTC_PARTITION\" IS NULL AND \"C\".\"CC_PARTITION\" IS NULL)) " +
+          "WHERE \"C\".\"CC_ID\" IS NOT NULL OR " + isWithinCheckInterval("\"TC\".\"CTC_TIMESTAMP\"", checkInterval) : "");
+
         LOG.debug("Going to execute query <" + s + ">");
         rs = stmt.executeQuery(s);
         while (rs.next()) {
@@ -83,40 +108,52 @@ class CompactionTxnHandler extends TxnHandler {
         }
         rs.close();
 
-        // Check for aborted txns
-        s = "select tc_database, tc_table, tc_partition " +
-          "from TXNS, TXN_COMPONENTS " +
-          "where txn_id = tc_txnid and txn_state = '" + TXN_ABORTED + "' " +
-          "group by tc_database, tc_table, tc_partition " +
-          "having count(*) > " + maxAborted;
+        // Check for aborted txns: number of aborted txns past threshold and age of aborted txns
+        // past time threshold
+        boolean checkAbortedTimeThreshold = abortedTimeThreshold >= 0;
+        final String sCheckAborted = "SELECT \"TC_DATABASE\", \"TC_TABLE\", \"TC_PARTITION\","
+            + "MIN(\"TXN_STARTED\"), COUNT(*)"
+            + "FROM \"TXNS\", \"TXN_COMPONENTS\" "
+            + "WHERE \"TXN_ID\" = \"TC_TXNID\" AND \"TXN_STATE\" = '" + TXN_ABORTED + "' "
+            + "GROUP BY \"TC_DATABASE\", \"TC_TABLE\", \"TC_PARTITION\""
+            + (checkAbortedTimeThreshold ? "" : " HAVING COUNT(*) > " + abortedThreshold);
 
-        LOG.debug("Going to execute query <" + s + ">");
-        rs = stmt.executeQuery(s);
+        LOG.debug("Going to execute query <" + sCheckAborted + ">");
+        rs = stmt.executeQuery(sCheckAborted);
+        long systemTime = System.currentTimeMillis();
         while (rs.next()) {
-          CompactionInfo info = new CompactionInfo();
-          info.dbname = rs.getString(1);
-          info.tableName = rs.getString(2);
-          info.partName = rs.getString(3);
-          info.tooManyAborts = true;
-          response.add(info);
+          boolean pastTimeThreshold =
+              checkAbortedTimeThreshold && rs.getLong(4) + abortedTimeThreshold < systemTime;
+          int numAbortedTxns = rs.getInt(5);
+          if (numAbortedTxns > abortedThreshold || pastTimeThreshold) {
+            CompactionInfo info = new CompactionInfo();
+            info.dbname = rs.getString(1);
+            info.tableName = rs.getString(2);
+            info.partName = rs.getString(3);
+            info.tooManyAborts = numAbortedTxns > abortedThreshold;
+            info.hasOldAbort = pastTimeThreshold;
+            response.add(info);
+          }
         }
 
         LOG.debug("Going to rollback");
         dbConn.rollback();
       } catch (SQLException e) {
         LOG.error("Unable to connect to transaction database " + e.getMessage());
-        checkRetryable(dbConn, e, "findPotentialCompactions(maxAborted:" + maxAborted + ")");
+        checkRetryable(dbConn, e,
+            "findPotentialCompactions(maxAborted:" + abortedThreshold
+                + ", abortedTimeThreshold:" + abortedTimeThreshold + ")");
       } finally {
         close(rs, stmt, dbConn);
       }
       return response;
     }
     catch (RetryException e) {
-      return findPotentialCompactions(maxAborted);
+      return findPotentialCompactions(abortedThreshold, abortedTimeThreshold, checkInterval);
     }
   }
 
-  /**
+    /**
    * Sets the user to run as.  This is for the case
    * where the request was generated by the user and so the worker must set this value later.
    * @param cq_id id of this entry in the queue

@@ -18,7 +18,9 @@
 package org.apache.hadoop.hive.metastore.txn;
 
 import org.apache.hadoop.hive.common.ValidCompactorWriteIdList;
+import org.apache.hadoop.hive.metastore.api.CompactionInfoStruct;
 import org.apache.hadoop.hive.metastore.api.CompactionType;
+import org.apache.hadoop.hive.metastore.api.OptionalCompactionInfoStruct;
 import org.apache.hadoop.hive.metastore.api.TableValidWriteIds;
 
 import java.sql.PreparedStatement;
@@ -40,6 +42,7 @@ public class CompactionInfo implements Comparable<CompactionInfo> {
   public String runAs;
   public String properties;
   public boolean tooManyAborts = false;
+  public boolean hasOldAbort = false;
   /**
    * {@code 0} means it wasn't set (e.g. in case of upgrades, since ResultSet.getLong() will return 0 if field is NULL) 
    * See {@link TxnStore#setCompactionHighestWriteId(CompactionInfo, long)} for precise definition.
@@ -49,6 +52,7 @@ public class CompactionInfo implements Comparable<CompactionInfo> {
   public long highestWriteId;
   byte[] metaInfo;
   String hadoopJobId;
+  public String errorMessage;
 
   private String fullPartitionName = null;
   private String fullTableName = null;
@@ -107,7 +111,28 @@ public class CompactionInfo implements Comparable<CompactionInfo> {
       "properties:" + properties + "," +
       "runAs:" + runAs + "," +
       "tooManyAborts:" + tooManyAborts + "," +
-      "highestWriteId:" + highestWriteId;
+      "hasOldAbort:" + hasOldAbort + "," +
+      "highestWriteId:" + highestWriteId + "," +
+      "errorMessage:" + errorMessage;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = 17;
+    result = 31 * result + this.getFullPartitionName().hashCode();
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    }
+    if (!(obj instanceof CompactionInfo)) {
+      return false;
+    }
+    CompactionInfo info = (CompactionInfo) obj;
+    return this.compareTo(info) == 0;
   }
 
   /**
@@ -147,5 +172,72 @@ public class CompactionInfo implements Comparable<CompactionInfo> {
     pStmt.setLong(12, ci.highestWriteId);
     pStmt.setBytes(13, ci.metaInfo);
     pStmt.setString(14, ci.hadoopJobId);
+    pStmt.setString(15, ci.errorMessage);
+  }
+
+  public static CompactionInfo compactionStructToInfo(CompactionInfoStruct cr) {
+    if (cr == null) {
+      return null;
+    }
+    CompactionInfo ci = new CompactionInfo(cr.getDbname(), cr.getTablename(), cr.getPartitionname(), cr.getType());
+    ci.id = cr.getId();
+    ci.runAs = cr.getRunas();
+    ci.properties = cr.getProperties();
+    if (cr.isSetToomanyaborts()) {
+      ci.tooManyAborts = cr.isToomanyaborts();
+    }
+    if (cr.isSetHasoldabort()) {
+      ci.hasOldAbort = cr.isHasoldabort();
+    }
+    if (cr.isSetState() && cr.getState().length() != 1) {
+      throw new IllegalStateException("State should only be one character but it was set to " + cr.getState());
+    } else if (cr.isSetState()) {
+      ci.state = cr.getState().charAt(0);
+    }
+    ci.workerId = cr.getWorkerId();
+    if (cr.isSetStart()) {
+      ci.start = cr.getStart();
+    }
+    if (cr.isSetHighestWriteId()) {
+      ci.highestWriteId = cr.getHighestWriteId();
+    }
+    if (cr.isSetErrorMessage()) {
+      ci.errorMessage = cr.getErrorMessage();
+    }
+    return ci;
+  }
+
+  public static CompactionInfoStruct compactionInfoToStruct(CompactionInfo ci) {
+    if (ci == null) {
+      return null;
+    }
+    CompactionInfoStruct cr = new CompactionInfoStruct(ci.id, ci.dbname, ci.tableName, ci.type);
+    cr.setPartitionname(ci.partName);
+    cr.setRunas(ci.runAs);
+    cr.setProperties(ci.properties);
+    cr.setToomanyaborts(ci.tooManyAborts);
+    cr.setHasoldabort(ci.hasOldAbort);
+    cr.setStart(ci.start);
+    cr.setState(Character.toString(ci.state));
+    cr.setWorkerId(ci.workerId);
+    cr.setHighestWriteId(ci.highestWriteId);
+    cr.setErrorMessage(ci.errorMessage);
+
+    return cr;
+  }
+
+  public static OptionalCompactionInfoStruct compactionInfoToOptionalStruct(CompactionInfo ci) {
+    CompactionInfoStruct cis = compactionInfoToStruct(ci);
+    OptionalCompactionInfoStruct ocis = new OptionalCompactionInfoStruct();
+    if (cis != null) {
+      ocis.setCi(cis);
+    }
+    return ocis;
+  }
+  public static CompactionInfo optionalCompactionInfoStructToInfo(OptionalCompactionInfoStruct ocis) {
+    if (ocis.isSetCi()) {
+      return compactionStructToInfo(ocis.getCi());
+    }
+    return null;
   }
 }

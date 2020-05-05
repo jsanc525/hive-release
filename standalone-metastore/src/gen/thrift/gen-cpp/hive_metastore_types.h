@@ -507,6 +507,10 @@ class HeartbeatTxnRangeResponse;
 
 class CompactionRequest;
 
+class CompactionInfoStruct;
+
+class OptionalCompactionInfoStruct;
+
 class CompactionResponse;
 
 class ShowCompactRequest;
@@ -8918,6 +8922,194 @@ class CompactionRequest {
 void swap(CompactionRequest &a, CompactionRequest &b);
 
 inline std::ostream& operator<<(std::ostream& out, const CompactionRequest& obj)
+{
+  obj.printTo(out);
+  return out;
+}
+
+typedef struct _CompactionInfoStruct__isset {
+  _CompactionInfoStruct__isset() : partitionname(false), runas(false), properties(false), toomanyaborts(false), state(false), workerId(false), start(false), highestWriteId(false), errorMessage(false), hasoldabort(false) {}
+  bool partitionname :1;
+  bool runas :1;
+  bool properties :1;
+  bool toomanyaborts :1;
+  bool state :1;
+  bool workerId :1;
+  bool start :1;
+  bool highestWriteId :1;
+  bool errorMessage :1;
+  bool hasoldabort :1;
+} _CompactionInfoStruct__isset;
+
+class CompactionInfoStruct {
+ public:
+
+  CompactionInfoStruct(const CompactionInfoStruct&);
+  CompactionInfoStruct& operator=(const CompactionInfoStruct&);
+  CompactionInfoStruct() : id(0), dbname(), tablename(), partitionname(), type((CompactionType::type)0), runas(), properties(), toomanyaborts(0), state(), workerId(), start(0), highestWriteId(0), errorMessage(), hasoldabort(0) {
+  }
+
+  virtual ~CompactionInfoStruct() throw();
+  int64_t id;
+  std::string dbname;
+  std::string tablename;
+  std::string partitionname;
+  CompactionType::type type;
+  std::string runas;
+  std::string properties;
+  bool toomanyaborts;
+  std::string state;
+  std::string workerId;
+  int64_t start;
+  int64_t highestWriteId;
+  std::string errorMessage;
+  bool hasoldabort;
+
+  _CompactionInfoStruct__isset __isset;
+
+  void __set_id(const int64_t val);
+
+  void __set_dbname(const std::string& val);
+
+  void __set_tablename(const std::string& val);
+
+  void __set_partitionname(const std::string& val);
+
+  void __set_type(const CompactionType::type val);
+
+  void __set_runas(const std::string& val);
+
+  void __set_properties(const std::string& val);
+
+  void __set_toomanyaborts(const bool val);
+
+  void __set_state(const std::string& val);
+
+  void __set_workerId(const std::string& val);
+
+  void __set_start(const int64_t val);
+
+  void __set_highestWriteId(const int64_t val);
+
+  void __set_errorMessage(const std::string& val);
+
+  void __set_hasoldabort(const bool val);
+
+  bool operator == (const CompactionInfoStruct & rhs) const
+  {
+    if (!(id == rhs.id))
+      return false;
+    if (!(dbname == rhs.dbname))
+      return false;
+    if (!(tablename == rhs.tablename))
+      return false;
+    if (__isset.partitionname != rhs.__isset.partitionname)
+      return false;
+    else if (__isset.partitionname && !(partitionname == rhs.partitionname))
+      return false;
+    if (!(type == rhs.type))
+      return false;
+    if (__isset.runas != rhs.__isset.runas)
+      return false;
+    else if (__isset.runas && !(runas == rhs.runas))
+      return false;
+    if (__isset.properties != rhs.__isset.properties)
+      return false;
+    else if (__isset.properties && !(properties == rhs.properties))
+      return false;
+    if (__isset.toomanyaborts != rhs.__isset.toomanyaborts)
+      return false;
+    else if (__isset.toomanyaborts && !(toomanyaborts == rhs.toomanyaborts))
+      return false;
+    if (__isset.state != rhs.__isset.state)
+      return false;
+    else if (__isset.state && !(state == rhs.state))
+      return false;
+    if (__isset.workerId != rhs.__isset.workerId)
+      return false;
+    else if (__isset.workerId && !(workerId == rhs.workerId))
+      return false;
+    if (__isset.start != rhs.__isset.start)
+      return false;
+    else if (__isset.start && !(start == rhs.start))
+      return false;
+    if (__isset.highestWriteId != rhs.__isset.highestWriteId)
+      return false;
+    else if (__isset.highestWriteId && !(highestWriteId == rhs.highestWriteId))
+      return false;
+    if (__isset.errorMessage != rhs.__isset.errorMessage)
+      return false;
+    else if (__isset.errorMessage && !(errorMessage == rhs.errorMessage))
+      return false;
+    if (__isset.hasoldabort != rhs.__isset.hasoldabort)
+      return false;
+    else if (__isset.hasoldabort && !(hasoldabort == rhs.hasoldabort))
+      return false;
+    return true;
+  }
+  bool operator != (const CompactionInfoStruct &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const CompactionInfoStruct & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  virtual void printTo(std::ostream& out) const;
+};
+
+void swap(CompactionInfoStruct &a, CompactionInfoStruct &b);
+
+inline std::ostream& operator<<(std::ostream& out, const CompactionInfoStruct& obj)
+{
+  obj.printTo(out);
+  return out;
+}
+
+typedef struct _OptionalCompactionInfoStruct__isset {
+  _OptionalCompactionInfoStruct__isset() : ci(false) {}
+  bool ci :1;
+} _OptionalCompactionInfoStruct__isset;
+
+class OptionalCompactionInfoStruct {
+ public:
+
+  OptionalCompactionInfoStruct(const OptionalCompactionInfoStruct&);
+  OptionalCompactionInfoStruct& operator=(const OptionalCompactionInfoStruct&);
+  OptionalCompactionInfoStruct() {
+  }
+
+  virtual ~OptionalCompactionInfoStruct() throw();
+  CompactionInfoStruct ci;
+
+  _OptionalCompactionInfoStruct__isset __isset;
+
+  void __set_ci(const CompactionInfoStruct& val);
+
+  bool operator == (const OptionalCompactionInfoStruct & rhs) const
+  {
+    if (__isset.ci != rhs.__isset.ci)
+      return false;
+    else if (__isset.ci && !(ci == rhs.ci))
+      return false;
+    return true;
+  }
+  bool operator != (const OptionalCompactionInfoStruct &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const OptionalCompactionInfoStruct & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  virtual void printTo(std::ostream& out) const;
+};
+
+void swap(OptionalCompactionInfoStruct &a, OptionalCompactionInfoStruct &b);
+
+inline std::ostream& operator<<(std::ostream& out, const OptionalCompactionInfoStruct& obj)
 {
   obj.printTo(out);
   return out;
