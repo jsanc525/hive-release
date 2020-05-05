@@ -59,13 +59,15 @@ class CompactionTxnHandler extends TxnHandler {
    */
   @Override
   @RetrySemantics.ReadOnly
-  public Set<CompactionInfo> findPotentialCompactions(int abortedThreshold) throws MetaException {
-    return findPotentialCompactions(abortedThreshold, -1);
+  public Set<CompactionInfo> findPotentialCompactions(int abortedThreshold, long abortedTimeThreshold)
+      throws MetaException {
+    return findPotentialCompactions(abortedThreshold, abortedTimeThreshold, -1);
   }
 
   @Override
   @RetrySemantics.ReadOnly
-  public Set<CompactionInfo> findPotentialCompactions(int abortedThreshold, long checkInterval) throws MetaException {
+  public Set<CompactionInfo> findPotentialCompactions(int abortedThreshold,
+      long abortedTimeThreshold, long checkInterval) throws MetaException {
     Connection dbConn = null;
     Set<CompactionInfo> response = new HashSet<>();
     Statement stmt = null;
@@ -75,7 +77,7 @@ class CompactionTxnHandler extends TxnHandler {
         dbConn = getDbConn(Connection.TRANSACTION_READ_COMMITTED);
         stmt = dbConn.createStatement();
         // Check for completed transactions
-        String s = "select distinct tc.ctc_database, tc.ctc_table, tc.ctc_partition " +
+        final String s = "select distinct tc.ctc_database, tc.ctc_table, tc.ctc_partition " +
           "from COMPLETED_TXN_COMPONENTS tc " + (checkInterval > 0 ?
           "left join ( " +
           "  select c1.* from COMPLETED_COMPACTIONS c1 " +
@@ -101,36 +103,48 @@ class CompactionTxnHandler extends TxnHandler {
         }
         rs.close();
 
-        // Check for aborted txns
-        s = "select tc_database, tc_table, tc_partition " +
-          "from TXNS, TXN_COMPONENTS " +
-          "where txn_id = tc_txnid and txn_state = '" + TXN_ABORTED + "' " +
-          "group by tc_database, tc_table, tc_partition " +
-          "having count(*) > " + abortedThreshold;
+        // Check for aborted txns: number of aborted txns past threshold and age of aborted txns
+        // past time threshold
+        boolean checkAbortedTimeThreshold = abortedTimeThreshold >= 0;
+        final String sCheckAborted = "SELECT \"TC_DATABASE\", \"TC_TABLE\", \"TC_PARTITION\","
+            + "MIN(\"TXN_STARTED\"), COUNT(*)"
+            + "FROM \"TXNS\", \"TXN_COMPONENTS\" "
+            + "WHERE \"TXN_ID\" = \"TC_TXNID\" AND \"TXN_STATE\" = '" + TXN_ABORTED + "' "
+            + "GROUP BY \"TC_DATABASE\", \"TC_TABLE\", \"TC_PARTITION\""
+            + (checkAbortedTimeThreshold ? "" : " HAVING COUNT(*) > " + abortedThreshold);
 
-        LOG.debug("Going to execute query <" + s + ">");
-        rs = stmt.executeQuery(s);
+        LOG.debug("Going to execute query <" + sCheckAborted + ">");
+        rs = stmt.executeQuery(sCheckAborted);
+        long systemTime = System.currentTimeMillis();
         while (rs.next()) {
-          CompactionInfo info = new CompactionInfo();
-          info.dbname = rs.getString(1);
-          info.tableName = rs.getString(2);
-          info.partName = rs.getString(3);
-          info.tooManyAborts = true;
-          response.add(info);
+          boolean pastTimeThreshold =
+              checkAbortedTimeThreshold && rs.getLong(4) + abortedTimeThreshold < systemTime;
+          int numAbortedTxns = rs.getInt(5);
+          if (numAbortedTxns > abortedThreshold || pastTimeThreshold) {
+            CompactionInfo info = new CompactionInfo();
+            info.dbname = rs.getString(1);
+            info.tableName = rs.getString(2);
+            info.partName = rs.getString(3);
+            info.tooManyAborts = numAbortedTxns > abortedThreshold;
+            info.hasOldAbort = pastTimeThreshold;
+            response.add(info);
+          }
         }
 
         LOG.debug("Going to rollback");
         dbConn.rollback();
       } catch (SQLException e) {
         LOG.error("Unable to connect to transaction database " + e.getMessage());
-        checkRetryable(dbConn, e, "findPotentialCompactions(maxAborted:" + abortedThreshold + ")");
+        checkRetryable(dbConn, e,
+            "findPotentialCompactions(maxAborted:" + abortedThreshold
+                + ", abortedTimeThreshold:" + abortedTimeThreshold + ")");
       } finally {
         close(rs, stmt, dbConn);
       }
       return response;
     }
     catch (RetryException e) {
-      return findPotentialCompactions(abortedThreshold, checkInterval);
+      return findPotentialCompactions(abortedThreshold, abortedTimeThreshold, checkInterval);
     }
   }
 
@@ -1124,5 +1138,3 @@ class CompactionTxnHandler extends TxnHandler {
     }
   }
 }
-
-

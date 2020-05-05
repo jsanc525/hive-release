@@ -21634,6 +21634,10 @@ class ShowCompactResponseElement {
    * @var int
    */
   public $id = null;
+  /**
+   * @var bool
+   */
+  public $hasoldabort = null;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -21690,6 +21694,10 @@ class ShowCompactResponseElement {
           'var' => 'id',
           'type' => TType::I64,
           ),
+        14 => array(
+          'var' => 'hasoldabort',
+          'type' => TType::BOOL,
+          ),
         );
     }
     if (is_array($vals)) {
@@ -21731,6 +21739,9 @@ class ShowCompactResponseElement {
       }
       if (isset($vals['id'])) {
         $this->id = $vals['id'];
+      }
+      if (isset($vals['hasoldabort'])) {
+        $this->hasoldabort = $vals['hasoldabort'];
       }
     }
   }
@@ -21845,6 +21856,13 @@ class ShowCompactResponseElement {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 14:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->hasoldabort);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -21921,6 +21939,11 @@ class ShowCompactResponseElement {
     if ($this->id !== null) {
       $xfer += $output->writeFieldBegin('id', TType::I64, 13);
       $xfer += $output->writeI64($this->id);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->hasoldabort !== null) {
+      $xfer += $output->writeFieldBegin('hasoldabort', TType::BOOL, 14);
+      $xfer += $output->writeBool($this->hasoldabort);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();
@@ -35794,5 +35817,3 @@ final class Constant extends \Thrift\Type\TConstant {
     return "hive.sql.";
   }
 }
-
-

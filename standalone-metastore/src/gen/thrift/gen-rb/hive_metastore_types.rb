@@ -5766,4 +5766,3 @@ class NoSuchLockException < ::Thrift::Exception
 
   ::Thrift::Struct.generate_accessors self
 end
-

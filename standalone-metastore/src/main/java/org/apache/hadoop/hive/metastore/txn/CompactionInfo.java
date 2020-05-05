@@ -40,8 +40,9 @@ public class CompactionInfo implements Comparable<CompactionInfo> {
   public String runAs;
   public String properties;
   public boolean tooManyAborts = false;
+  public boolean hasOldAbort = false;
   /**
-   * {@code 0} means it wasn't set (e.g. in case of upgrades, since ResultSet.getLong() will return 0 if field is NULL) 
+   * {@code 0} means it wasn't set (e.g. in case of upgrades, since ResultSet.getLong() will return 0 if field is NULL)
    * See {@link TxnStore#setCompactionHighestWriteId(CompactionInfo, long)} for precise definition.
    * See also {@link TxnUtils#createValidCompactWriteIdList(TableValidWriteIds)} and
    * {@link ValidCompactorWriteIdList#highWatermark}.
@@ -65,7 +66,7 @@ public class CompactionInfo implements Comparable<CompactionInfo> {
     this.state = state;
   }
   CompactionInfo() {}
-  
+
   public String getFullPartitionName() {
     if (fullPartitionName == null) {
       StringBuilder buf = new StringBuilder(dbname);
@@ -107,7 +108,8 @@ public class CompactionInfo implements Comparable<CompactionInfo> {
       "properties:" + properties + "," +
       "runAs:" + runAs + "," +
       "tooManyAborts:" + tooManyAborts + "," +
-      "highestWriteId:" + highestWriteId;
+      "highestWriteId:" + highestWriteId + "," +
+      "hasOldAbort:" + hasOldAbort;
   }
 
   /**
