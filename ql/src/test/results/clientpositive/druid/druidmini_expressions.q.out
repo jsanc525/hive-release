@@ -286,7 +286,6 @@ STAGE PLANS:
                   input format: org.apache.hadoop.hive.druid.io.DruidQueryBasedInputFormat
                   output format: org.apache.hadoop.hive.druid.io.DruidOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     EXTERNAL TRUE
                     bucket_count -1
                     bucketing_version 2
@@ -311,16 +310,12 @@ STAGE PLANS:
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.druid.serde.DruidSerDe
                     storage_handler org.apache.hadoop.hive.druid.DruidStorageHandler
-                    totalSize 0
-#### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.druid.serde.DruidSerDe
                 
                     input format: org.apache.hadoop.hive.druid.io.DruidQueryBasedInputFormat
                     output format: org.apache.hadoop.hive.druid.io.DruidOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                       EXTERNAL TRUE
-                      bucket_count -1
                       bucketing_version 2
                       column.name.delimiter ,
                       columns __time,cstring1,cstring2,cdouble,cfloat,ctinyint,csmallint,cint,cbigint,cboolean1,cboolean2
@@ -343,8 +338,6 @@ STAGE PLANS:
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.druid.serde.DruidSerDe
                       storage_handler org.apache.hadoop.hive.druid.DruidStorageHandler
-                      totalSize 0
-#### A masked pattern was here ####
                     serde: org.apache.hadoop.hive.druid.serde.DruidSerDe
                     name: default.druid_table_n0
                   name: default.druid_table_n0

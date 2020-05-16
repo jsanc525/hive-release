@@ -189,18 +189,11 @@ STAGE PLANS:
                     bucketing_version 2
                     column.name.delimiter ,
                     columns key,value
-                    columns.comments 
                     columns.types int:string
 #### A masked pattern was here ####
                     name default.srcbucket_mapjoin_n17
-                    numFiles 2
-                    numRows 0
-                    rawDataSize 0
-                    serialization.ddl struct srcbucket_mapjoin_n17 { i32 key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                    totalSize 2750
-#### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 
                     input format: org.apache.hadoop.mapred.TextInputFormat
@@ -215,14 +208,8 @@ STAGE PLANS:
                       columns.types int:string
 #### A masked pattern was here ####
                       name default.srcbucket_mapjoin_n17
-                      numFiles 2
-                      numRows 0
-                      rawDataSize 0
-                      serialization.ddl struct srcbucket_mapjoin_n17 { i32 key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                      totalSize 2750
-#### A masked pattern was here ####
                     serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                     name: default.srcbucket_mapjoin_n17
                   name: default.srcbucket_mapjoin_n17
@@ -267,18 +254,11 @@ STAGE PLANS:
                     bucketing_version 2
                     column.name.delimiter ,
                     columns key,value
-                    columns.comments 
                     columns.types int:string
 #### A masked pattern was here ####
                     name default.srcbucket_mapjoin_n17
-                    numFiles 2
-                    numRows 0
-                    rawDataSize 0
-                    serialization.ddl struct srcbucket_mapjoin_n17 { i32 key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                    totalSize 2750
-#### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 
                     input format: org.apache.hadoop.mapred.TextInputFormat
@@ -293,14 +273,8 @@ STAGE PLANS:
                       columns.types int:string
 #### A masked pattern was here ####
                       name default.srcbucket_mapjoin_n17
-                      numFiles 2
-                      numRows 0
-                      rawDataSize 0
-                      serialization.ddl struct srcbucket_mapjoin_n17 { i32 key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                      totalSize 2750
-#### A masked pattern was here ####
                     serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                     name: default.srcbucket_mapjoin_n17
                   name: default.srcbucket_mapjoin_n17
@@ -334,8 +308,6 @@ STAGE PLANS:
                         input format: org.apache.hadoop.mapred.TextInputFormat
                         output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                         properties:
-                          COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value1":"true","value2":"true"}}
-                          bucket_count -1
                           bucketing_version 2
                           column.name.delimiter ,
                           columns key,value1,value2
@@ -343,14 +315,8 @@ STAGE PLANS:
                           columns.types string:string:string
 #### A masked pattern was here ####
                           name default.bucketmapjoin_tmp_result_n8
-                          numFiles 0
-                          numRows 0
-                          rawDataSize 0
-                          serialization.ddl struct bucketmapjoin_tmp_result_n8 { string key, string value1, string value2}
                           serialization.format 1
                           serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                          totalSize 0
-#### A masked pattern was here ####
                         serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                         name: default.bucketmapjoin_tmp_result_n8
                     TotalFiles: 1
@@ -416,8 +382,6 @@ STAGE PLANS:
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
-                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value1":"true","value2":"true"}}
-                bucket_count -1
                 bucketing_version 2
                 column.name.delimiter ,
                 columns key,value1,value2
@@ -425,14 +389,8 @@ STAGE PLANS:
                 columns.types string:string:string
 #### A masked pattern was here ####
                 name default.bucketmapjoin_tmp_result_n8
-                numFiles 0
-                numRows 0
-                rawDataSize 0
-                serialization.ddl struct bucketmapjoin_tmp_result_n8 { string key, string value1, string value2}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                totalSize 0
-#### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.bucketmapjoin_tmp_result_n8
 
@@ -616,18 +574,11 @@ STAGE PLANS:
                     bucketing_version 2
                     column.name.delimiter ,
                     columns key,value
-                    columns.comments 
                     columns.types int:string
 #### A masked pattern was here ####
                     name default.srcbucket_mapjoin_n17
-                    numFiles 2
-                    numRows 0
-                    rawDataSize 0
-                    serialization.ddl struct srcbucket_mapjoin_n17 { i32 key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                    totalSize 2750
-#### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 
                     input format: org.apache.hadoop.mapred.TextInputFormat
@@ -642,14 +593,8 @@ STAGE PLANS:
                       columns.types int:string
 #### A masked pattern was here ####
                       name default.srcbucket_mapjoin_n17
-                      numFiles 2
-                      numRows 0
-                      rawDataSize 0
-                      serialization.ddl struct srcbucket_mapjoin_n17 { i32 key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                      totalSize 2750
-#### A masked pattern was here ####
                     serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                     name: default.srcbucket_mapjoin_n17
                   name: default.srcbucket_mapjoin_n17
@@ -694,18 +639,11 @@ STAGE PLANS:
                     bucketing_version 2
                     column.name.delimiter ,
                     columns key,value
-                    columns.comments 
                     columns.types int:string
 #### A masked pattern was here ####
                     name default.srcbucket_mapjoin_n17
-                    numFiles 2
-                    numRows 0
-                    rawDataSize 0
-                    serialization.ddl struct srcbucket_mapjoin_n17 { i32 key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                    totalSize 2750
-#### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 
                     input format: org.apache.hadoop.mapred.TextInputFormat
@@ -720,14 +658,8 @@ STAGE PLANS:
                       columns.types int:string
 #### A masked pattern was here ####
                       name default.srcbucket_mapjoin_n17
-                      numFiles 2
-                      numRows 0
-                      rawDataSize 0
-                      serialization.ddl struct srcbucket_mapjoin_n17 { i32 key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                      totalSize 2750
-#### A masked pattern was here ####
                     serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                     name: default.srcbucket_mapjoin_n17
                   name: default.srcbucket_mapjoin_n17
@@ -761,8 +693,6 @@ STAGE PLANS:
                         input format: org.apache.hadoop.mapred.TextInputFormat
                         output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                         properties:
-                          COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value1":"true","value2":"true"}}
-                          bucket_count -1
                           bucketing_version 2
                           column.name.delimiter ,
                           columns key,value1,value2
@@ -770,14 +700,8 @@ STAGE PLANS:
                           columns.types string:string:string
 #### A masked pattern was here ####
                           name default.bucketmapjoin_tmp_result_n8
-                          numFiles 1
-                          numRows 464
-                          rawDataSize 8519
-                          serialization.ddl struct bucketmapjoin_tmp_result_n8 { string key, string value1, string value2}
                           serialization.format 1
                           serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                          totalSize 8983
-#### A masked pattern was here ####
                         serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                         name: default.bucketmapjoin_tmp_result_n8
                     TotalFiles: 1
@@ -843,8 +767,6 @@ STAGE PLANS:
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
-                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value1":"true","value2":"true"}}
-                bucket_count -1
                 bucketing_version 2
                 column.name.delimiter ,
                 columns key,value1,value2
@@ -852,14 +774,8 @@ STAGE PLANS:
                 columns.types string:string:string
 #### A masked pattern was here ####
                 name default.bucketmapjoin_tmp_result_n8
-                numFiles 1
-                numRows 464
-                rawDataSize 8519
-                serialization.ddl struct bucketmapjoin_tmp_result_n8 { string key, string value1, string value2}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                totalSize 8983
-#### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.bucketmapjoin_tmp_result_n8
 

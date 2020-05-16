@@ -104,25 +104,17 @@ STAGE PLANS:
             partition values:
               ds 1
             properties:
-              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
               bucket_count 16
               bucket_field_name key
               column.name.delimiter ,
               columns key,value
-              columns.comments 
               columns.types int:string
 #### A masked pattern was here ####
               name default.test_table1_n1
-              numFiles 16
-              numRows 500
               partition_columns ds
               partition_columns.types string
-              rawDataSize 5312
-              serialization.ddl struct test_table1_n1 { i32 key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-              totalSize 5812
-#### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
               input format: org.apache.hadoop.mapred.TextInputFormat
@@ -140,10 +132,8 @@ STAGE PLANS:
                 name default.test_table1_n1
                 partition_columns ds
                 partition_columns.types string
-                serialization.ddl struct test_table1_n1 { i32 key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-#### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.test_table1_n1
             name: default.test_table1_n1
@@ -176,10 +166,8 @@ STAGE PLANS:
                   name default.test_table3_n1
                   partition_columns ds
                   partition_columns.types string
-                  serialization.ddl struct test_table3_n1 { i32 key, string value}
                   serialization.format 1
                   serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-#### A masked pattern was here ####
                 serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 name: default.test_table3_n1
             TotalFiles: 16
@@ -234,10 +222,8 @@ STAGE PLANS:
                 name default.test_table3_n1
                 partition_columns ds
                 partition_columns.types string
-                serialization.ddl struct test_table3_n1 { i32 key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-#### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.test_table3_n1
 
@@ -1953,25 +1939,17 @@ STAGE PLANS:
             partition values:
               ds 1
             properties:
-              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
               bucket_count 16
               bucket_field_name key
               column.name.delimiter ,
               columns key,value
-              columns.comments 
               columns.types int:string
 #### A masked pattern was here ####
               name default.test_table1_n1
-              numFiles 16
-              numRows 500
               partition_columns ds
               partition_columns.types string
-              rawDataSize 5312
-              serialization.ddl struct test_table1_n1 { i32 key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-              totalSize 5812
-#### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
               input format: org.apache.hadoop.mapred.TextInputFormat
@@ -1989,10 +1967,8 @@ STAGE PLANS:
                 name default.test_table1_n1
                 partition_columns ds
                 partition_columns.types string
-                serialization.ddl struct test_table1_n1 { i32 key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-#### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.test_table1_n1
             name: default.test_table1_n1
@@ -2070,25 +2046,17 @@ STAGE PLANS:
             partition values:
               ds 1
             properties:
-              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
               bucket_count 16
               bucket_field_name key
               column.name.delimiter ,
               columns key,value
-              columns.comments 
               columns.types int:string
 #### A masked pattern was here ####
               name default.test_table3_n1
-              numFiles 16
-              numRows 1028
               partition_columns ds
               partition_columns.types string
-              rawDataSize 10968
-              serialization.ddl struct test_table3_n1 { i32 key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-              totalSize 11996
-#### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
               input format: org.apache.hadoop.mapred.TextInputFormat
@@ -2105,10 +2073,8 @@ STAGE PLANS:
                 name default.test_table3_n1
                 partition_columns ds
                 partition_columns.types string
-                serialization.ddl struct test_table3_n1 { i32 key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-#### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.test_table3_n1
             name: default.test_table3_n1
