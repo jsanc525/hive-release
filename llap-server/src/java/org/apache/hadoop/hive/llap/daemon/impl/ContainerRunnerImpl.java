@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.common.UgiFactory;
@@ -271,15 +272,11 @@ public class ContainerRunnerImpl extends CompositeService implements ContainerRu
           vertex.getVertexName(), request.getFragmentNumber(), request.getAttemptNumber(),
           vertex.getUser(), vertex, jobToken, fragmentIdString, tokenInfo, amNodeId);
 
-      String[] localDirs = fragmentInfo.getLocalDirs();
-      Preconditions.checkNotNull(localDirs);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Dirs are: " + Arrays.toString(localDirs));
-      }
       // May need to setup localDir for re-localization, which is usually setup as Environment.PWD.
       // Used for re-localization, to add the user specified configuration (conf_pb_binary_stream)
 
-      Configuration callableConf = new Configuration(getConfig());
+      // Lazy create conf object, as it gets expensive in this codepath.
+      Supplier<Configuration> callableConf = () -> new Configuration(getConfig());
       UserGroupInformation fsTaskUgi = fsUgiFactory == null ? null : fsUgiFactory.createUgi();
       boolean isGuaranteed = request.hasIsGuaranteed() && request.getIsGuaranteed();
       // TODO: ideally we'd register TezCounters here, but it seems impossible before registerTask.
