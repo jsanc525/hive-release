@@ -22,9 +22,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.common.UgiFactory;
 import org.apache.hadoop.hive.llap.DaemonId;
@@ -103,6 +112,7 @@ public class ContainerRunnerImpl extends CompositeService implements ContainerRu
   private static final Logger LOG = LoggerFactory.getLogger(ContainerRunnerImpl.class);
   public static final String THREAD_NAME_FORMAT_PREFIX = "ContainerExecutor ";
 
+  private UgiPool ugiPool;
   private final AMReporter amReporter;
   private final QueryTracker queryTracker;
   private final Scheduler<TaskRunnerCallable> executorService;
@@ -130,6 +140,7 @@ public class ContainerRunnerImpl extends CompositeService implements ContainerRu
     super("ContainerRunnerImpl");
     Preconditions.checkState(numExecutors > 0,
         "Invalid number of executors: " + numExecutors + ". Must be > 0");
+    this.ugiPool = new UgiPool(numExecutors);
     this.localAddress = localAddress;
     this.localShufflePort = localShufflePort;
     this.amReporter = amReporter;
@@ -269,7 +280,7 @@ public class ContainerRunnerImpl extends CompositeService implements ContainerRu
           queryIdentifier, qIdProto.getApplicationIdString(), dagId,
           vertex.getDagName(), vertex.getHiveQueryId(), dagIdentifier,
           vertex.getVertexName(), request.getFragmentNumber(), request.getAttemptNumber(),
-          vertex.getUser(), vertex, jobToken, fragmentIdString, tokenInfo, amNodeId);
+          vertex.getUser(), vertex, jobToken, fragmentIdString, tokenInfo, amNodeId, ugiPool);
 
       String[] localDirs = fragmentInfo.getLocalDirs();
       Preconditions.checkNotNull(localDirs);
@@ -574,6 +585,74 @@ public class ContainerRunnerImpl extends CompositeService implements ContainerRu
 
   public int getNumActive() {
     return executorService.getNumActiveForReporting();
+  }
+
+  static class UgiPool {
+    // Pool of UGI for a given appTokenIdentifier (AM). Expires after 3 hours of last access
+    private final Cache<String, BlockingQueue<UserGroupInformation>> ugiPool =
+        CacheBuilder
+            .newBuilder().removalListener(new RemovalListener<String, BlockingQueue<UserGroupInformation>>() {
+          @Override
+          public void onRemoval(
+              RemovalNotification<String, BlockingQueue<UserGroupInformation>> notification) {
+            LOG.debug("Removing " + notification.getValue()  + " from pool.Pool size: " + ugiPool.size());
+          }
+        }).expireAfterAccess(60 * 3, TimeUnit.MINUTES).build();
+
+    private final int numExecutors;
+
+    public UgiPool(int numExecutors) {
+      this.numExecutors = numExecutors;
+    }
+
+    /**
+     * Get UGI for a given AM and appToken. It is possible to have more than one
+     * UGI per AM.
+     *
+     * @param appTokenIdentifier
+     * @param appToken
+     * @return UserGroupInformation
+     * @throws ExecutionException
+     */
+    public UserGroupInformation getUmbilicalUgi(String appTokenIdentifier,
+        Token<JobTokenIdentifier> appToken) throws ExecutionException {
+      BlockingQueue<UserGroupInformation> queue = ugiPool.get(appTokenIdentifier,
+          new Callable<BlockingQueue<UserGroupInformation>>() {
+            @Override
+            public BlockingQueue<UserGroupInformation> call() throws Exception {
+              UserGroupInformation ugi = UserGroupInformation.createRemoteUser(appTokenIdentifier);
+              ugi.addToken(appToken);
+              BlockingQueue<UserGroupInformation> queue = new LinkedBlockingQueue<>(numExecutors);
+              queue.add(ugi);
+              LOG.debug("Added new ugi pool for " + appTokenIdentifier + ", Pool Size: ");
+              return queue;
+            }
+          });
+
+      //Get UGI from the queue. Possible to maintain more than one UGI per AM. Ref: HIVE-16634
+      UserGroupInformation ugi = queue.poll();
+      if (ugi == null) {
+        ugi = UserGroupInformation.createRemoteUser(appTokenIdentifier);
+        ugi.addToken(appToken);
+        queue.offer(ugi);
+        LOG.info("Added new ugi for " + appTokenIdentifier + ". Pool size:" + ugiPool.size());
+      }
+      return ugi;
+    }
+
+    /**
+     * Return UGI back to pool
+     *
+     * @param appTokenIdentifier AM identifier
+     * @param ugi
+     */
+    public void returnUmbilicalUgi(String appTokenIdentifier, UserGroupInformation ugi) {
+      BlockingQueue<UserGroupInformation> ugiQueue = ugiPool.getIfPresent(appTokenIdentifier);
+      // Entry could have been removed due to expiry. Check before returning back to queue
+      if (ugiQueue != null) {
+        ugiQueue.offer(ugi);
+      }
+    }
   }
 
 }
