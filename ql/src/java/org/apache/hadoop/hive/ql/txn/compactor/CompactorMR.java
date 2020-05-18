@@ -99,6 +99,7 @@ import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.TaskAttemptContext;
 import org.apache.hadoop.mapred.lib.NullOutputFormat;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hive.common.util.HiveStringUtils;
 import org.apache.hive.common.util.Ref;
@@ -570,6 +571,9 @@ public class CompactorMR {
     job.set(DIRS_TO_SEARCH, dirsToSearch.toString());
     job.setLong(MIN_TXN, minTxn);
     job.setLong(MAX_TXN, maxTxn);
+    // HIVE-23354 enforces that MR speculative execution is disabled
+    job.setBoolean(MRJobConfig.REDUCE_SPECULATIVE, false);
+    job.setBoolean(MRJobConfig.MAP_SPECULATIVE, false);
 
     if (hiveConf.getBoolVar(HiveConf.ConfVars.HIVE_IN_TEST)) {
       mrJob = job;
