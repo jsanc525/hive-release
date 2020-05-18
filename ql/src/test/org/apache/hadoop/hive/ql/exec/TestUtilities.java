@@ -85,6 +85,7 @@ import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.RecordReader;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -216,6 +217,9 @@ public class TestUtilities {
     DynamicPartitionCtx dpCtx = getDynamicPartitionCtx(dPEnabled);
     Path tempDirPath = setupTempDirWithSingleOutputFile(hconf);
     FileSinkDesc conf = getFileSinkDesc(tempDirPath);
+    // HIVE-23354 enforces that MR speculative execution is disabled
+    hconf.setBoolean(MRJobConfig.MAP_SPECULATIVE, false);
+    hconf.setBoolean(MRJobConfig.REDUCE_SPECULATIVE, false);
 
     List<Path> paths = Utilities.removeTempOrDuplicateFiles(localFs, tempDirPath, dpCtx, conf, hconf, false);
 
