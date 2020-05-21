@@ -24,23 +24,14 @@ import java.math.BigDecimal;
 import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.Timestamp;
 import java.util.List;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.hive.llap.FieldDesc;
 import org.apache.hadoop.hive.llap.Row;
 import org.apache.hadoop.io.NullWritable;
 import org.junit.BeforeClass;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
-import org.apache.hadoop.hive.llap.LlapBaseInputFormat;
-import java.util.stream.IntStream;
-import java.util.Iterator;
-import com.google.common.collect.Iterables;
-import org.apache.hadoop.mapred.InputSplit;
-import java.sql.Statement;
-import java.util.ArrayList;
 
 import org.junit.AfterClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -51,11 +42,9 @@ import org.apache.hadoop.hive.llap.LlapArrowRowInputFormat;
 import org.apache.hive.jdbc.miniHS2.MiniHS2;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
-import java.util.concurrent.Callable;
 
 /**
  * TestJdbcWithMiniLlap for Arrow format
@@ -356,7 +345,7 @@ public class TestJdbcWithMiniLlapArrow extends BaseJdbcWithMiniLlap {
         count++;
       }
     }
-
+    
     tExecute.join();
     stmt.close();
     con2.close();
@@ -366,87 +355,5 @@ public class TestJdbcWithMiniLlapArrow extends BaseJdbcWithMiniLlap {
     assertNull("tCancel", tKillHolder.throwable);
   }
 
-  @Test
-  public void testConcurrentAddAndCloseAndCloseAllConnections() throws Exception {
-    createTestTable("testtab1");
-
-    String url = miniHS2.getJdbcURL();
-    String user = System.getProperty("user.name");
-    String pwd = user;
-
-    InputFormat<NullWritable, Row> inputFormat = getInputFormat();
-
-    // Get splits
-    JobConf job = new JobConf(conf);
-    job.set(LlapBaseInputFormat.URL_KEY, url);
-    job.set(LlapBaseInputFormat.USER_KEY, user);
-    job.set(LlapBaseInputFormat.PWD_KEY, pwd);
-    job.set(LlapBaseInputFormat.QUERY_KEY, "select * from testtab1");
-
-    final String[] handleIds = IntStream.range(0, 20).boxed().map(i -> "handleId-" + i).toArray(String[]::new);
-
-    final ExceptionHolder exceptionHolder = new ExceptionHolder();
-
-    // addConnThread thread will keep adding connections
-    // closeConnThread thread tries close connection(s) associated to handleIds, one at a time
-    // closeAllConnThread thread tries to close All at once.
-
-    final int numIterations = 100;
-    final Iterator<String> addConnIterator = Iterables.cycle(handleIds).iterator();
-    Thread addConnThread = new Thread(() -> executeNTimes(() -> {
-      String handleId = addConnIterator.next();
-      job.set(LlapBaseInputFormat.HANDLE_ID, handleId);
-      InputSplit[] splits = inputFormat.getSplits(job, 1);
-      assertTrue(splits.length > 0);
-      return null;
-    }, numIterations, 1, exceptionHolder));
-
-    final Iterator<String> removeConnIterator = Iterables.cycle(handleIds).iterator();
-    Thread closeConnThread = new Thread(() -> executeNTimes(() -> {
-      String handleId = removeConnIterator.next();
-      LlapBaseInputFormat.close(handleId);
-      return null;
-    }, numIterations, 2, exceptionHolder));
-
-    Thread closeAllConnThread = new Thread(() -> executeNTimes(() -> {
-      LlapBaseInputFormat.closeAll();
-      return null;
-    }, numIterations, 5, exceptionHolder));
-
-    addConnThread.start();
-    closeConnThread.start();
-    closeAllConnThread.start();
-
-    closeAllConnThread.join();
-    closeConnThread.join();
-    addConnThread.join();
-
-    Throwable throwable = exceptionHolder.throwable;
-    assertNull("Something went wrong while testAddCloseCloseAllConnections" + throwable, throwable);
-
-  }
-
-  @Ignore
-  public void testMultipleBatchesOfComplexTypes() {
-    // ToDo: FixMe
-  }
-
-  private void executeNTimes(Callable action, int noOfTimes, long intervalMillis, ExceptionHolder exceptionHolder) {
-    for (int i = 0; i < noOfTimes; i++) {
-      try {
-        action.call();
-        Thread.sleep(intervalMillis);
-      } catch (Exception e) {
-        // populate first exception only
-        if (exceptionHolder.throwable == null) {
-          synchronized (this) {
-            if (exceptionHolder.throwable == null) {
-              exceptionHolder.throwable = e;
-            }
-          }
-        }
-      }
-    }
-  }
-
 }
+

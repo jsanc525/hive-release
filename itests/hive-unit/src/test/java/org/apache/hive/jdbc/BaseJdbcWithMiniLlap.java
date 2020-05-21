@@ -161,7 +161,7 @@ public abstract class BaseJdbcWithMiniLlap {
     }
   }
 
-  public static void createTestTable(String tableName) throws Exception {
+  private void createTestTable(String tableName) throws Exception {
     createTestTable(hs2Conn, null, tableName, kvDataFilePath.toString());
   }
 
@@ -624,3 +624,4 @@ public abstract class BaseJdbcWithMiniLlap {
     Throwable throwable;
   }
 }
+

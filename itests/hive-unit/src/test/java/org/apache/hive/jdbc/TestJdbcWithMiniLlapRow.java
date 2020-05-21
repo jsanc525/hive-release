@@ -47,9 +47,5 @@ public class TestJdbcWithMiniLlapRow extends BaseJdbcWithMiniLlap {
     return new LlapRowInputFormat();
   }
 
-  @Ignore
-  public void testMultipleBatchesOfComplexTypes() {
-    // ToDo: FixMe
-  }
-
 }
+
