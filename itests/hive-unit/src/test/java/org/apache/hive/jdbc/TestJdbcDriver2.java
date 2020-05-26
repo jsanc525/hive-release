@@ -203,7 +203,7 @@ public class TestJdbcDriver2 {
         "org.apache.hadoop.hive.ql.security.authorization.DefaultHiveAuthorizationProvider");
     System.setProperty(ConfVars.HIVE_SERVER2_PARALLEL_OPS_IN_SESSION.varname, "false");
     System.setProperty(ConfVars.REPLCMENABLED.varname, "true");
-    System.setProperty(ConfVars.REPLCMDIR.varname, "cmroot");
+    System.setProperty(ConfVars.REPLCMDIR.varname, "/tmp/cmroot");
     con = getConnection(defaultDbName + ";create=true");
     Statement stmt = con.createStatement();
     assertNotNull("Statement is null", stmt);
