@@ -622,7 +622,6 @@ class EncodedReaderImpl implements EncodedReader {
         }
         dataReader.readFileData(toRead.next, stripeOffset,
             cacheWrapper.getAllocator().isDirectAlloc());
-        toRelease = new IdentityHashMap<>();
         DiskRangeList drl = toRead.next;
         while (drl != null) {
           if (drl instanceof BufferChunk) {
