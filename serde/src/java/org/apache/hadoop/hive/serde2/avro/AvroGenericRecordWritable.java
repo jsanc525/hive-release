@@ -24,6 +24,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.rmi.server.UID;
+import java.time.ZoneId;
 
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileStream;

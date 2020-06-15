@@ -28,6 +28,7 @@ import org.apache.parquet.column.ColumnDescriptor;
 import org.apache.parquet.column.page.PageReader;
 import org.apache.parquet.schema.Type;
 import java.io.IOException;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,8 +48,8 @@ public class VectorizedListColumnReader extends BaseVectorizedColumnReader {
   boolean isFirstRow = true;
 
   public VectorizedListColumnReader(ColumnDescriptor descriptor, PageReader pageReader,
-      boolean skipTimestampConversion, ZoneId writerTimezone, boolean skipProlepticConversion,
-      Type type, TypeInfo hiveType) throws IOException {
+                                    boolean skipTimestampConversion, ZoneId writerTimezone, boolean skipProlepticConversion,
+                                    Type type, TypeInfo hiveType) throws IOException {
     super(descriptor, pageReader, skipTimestampConversion, writerTimezone, skipProlepticConversion, type, hiveType);
   }
 

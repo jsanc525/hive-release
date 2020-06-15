@@ -31,6 +31,7 @@ import org.apache.parquet.schema.DecimalMetadata;
 import org.apache.parquet.schema.Type;
 
 import java.io.IOException;
+import java.time.ZoneId;
 
 import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.INT32;
 import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.INT64;

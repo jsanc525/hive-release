@@ -13,6 +13,7 @@
  */
 package org.apache.hadoop.hive.ql.io.parquet.read;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;

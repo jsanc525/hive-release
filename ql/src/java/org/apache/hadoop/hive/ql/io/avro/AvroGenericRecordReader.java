@@ -20,6 +20,7 @@ package org.apache.hadoop.hive.ql.io.avro;
 
 import java.io.IOException;
 import java.rmi.server.UID;
+import java.time.ZoneId;
 import java.util.Map;
 import java.util.Properties;
 
