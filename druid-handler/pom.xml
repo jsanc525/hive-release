@@ -192,7 +192,7 @@
       <version>${druid.version}</version>
     </dependency>
     <dependency>
-        <groupId>org.apache.druid.extensions</groupId>
+        <groupId>io.druid.exetensions</groupId>
         <artifactId>druid-bloom-filter</artifactId>
         <version>${druid.version}</version>
     </dependency>
