@@ -14,6 +14,8 @@
 package org.apache.hadoop.hive.ql.io.parquet.write;
 
 import java.util.HashMap;
+import java.util.Map;
+import java.util.TimeZone;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;

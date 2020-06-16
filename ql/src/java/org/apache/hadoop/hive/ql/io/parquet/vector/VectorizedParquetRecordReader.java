@@ -126,6 +126,7 @@ public class VectorizedParquetRecordReader extends ParquetRecordReaderBase
    * rows of all the row groups.
    */
   protected long totalRowCount = 0;
+  private ZoneId writerTimezone;
 
   public VectorizedParquetRecordReader(
       org.apache.hadoop.mapred.InputSplit oldInputSplit, JobConf conf) {

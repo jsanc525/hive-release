@@ -13,6 +13,7 @@
  */
 package org.apache.hadoop.hive.ql.io.parquet.read;
 
+import java.time.DateTimeException;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +29,7 @@ import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.ql.io.IOConstants;
 import org.apache.hadoop.hive.ql.io.parquet.convert.DataWritableRecordConverter;
 import org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe;
+import org.apache.hadoop.hive.ql.io.parquet.write.DataWritableWriteSupport;
 import org.apache.hadoop.hive.ql.metadata.VirtualColumn;
 import org.apache.hadoop.hive.ql.optimizer.FieldNode;
 import org.apache.hadoop.hive.ql.optimizer.NestedColumnFieldPruningUtils;

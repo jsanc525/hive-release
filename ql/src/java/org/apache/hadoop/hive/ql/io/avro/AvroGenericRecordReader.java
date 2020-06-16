@@ -19,7 +19,9 @@ package org.apache.hadoop.hive.ql.io.avro;
 
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.rmi.server.UID;
+import java.time.DateTimeException;
 import java.time.ZoneId;
 import java.util.Map;
 import java.util.Properties;
@@ -30,6 +32,7 @@ import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapred.FsInput;
+import org.apache.hadoop.hive.serde2.avro.AvroSerDe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.fs.Path;

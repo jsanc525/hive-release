@@ -24,6 +24,7 @@ import static org.apache.avro.mapred.AvroOutputFormat.DEFLATE_LEVEL_KEY;
 
 import java.io.IOException;
 import java.util.Properties;
+import java.util.TimeZone;
 
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
