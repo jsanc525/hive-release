@@ -1128,7 +1128,7 @@ public final class DruidStorageHandlerUtils {
           delegates.add(filter);
         }
       }
-      if(delegates != null && !delegates.isEmpty()) {
+      if(!delegates.isEmpty()) {
         return new AndDimFilter(delegates);
       }
     }
@@ -1143,7 +1143,7 @@ public final class DruidStorageHandlerUtils {
           delegates.add(filter);
         }
       }
-      if(delegates != null) {
+      if(!delegates.isEmpty()) {
         return new OrDimFilter(delegates);
       }
     } else if(GenericUDFBetween.class == genericUDFClass) {
