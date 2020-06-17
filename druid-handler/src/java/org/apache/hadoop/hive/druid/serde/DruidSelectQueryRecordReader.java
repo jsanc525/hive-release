@@ -58,7 +58,7 @@ public class DruidSelectQueryRecordReader
       return true;
     }
     if (getQueryResultsIterator().hasNext()) {
-      Result<SelectResultValue> current = getQueryResultsIterator().next();
+      current = getQueryResultsIterator().next();
       values = current.getValue().getEvents().iterator();
       return nextKeyValue();
     }
@@ -93,7 +93,8 @@ public class DruidSelectQueryRecordReader
     return false;
   }
 
-  @Override public float getProgress() {
+  @Override
+  public float getProgress() {
     return getQueryResultsIterator().hasNext() || values.hasNext() ? 0 : 1;
   }
 

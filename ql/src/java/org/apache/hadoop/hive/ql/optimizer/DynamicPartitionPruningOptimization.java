@@ -272,7 +272,7 @@ public class DynamicPartitionPruningOptimization implements NodeProcessor {
         }
       } else {
         ExprNodeDesc constNode =
-            new ExprNodeConstantDesc(ctx.parent.getTypeInfo(), true);
+                new ExprNodeConstantDesc(ctx.parent.getTypeInfo(), true);
         replaceExprNode(ctx, desc, constNode);
       }
     }
