@@ -106,11 +106,6 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     location hdfs://### HDFS PATH ###
                     name default.acidtbldefault
-                    numFiles 17
-                    numRows 9174
-                    rawDataSize 0
-                    serialization.ddl struct acidtbldefault { i32 a}
-                    serialization.format 1
                     serialization.lib org.apache.hadoop.hive.ql.io.orc.OrcSerde
                     totalSize 34795
                     transactional true
@@ -132,11 +127,6 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       location hdfs://### HDFS PATH ###
                       name default.acidtbldefault
-                      numFiles 17
-                      numRows 9174
-                      rawDataSize 0
-                      serialization.ddl struct acidtbldefault { i32 a}
-                      serialization.format 1
                       serialization.lib org.apache.hadoop.hive.ql.io.orc.OrcSerde
                       totalSize 34795
                       transactional true

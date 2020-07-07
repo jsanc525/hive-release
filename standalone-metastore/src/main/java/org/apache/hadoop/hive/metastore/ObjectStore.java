@@ -2065,10 +2065,12 @@ public class ObjectStore implements RawStore, Configurable {
         tableType = TableType.MANAGED_TABLE.toString();
       }
     }
+    Map<String, String> parameters = convertMap(mtbl.getParameters());
+    boolean isTxnTable = TxnUtils.isTransactionalTable(parameters);
     final Table t = new Table(mtbl.getTableName(), mtbl.getDatabase().getName(), mtbl
         .getOwner(), mtbl.getCreateTime(), mtbl.getLastAccessTime(), mtbl
-        .getRetention(), convertToStorageDescriptor(mtbl.getSd()),
-        convertToFieldSchemas(mtbl.getPartitionKeys()), convertMap(mtbl.getParameters()),
+        .getRetention(), convertToStorageDescriptor(mtbl.getSd(), false, isTxnTable),
+        convertToFieldSchemas(mtbl.getPartitionKeys()), parameters,
         mtbl.getViewOriginalText(), mtbl.getViewExpandedText(), tableType);
 
     if (Strings.isNullOrEmpty(mtbl.getOwnerType())) {
@@ -2218,32 +2220,35 @@ public class ObjectStore implements RawStore, Configurable {
     return new MColumnDescriptor(cols);
   }
 
-  // MSD and SD should be same objects. Not sure how to make then same right now
-  // MSerdeInfo *& SerdeInfo should be same as well
   private StorageDescriptor convertToStorageDescriptor(
       MStorageDescriptor msd,
-      boolean noFS) throws MetaException {
+      boolean noFS, boolean isTxnTable) throws MetaException {
     if (msd == null) {
       return null;
     }
     List<MFieldSchema> mFieldSchemas = msd.getCD() == null ? null : msd.getCD().getCols();
+    List<Order> orderList = (isTxnTable) ? Collections.emptyList() : convertToOrders(msd.getSortCols());
+    List<String> bucList = convertList(msd.getBucketCols());
+    SkewedInfo skewedInfo = null;
 
+    Map<String, String> sdParams = isTxnTable ? Collections.emptyMap() : convertMap(msd.getParameters());
     StorageDescriptor sd = new StorageDescriptor(noFS ? null : convertToFieldSchemas(mFieldSchemas),
         msd.getLocation(), msd.getInputFormat(), msd.getOutputFormat(), msd
-        .isCompressed(), msd.getNumBuckets(), convertToSerDeInfo(msd
-        .getSerDeInfo()), convertList(msd.getBucketCols()), convertToOrders(msd
-        .getSortCols()), convertMap(msd.getParameters()));
-    SkewedInfo skewedInfo = new SkewedInfo(convertList(msd.getSkewedColNames()),
-        convertToSkewedValues(msd.getSkewedColValues()),
-        covertToSkewedMap(msd.getSkewedColValueLocationMaps()));
+        .isCompressed(), msd.getNumBuckets(),
+        (!isTxnTable) ? convertToSerDeInfo(msd.getSerDeInfo())
+            : new SerDeInfo(msd.getSerDeInfo().getName(), msd.getSerDeInfo().getSerializationLib(), Collections.emptyMap()),
+        bucList , orderList, sdParams);
+    if (!isTxnTable) {
+      skewedInfo = new SkewedInfo(convertList(msd.getSkewedColNames()),
+          convertToSkewedValues(msd.getSkewedColValues()),
+          covertToSkewedMap(msd.getSkewedColValueLocationMaps()));
+    } else {
+      skewedInfo = new SkewedInfo(Collections.emptyList(), Collections.emptyList(),
+          Collections.emptyMap());
+    }
     sd.setSkewedInfo(skewedInfo);
     sd.setStoredAsSubDirectories(msd.isStoredAsSubDirectories());
     return sd;
-  }
-
-  private StorageDescriptor convertToStorageDescriptor(MStorageDescriptor msd)
-      throws MetaException {
-    return convertToStorageDescriptor(msd, false);
   }
 
   /**
@@ -2582,7 +2587,7 @@ public class ObjectStore implements RawStore, Configurable {
     openTransaction();
     MTable table = this.getMTable(catName, dbName, tableName);
     MPartition mpart = getMPartition(catName, dbName, tableName, part_vals);
-    Partition part = convertToPart(mpart);
+    Partition part = convertToPart(mpart, false);
     commitTransaction();
     if(part == null) {
       throw new NoSuchObjectException("partition values="
@@ -2714,27 +2719,29 @@ public class ObjectStore implements RawStore, Configurable {
     return mpart;
   }
 
-  private Partition convertToPart(MPartition mpart) throws MetaException {
+  private Partition convertToPart(MPartition mpart, boolean isTxnTable) throws MetaException {
     if (mpart == null) {
       return null;
     }
+    Map<String,String> params = convertMap(mpart.getParameters());
     Partition p = new Partition(convertList(mpart.getValues()), mpart.getTable().getDatabase()
         .getName(), mpart.getTable().getTableName(), mpart.getCreateTime(),
-        mpart.getLastAccessTime(), convertToStorageDescriptor(mpart.getSd()),
-        convertMap(mpart.getParameters()));
+        mpart.getLastAccessTime(), convertToStorageDescriptor(mpart.getSd(), false, isTxnTable),
+        params);
     p.setCatName(mpart.getTable().getDatabase().getCatalogName());
     p.setWriteId(mpart.getWriteId());
     return p;
   }
 
-  private Partition convertToPart(String catName, String dbName, String tblName, MPartition mpart)
+  private Partition convertToPart(String catName, String dbName, String tblName, MPartition mpart, boolean isTxnTable)
       throws MetaException {
     if (mpart == null) {
       return null;
     }
+    Map<String,String> params = convertMap(mpart.getParameters());
     Partition p = new Partition(convertList(mpart.getValues()), dbName, tblName,
         mpart.getCreateTime(), mpart.getLastAccessTime(),
-        convertToStorageDescriptor(mpart.getSd(), false), convertMap(mpart.getParameters()));
+        convertToStorageDescriptor(mpart.getSd(), false, isTxnTable), params);
     p.setCatName(catName);
     p.setWriteId(mpart.getWriteId());
     return p;
@@ -2904,7 +2911,7 @@ public class ObjectStore implements RawStore, Configurable {
       if (CollectionUtils.isNotEmpty(mparts)) {
         for (MPartition mpart : mparts) {
           MTable mtbl = mpart.getTable();
-          Partition part = convertToPart(mpart);
+          Partition part = convertToPart(mpart, false);
           parts.add(part);
 
           if ("TRUE".equalsIgnoreCase(mtbl.getParameters().get("PARTITION_LEVEL_PRIVILEGE"))) {
@@ -2938,7 +2945,7 @@ public class ObjectStore implements RawStore, Configurable {
       }
       Partition part = null;
       MTable mtbl = mpart.getTable();
-      part = convertToPart(mpart);
+      part = convertToPart(mpart, false);
       if ("TRUE".equalsIgnoreCase(mtbl.getParameters().get("PARTITION_LEVEL_PRIVILEGE"))) {
         String partName = Warehouse.makePartName(this.convertToFieldSchemas(mtbl
             .getPartitionKeys()), partVals);
@@ -2969,17 +2976,18 @@ public class ObjectStore implements RawStore, Configurable {
       dest = new ArrayList<>(src.size());
     }
     for (MPartition mp : src) {
-      dest.add(convertToPart(mp));
+      dest.add(convertToPart(mp, false));
       Deadline.checkTimeout();
     }
     return dest;
   }
 
-  private List<Partition> convertToParts(String catName, String dbName, String tblName, List<MPartition> mparts)
+  private List<Partition> convertToParts(String catName, String dbName, String tblName,
+      List<MPartition> mparts, boolean isTxnTable)
       throws MetaException {
     List<Partition> parts = new ArrayList<>(mparts.size());
     for (MPartition mp : mparts) {
-      parts.add(convertToPart(catName, dbName, tblName, mp));
+      parts.add(convertToPart(catName, dbName, tblName, mp, isTxnTable));
       Deadline.checkTimeout();
     }
     return parts;
@@ -3338,7 +3346,7 @@ public class ObjectStore implements RawStore, Configurable {
           part_vals, max_parts, null, queryWrapper);
       MTable mtbl = getMTable(catName, db_name, tbl_name);
       for (Object o : parts) {
-        Partition part = convertToPart((MPartition) o);
+        Partition part = convertToPart((MPartition) o, false);
         //set auth privileges
         if (null != userName && null != groupNames &&
             "TRUE".equalsIgnoreCase(mtbl.getParameters().get("PARTITION_LEVEL_PRIVILEGE"))) {
@@ -3426,7 +3434,7 @@ public class ObjectStore implements RawStore, Configurable {
       @Override
       protected List<Partition> getJdoResult(
           GetHelper<List<Partition>> ctx) throws MetaException, NoSuchObjectException {
-        return getPartitionsViaOrmFilter(catName, dbName, tblName, partNames);
+        return getPartitionsViaOrmFilter(catName, dbName, tblName, partNames, false);
       }
     }.run(false);
   }
@@ -3446,6 +3454,8 @@ public class ObjectStore implements RawStore, Configurable {
     final ExpressionTree exprTree = PartFilterExprUtil.makeExpressionTree(expressionProxy, expr,
                                                     getDefaultPartitionName(defaultPartitionName));
     final AtomicBoolean hasUnknownPartitions = new AtomicBoolean(false);
+    MTable mTable = ensureGetMTable(catName, dbName, tblName);
+    boolean isTxnTbl = TxnUtils.isTransactionalTable(convertMap(mTable.getParameters()));
     result.addAll(new GetListHelper<Partition>(catName, dbName, tblName, allowSql, allowJdo) {
       @Override
       protected List<Partition> getSqlResult(GetHelper<List<Partition>> ctx) throws MetaException {
@@ -3454,7 +3464,7 @@ public class ObjectStore implements RawStore, Configurable {
         if (exprTree != null) {
           SqlFilterForPushdown filter = new SqlFilterForPushdown();
           if (directSql.generateSqlFilterForPushdown(ctx.getTable(), exprTree, defaultPartitionName, filter)) {
-            return directSql.getPartitionsViaSqlFilter(filter, null);
+            return directSql.getPartitionsViaSqlFilter(filter, null, isTxnTbl);
           }
         }
         // We couldn't do SQL filter pushdown. Get names via normal means.
@@ -3477,7 +3487,7 @@ public class ObjectStore implements RawStore, Configurable {
           List<String> partNames = new ArrayList<>();
           hasUnknownPartitions.set(getPartitionNamesPrunedByExprNoTxn(
               ctx.getTable(), expr, defaultPartitionName, maxParts, partNames));
-          result = getPartitionsViaOrmFilter(catName, dbName, tblName, partNames);
+          result = getPartitionsViaOrmFilter(catName, dbName, tblName, partNames, isTxnTbl);
         }
         return result;
       }
@@ -3581,7 +3591,7 @@ public class ObjectStore implements RawStore, Configurable {
    * @return Resulting partitions.
    */
   private List<Partition> getPartitionsViaOrmFilter(String catName,
-      String dbName, String tblName, List<String> partNames) throws MetaException {
+      String dbName, String tblName, List<String> partNames, boolean isTxnTable) throws MetaException {
     if (partNames.isEmpty()) {
       return new ArrayList<>();
     }
@@ -3593,7 +3603,7 @@ public class ObjectStore implements RawStore, Configurable {
     query.setOrdering("partitionName ascending");
     @SuppressWarnings("unchecked")
     List<MPartition> mparts = (List<MPartition>)query.executeWithMap(queryWithParams.getSecond());
-    List<Partition> partitions = convertToParts(catName, dbName, tblName, mparts);
+    List<Partition> partitions = convertToParts(catName, dbName, tblName, mparts, isTxnTable);
     if (query != null) {
       query.closeAll();
     }
@@ -3994,6 +4004,8 @@ public class ObjectStore implements RawStore, Configurable {
       String catName, String dbName, String tblName, String filter, final short maxParts,
       boolean allowSql, boolean allowJdo)
       throws MetaException, NoSuchObjectException {
+    MTable mTable = ensureGetMTable(catName, dbName, tblName);
+    boolean isTxnTable = TxnUtils.isTransactionalTable(convertMap(mTable.getParameters()));
     final ExpressionTree tree = (filter != null && !filter.isEmpty())
         ? PartFilterExprUtil.getFilterParser(filter).tree : ExpressionTree.EMPTY_TREE;
     return new GetListHelper<Partition>(catName, dbName, tblName, allowSql, allowJdo) {
@@ -4006,7 +4018,7 @@ public class ObjectStore implements RawStore, Configurable {
 
       @Override
       protected List<Partition> getSqlResult(GetHelper<List<Partition>> ctx) throws MetaException {
-        return directSql.getPartitionsViaSqlFilter(filter, (maxParts < 0) ? null : (int)maxParts);
+        return directSql.getPartitionsViaSqlFilter(filter, (maxParts < 0) ? null : (int)maxParts, isTxnTable);
       }
 
       @Override
@@ -4357,7 +4369,7 @@ public class ObjectStore implements RawStore, Configurable {
     }
 
     oldCd.t = oldCD;
-    return convertToPart(oldp);
+    return convertToPart(oldp, false);
   }
 
   @Override
@@ -8594,7 +8606,7 @@ public class ObjectStore implements RawStore, Configurable {
       String catName = statsDesc.isSetCatName() ? statsDesc.getCatName() : getDefaultCatalog(conf);
       Table table = ensureGetTable(catName, statsDesc.getDbName(), statsDesc.getTableName());
       Partition partition = convertToPart(getMPartition(
-          catName, statsDesc.getDbName(), statsDesc.getTableName(), partVals));
+          catName, statsDesc.getDbName(), statsDesc.getTableName(), partVals), false);
       List<String> colNames = new ArrayList<>();
 
       for(ColumnStatisticsObj statsObj : statsObjs) {

@@ -480,7 +480,7 @@ class MetaStoreDirectSql {
    * @return List of partitions.
    */
   public List<Partition> getPartitionsViaSqlFilter(
-      SqlFilterForPushdown filter, Integer max) throws MetaException {
+      SqlFilterForPushdown filter, Integer max, boolean isTxnTable) throws MetaException {
     Boolean isViewTable = isViewTable(filter.table);
     String catName = filter.table.isSetCatName() ? filter.table.getCatName() :
         DEFAULT_CATALOG_NAME;
@@ -494,7 +494,7 @@ class MetaStoreDirectSql {
       @Override
       public List<Partition> run(List<Object> input) throws MetaException {
         return getPartitionsFromPartitionIds(catName, filter.table.getDbName(),
-            filter.table.getTableName(), isViewTable, input);
+            filter.table.getTableName(), isViewTable, input, isTxnTable);
       }
     });
   }
@@ -636,6 +636,12 @@ class MetaStoreDirectSql {
   /** Should be called with the list short enough to not trip up Oracle/etc. */
   private List<Partition> getPartitionsFromPartitionIds(String catName, String dbName, String tblName,
       Boolean isView, List<Object> partIdList) throws MetaException {
+    return getPartitionsFromPartitionIds(catName, dbName, tblName, isView, partIdList, false);
+  }
+
+  /** Should be called with the list short enough to not trip up Oracle/etc. */
+  private List<Partition> getPartitionsFromPartitionIds(String catName, String dbName, String tblName,
+      Boolean isView, List<Object> partIdList, boolean isTxnTable) throws MetaException {
     boolean doTrace = LOG.isDebugEnabled();
 
     int idStringWidth = (int)Math.ceil(Math.log10(partIdList.size())) + 1; // 1 for comma
@@ -796,30 +802,34 @@ class MetaStoreDirectSql {
     String serdeIds = trimCommaList(serdeSb);
     String colIds = trimCommaList(colsSb);
 
-    // Get all the stuff for SD. Don't do empty-list check - we expect partitions do have SDs.
-    queryText = "select \"SD_ID\", \"PARAM_KEY\", \"PARAM_VALUE\" from " + SD_PARAMS + ""
-        + " where \"SD_ID\" in (" + sdIds + ") and \"PARAM_KEY\" is not null"
-        + " order by \"SD_ID\" asc";
-    loopJoinOrderedResult(sds, queryText, 0, new ApplyFunc<StorageDescriptor>() {
-      @Override
-      public void apply(StorageDescriptor t, Object[] fields) {
-        t.putToParameters((String)fields[1], extractSqlClob(fields[2]));
-      }});
-    // Perform conversion of null map values
-    for (StorageDescriptor t : sds.values()) {
-      t.setParameters(MetaStoreUtils.trimMapNulls(t.getParameters(), convertMapNullsToEmptyStrings));
+    if (!isTxnTable) {
+      // Get all the stuff for SD. Don't do empty-list check - we expect partitions do have SDs.
+      queryText = "select \"SD_ID\", \"PARAM_KEY\", \"PARAM_VALUE\" from " + SD_PARAMS + ""
+          + " where \"SD_ID\" in (" + sdIds + ") and \"PARAM_KEY\" is not null"
+          + " order by \"SD_ID\" asc";
+      loopJoinOrderedResult(sds, queryText, 0, new ApplyFunc<StorageDescriptor>() {
+        @Override
+        public void apply(StorageDescriptor t, Object[] fields) {
+          t.putToParameters((String)fields[1], extractSqlClob(fields[2]));
+        }});
+      // Perform conversion of null map values
+      for (StorageDescriptor t : sds.values()) {
+        t.setParameters(MetaStoreUtils.trimMapNulls(t.getParameters(), convertMapNullsToEmptyStrings));
+      }
     }
 
-    queryText = "select \"SD_ID\", \"COLUMN_NAME\", " + SORT_COLS + ".\"ORDER\""
-        + " from " + SORT_COLS + ""
-        + " where \"SD_ID\" in (" + sdIds + ")"
-        + " order by \"SD_ID\" asc, \"INTEGER_IDX\" asc";
-    loopJoinOrderedResult(sds, queryText, 0, new ApplyFunc<StorageDescriptor>() {
-      @Override
-      public void apply(StorageDescriptor t, Object[] fields) {
-        if (fields[2] == null) return;
-        t.addToSortCols(new Order((String)fields[1], extractSqlInt(fields[2])));
-      }});
+    boolean hasSkewedColumns = false;
+    if (!isTxnTable) {
+      queryText = "select \"SD_ID\", \"COLUMN_NAME\", " + SORT_COLS + ".\"ORDER\"" + " from " + SORT_COLS + ""
+          + " where \"SD_ID\" in (" + sdIds + ")" + " order by \"SD_ID\" asc, \"INTEGER_IDX\" asc";
+      loopJoinOrderedResult(sds, queryText, 0, new ApplyFunc<StorageDescriptor>() {
+        @Override public void apply(StorageDescriptor t, Object[] fields) {
+          if (fields[2] == null)
+            return;
+          t.addToSortCols(new Order((String) fields[1], extractSqlInt(fields[2])));
+        }
+      });
+    }
 
     queryText = "select \"SD_ID\", \"BUCKET_COL_NAME\" from " + BUCKETING_COLS + ""
         + " where \"SD_ID\" in (" + sdIds + ")"
@@ -831,16 +841,18 @@ class MetaStoreDirectSql {
       }});
 
     // Skewed columns stuff.
-    queryText = "select \"SD_ID\", \"SKEWED_COL_NAME\" from " + SKEWED_COL_NAMES + ""
-        + " where \"SD_ID\" in (" + sdIds + ")"
-        + " order by \"SD_ID\" asc, \"INTEGER_IDX\" asc";
-    boolean hasSkewedColumns =
-      loopJoinOrderedResult(sds, queryText, 0, new ApplyFunc<StorageDescriptor>() {
-        @Override
-        public void apply(StorageDescriptor t, Object[] fields) {
-          if (!t.isSetSkewedInfo()) t.setSkewedInfo(new SkewedInfo());
-          t.getSkewedInfo().addToSkewedColNames((String)fields[1]);
-        }}) > 0;
+    if (!isTxnTable) {
+      queryText =
+          "select \"SD_ID\", \"SKEWED_COL_NAME\" from " + SKEWED_COL_NAMES + "" + " where \"SD_ID\" in (" + sdIds + ")"
+              + " order by \"SD_ID\" asc, \"INTEGER_IDX\" asc";
+      hasSkewedColumns = loopJoinOrderedResult(sds, queryText, 0, new ApplyFunc<StorageDescriptor>() {
+        @Override public void apply(StorageDescriptor t, Object[] fields) {
+          if (!t.isSetSkewedInfo())
+            t.setSkewedInfo(new SkewedInfo());
+          t.getSkewedInfo().addToSkewedColNames((String) fields[1]);
+        }
+      }) > 0;
+    }
 
     // Assume we don't need to fetch the rest of the skewed column data if we have no columns.
     if (hasSkewedColumns) {
@@ -939,17 +951,19 @@ class MetaStoreDirectSql {
     }
 
     // Finally, get all the stuff for serdes - just the params.
-    queryText = "select \"SERDE_ID\", \"PARAM_KEY\", \"PARAM_VALUE\" from " + SERDE_PARAMS + ""
-        + " where \"SERDE_ID\" in (" + serdeIds + ") and \"PARAM_KEY\" is not null"
-        + " order by \"SERDE_ID\" asc";
-    loopJoinOrderedResult(serdes, queryText, 0, new ApplyFunc<SerDeInfo>() {
-      @Override
-      public void apply(SerDeInfo t, Object[] fields) {
-        t.putToParameters((String)fields[1], extractSqlClob(fields[2]));
-      }});
-    // Perform conversion of null map values
-    for (SerDeInfo t : serdes.values()) {
-      t.setParameters(MetaStoreUtils.trimMapNulls(t.getParameters(), convertMapNullsToEmptyStrings));
+    if (!isTxnTable) {
+      queryText =
+          "select \"SERDE_ID\", \"PARAM_KEY\", \"PARAM_VALUE\" from " + SERDE_PARAMS + "" + " where \"SERDE_ID\" in (" + serdeIds + ") and \"PARAM_KEY\" is not null"
+              + " order by \"SERDE_ID\" asc";
+      loopJoinOrderedResult(serdes, queryText, 0, new ApplyFunc<SerDeInfo>() {
+        @Override public void apply(SerDeInfo t, Object[] fields) {
+          t.putToParameters((String) fields[1], extractSqlClob(fields[2]));
+        }
+      });
+      // Perform conversion of null map values
+      for (SerDeInfo t : serdes.values()) {
+        t.setParameters(MetaStoreUtils.trimMapNulls(t.getParameters(), convertMapNullsToEmptyStrings));
+      }
     }
 
     return orderedResult;
