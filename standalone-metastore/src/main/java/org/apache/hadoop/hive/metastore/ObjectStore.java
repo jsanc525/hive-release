@@ -19,6 +19,7 @@
 package org.apache.hadoop.hive.metastore;
 
 import static org.apache.commons.lang.StringUtils.join;
+import static org.apache.hadoop.hive.metastore.Warehouse.DEFAULT_CATALOG_NAME;
 import static org.apache.hadoop.hive.metastore.Warehouse.getCatalogQualifiedDbName;
 import static org.apache.hadoop.hive.metastore.Warehouse.getCatalogQualifiedTableName;
 import static org.apache.hadoop.hive.metastore.utils.MetaStoreUtils.getDefaultCatalog;
@@ -3454,7 +3455,12 @@ public class ObjectStore implements RawStore, Configurable {
     final ExpressionTree exprTree = PartFilterExprUtil.makeExpressionTree(expressionProxy, expr,
                                                     getDefaultPartitionName(defaultPartitionName));
     final AtomicBoolean hasUnknownPartitions = new AtomicBoolean(false);
+    catName = normalizeIdentifier(catName);
+    dbName = normalizeIdentifier(dbName);
+    tblName = normalizeIdentifier(tblName);
+
     MTable mTable = ensureGetMTable(catName, dbName, tblName);
+    List<FieldSchema> partitionKeys = convertToFieldSchemas(mTable.getPartitionKeys());
     boolean isTxnTbl = TxnUtils.isTransactionalTable(convertMap(mTable.getParameters()));
     result.addAll(new GetListHelper<Partition>(catName, dbName, tblName, allowSql, allowJdo) {
       @Override
@@ -3463,14 +3469,16 @@ public class ObjectStore implements RawStore, Configurable {
         List<Partition> result = null;
         if (exprTree != null) {
           SqlFilterForPushdown filter = new SqlFilterForPushdown();
-          if (directSql.generateSqlFilterForPushdown(ctx.getTable(), exprTree, defaultPartitionName, filter)) {
-            return directSql.getPartitionsViaSqlFilter(filter, null, isTxnTbl);
+          if (directSql.generateSqlFilterForPushdown(catName, dbName, tblName, partitionKeys,
+                  exprTree, defaultPartitionName, filter)) {
+            String catalogName = (catName != null) ? catName : DEFAULT_CATALOG_NAME;
+            return directSql.getPartitionsViaSqlFilter(catalogName, dbName, tblName, filter, null, isTxnTbl);
           }
         }
         // We couldn't do SQL filter pushdown. Get names via normal means.
         List<String> partNames = new LinkedList<>();
         hasUnknownPartitions.set(getPartitionNamesPrunedByExprNoTxn(
-            ctx.getTable(), expr, defaultPartitionName, maxParts, partNames));
+                catName, dbName, tblName, partitionKeys, expr, defaultPartitionName, maxParts, partNames));
         return directSql.getPartitionsViaSqlFilter(catName, dbName, tblName, partNames);
       }
 
@@ -3480,18 +3488,18 @@ public class ObjectStore implements RawStore, Configurable {
         // If we have some sort of expression tree, try JDOQL filter pushdown.
         List<Partition> result = null;
         if (exprTree != null) {
-          result = getPartitionsViaOrmFilter(ctx.getTable(), exprTree, maxParts, false);
+          result = getPartitionsViaOrmFilter(catName, dbName, tblName, exprTree, maxParts, false, partitionKeys);
         }
         if (result == null) {
           // We couldn't do JDOQL filter pushdown. Get names via normal means.
           List<String> partNames = new ArrayList<>();
           hasUnknownPartitions.set(getPartitionNamesPrunedByExprNoTxn(
-              ctx.getTable(), expr, defaultPartitionName, maxParts, partNames));
+                  catName, dbName, tblName, partitionKeys, expr, defaultPartitionName, maxParts, partNames));
           result = getPartitionsViaOrmFilter(catName, dbName, tblName, partNames, isTxnTbl);
         }
         return result;
       }
-    }.run(true));
+    }.run(false));
     return hasUnknownPartitions.get();
   }
 
@@ -3508,19 +3516,27 @@ public class ObjectStore implements RawStore, Configurable {
 
   /**
    * Gets the partition names from a table, pruned using an expression.
-   * @param table Table.
+   * @param catName
+   * @param dbName
+   * @param tblName
    * @param expr Expression.
    * @param defaultPartName Default partition name from job config, if any.
    * @param maxParts Maximum number of partition names to return.
    * @param result The resulting names.
    * @return Whether the result contains any unknown partitions.
    */
-  private boolean getPartitionNamesPrunedByExprNoTxn(Table table, byte[] expr,
-      String defaultPartName, short maxParts, List<String> result) throws MetaException {
-    result.addAll(getPartitionNamesNoTxn(table.getCatName(),
-        table.getDbName(), table.getTableName(), maxParts));
-    return expressionProxy.filterPartitionsByExpr(table.getPartitionKeys(), expr,
-            getDefaultPartitionName(defaultPartName), result);
+  private boolean getPartitionNamesPrunedByExprNoTxn(String catName, String dbName, String tblName, List<FieldSchema> partColumns, byte[] expr,
+                                                     String defaultPartName, short maxParts, List<String> result) throws MetaException {
+    result.addAll(getPartitionNamesNoTxn(
+            catName,
+            dbName,
+            tblName,
+            maxParts));
+    return expressionProxy.filterPartitionsByExpr(
+            partColumns,
+            expr,
+            getDefaultPartitionName(defaultPartName),
+            result);
   }
 
   /**
@@ -3533,11 +3549,11 @@ public class ObjectStore implements RawStore, Configurable {
    * @return Resulting partitions. Can be null if isValidatedFilter is false, and
    *         there was error deriving the JDO filter.
    */
-  private List<Partition> getPartitionsViaOrmFilter(Table table, ExpressionTree tree,
-      short maxParts, boolean isValidatedFilter) throws MetaException {
+  private List<Partition> getPartitionsViaOrmFilter(String catName, String dbName, String tblName, ExpressionTree tree,
+      short maxParts, boolean isValidatedFilter, List<FieldSchema> partitionKeys) throws MetaException {
     Map<String, Object> params = new HashMap<>();
     String jdoFilter =
-        makeQueryFilterString(table.getCatName(), table.getDbName(), table, tree, params, isValidatedFilter);
+        makeQueryFilterString(catName, dbName, tblName, tree, params, isValidatedFilter, partitionKeys);
     if (jdoFilter == null) {
       assert !isValidatedFilter;
       return null;
@@ -3561,11 +3577,11 @@ public class ObjectStore implements RawStore, Configurable {
   }
 
 
-  private Integer getNumPartitionsViaOrmFilter(Table table, ExpressionTree tree, boolean isValidatedFilter)
-    throws MetaException {
+  private Integer getNumPartitionsViaOrmFilter(String catName, String dbName, String tblName, ExpressionTree tree, boolean isValidatedFilter, List<FieldSchema> partitionKeys)
+          throws MetaException {
     Map<String, Object> params = new HashMap<>();
-    String jdoFilter = makeQueryFilterString(table.getCatName(), table.getDbName(), table, tree,
-        params, isValidatedFilter);
+    String jdoFilter = makeQueryFilterString(catName, dbName, tblName, tree,
+            params, isValidatedFilter, partitionKeys);
     if (jdoFilter == null) {
       assert !isValidatedFilter;
       return null;
@@ -3926,6 +3942,12 @@ public class ObjectStore implements RawStore, Configurable {
     final ExpressionTree exprTree = org.apache.commons.lang.StringUtils.isNotEmpty(filter)
         ? PartFilterExprUtil.getFilterParser(filter).tree : ExpressionTree.EMPTY_TREE;
 
+    catName = normalizeIdentifier(catName);
+    dbName = normalizeIdentifier(dbName);
+    tblName = normalizeIdentifier(tblName);
+    MTable mTable = ensureGetMTable(catName, dbName, tblName);
+    List<FieldSchema> partitionKeys = convertToFieldSchemas(mTable.getPartitionKeys());
+
     return new GetHelper<Integer>(catName, dbName, tblName, true, true) {
       private final SqlFilterForPushdown filter = new SqlFilterForPushdown();
 
@@ -3936,7 +3958,7 @@ public class ObjectStore implements RawStore, Configurable {
 
       @Override
       protected boolean canUseDirectSql(GetHelper<Integer> ctx) throws MetaException {
-        return directSql.generateSqlFilterForPushdown(ctx.getTable(), exprTree, filter);
+        return directSql.generateSqlFilterForPushdown(catName, dbName, tblName, partitionKeys, exprTree, null, filter);
       }
 
       @Override
@@ -3946,9 +3968,9 @@ public class ObjectStore implements RawStore, Configurable {
       @Override
       protected Integer getJdoResult(
           GetHelper<Integer> ctx) throws MetaException, NoSuchObjectException {
-        return getNumPartitionsViaOrmFilter(ctx.getTable(), exprTree, true);
+        return getNumPartitionsViaOrmFilter(catName ,dbName, tblName, exprTree, true, partitionKeys);
       }
-    }.run(true);
+    }.run(false);
   }
 
   @Override
@@ -3957,6 +3979,11 @@ public class ObjectStore implements RawStore, Configurable {
     final ExpressionTree exprTree = PartFilterExprUtil.makeExpressionTree(expressionProxy, expr, null);
     final byte[] tempExpr = expr; // Need to be final to pass it to an inner class
 
+    catName = normalizeIdentifier(catName);
+    dbName = normalizeIdentifier(dbName);
+    tblName = normalizeIdentifier(tblName);
+    MTable mTable = ensureGetMTable(catName, dbName, tblName);
+    List<FieldSchema> partitionKeys = convertToFieldSchemas(mTable.getPartitionKeys());
 
     return new GetHelper<Integer>(catName, dbName, tblName, true, true) {
       private final SqlFilterForPushdown filter = new SqlFilterForPushdown();
@@ -3968,7 +3995,7 @@ public class ObjectStore implements RawStore, Configurable {
 
       @Override
       protected boolean canUseDirectSql(GetHelper<Integer> ctx) throws MetaException {
-        return directSql.generateSqlFilterForPushdown(ctx.getTable(), exprTree, filter);
+        return directSql.generateSqlFilterForPushdown(catName, dbName, tblName, partitionKeys, exprTree, null, filter);
       }
 
       @Override
@@ -3982,7 +4009,7 @@ public class ObjectStore implements RawStore, Configurable {
 
         if (exprTree != null) {
           try {
-            numPartitions = getNumPartitionsViaOrmFilter(ctx.getTable(), exprTree, true);
+            numPartitions = getNumPartitionsViaOrmFilter(catName ,dbName, tblName, exprTree, true, partitionKeys);
           } catch (MetaException e) {
             numPartitions = null;
           }
@@ -3991,20 +4018,26 @@ public class ObjectStore implements RawStore, Configurable {
         // if numPartitions could not be obtained from ORM filters, then get number partitions names, and count them
         if (numPartitions == null) {
           List<String> filteredPartNames = new ArrayList<>();
-          getPartitionNamesPrunedByExprNoTxn(ctx.getTable(), tempExpr, "", (short) -1, filteredPartNames);
+          getPartitionNamesPrunedByExprNoTxn(catName, dbName, tblName, partitionKeys, tempExpr, "", (short) -1, filteredPartNames);
           numPartitions = filteredPartNames.size();
         }
 
         return numPartitions;
       }
-    }.run(true);
+    }.run(false);
   }
 
   protected List<Partition> getPartitionsByFilterInternal(
       String catName, String dbName, String tblName, String filter, final short maxParts,
       boolean allowSql, boolean allowJdo)
       throws MetaException, NoSuchObjectException {
+
+    catName = normalizeIdentifier(catName);
+    dbName = normalizeIdentifier(dbName);
+    tblName = normalizeIdentifier(tblName);
+
     MTable mTable = ensureGetMTable(catName, dbName, tblName);
+    List<FieldSchema> partitionKeys = convertToFieldSchemas(mTable.getPartitionKeys());
     boolean isTxnTable = TxnUtils.isTransactionalTable(convertMap(mTable.getParameters()));
     final ExpressionTree tree = (filter != null && !filter.isEmpty())
         ? PartFilterExprUtil.getFilterParser(filter).tree : ExpressionTree.EMPTY_TREE;
@@ -4013,20 +4046,20 @@ public class ObjectStore implements RawStore, Configurable {
 
       @Override
       protected boolean canUseDirectSql(GetHelper<List<Partition>> ctx) throws MetaException {
-        return directSql.generateSqlFilterForPushdown(ctx.getTable(), tree, filter);
+        return directSql.generateSqlFilterForPushdown(catName, dbName, tblName, partitionKeys, tree, null, filter);
       }
 
       @Override
       protected List<Partition> getSqlResult(GetHelper<List<Partition>> ctx) throws MetaException {
-        return directSql.getPartitionsViaSqlFilter(filter, (maxParts < 0) ? null : (int)maxParts, isTxnTable);
+        return directSql.getPartitionsViaSqlFilter(catName, dbName, tblName, filter, (maxParts < 0) ? null : (int)maxParts, isTxnTable);
       }
 
       @Override
       protected List<Partition> getJdoResult(
           GetHelper<List<Partition>> ctx) throws MetaException, NoSuchObjectException {
-        return getPartitionsViaOrmFilter(ctx.getTable(), tree, maxParts, true);
+        return getPartitionsViaOrmFilter(catName, dbName, tblName, tree, maxParts, true, partitionKeys);
       }
-    }.run(true);
+    }.run(false);
   }
 
   /**
@@ -4094,10 +4127,30 @@ public class ObjectStore implements RawStore, Configurable {
       params.put("catName", catName);
     }
 
-    tree.generateJDOFilterFragment(getConf(), table, params, queryBuilder);
+    tree.generateJDOFilterFragment(getConf(), params, queryBuilder, table != null ? table.getPartitionKeys() : null);
     if (queryBuilder.hasError()) {
       assert !isValidatedFilter;
-      LOG.info("JDO filter pushdown cannot be used: {}", queryBuilder.getErrorMessage());
+      LOG.debug("JDO filter pushdown cannot be used: {}", queryBuilder.getErrorMessage());
+      return null;
+    }
+    String jdoFilter = queryBuilder.getFilter();
+    LOG.debug("jdoFilter = {}", jdoFilter);
+    return jdoFilter;
+  }
+
+  private String makeQueryFilterString(String catName, String dbName, String tblName,
+                                       ExpressionTree tree, Map<String, Object> params,
+                                       boolean isValidatedFilter, List<FieldSchema> partitionKeys) throws MetaException {
+    assert tree != null;
+    FilterBuilder queryBuilder = new FilterBuilder(isValidatedFilter);
+    queryBuilder.append("table.tableName == t1 && table.database.name == t2 && table.database.catalogName == t3");
+    params.put("t1", tblName);
+    params.put("t2", dbName);
+    params.put("t3", catName);
+    tree.generateJDOFilterFragment(getConf(), params, queryBuilder, partitionKeys);
+    if (queryBuilder.hasError()) {
+      assert !isValidatedFilter;
+      LOG.debug("JDO filter pushdown cannot be used: {}", queryBuilder.getErrorMessage());
       return null;
     }
     String jdoFilter = queryBuilder.getFilter();
