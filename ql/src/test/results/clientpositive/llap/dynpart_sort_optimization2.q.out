@@ -75,6 +75,7 @@ select ss_net_paid_inc_tax,
     distribute by ss_sold_date_sk
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@ss_n0
+POSTHOOK: Output: default@ss_part
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-2 depends on stages: Stage-1
@@ -179,6 +180,7 @@ select ss_net_paid_inc_tax,
     distribute by ss_sold_date_sk
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@ss_n0
+POSTHOOK: Output: default@ss_part
 POSTHOOK: Output: default@ss_part@ss_sold_date_sk=2452617
 POSTHOOK: Output: default@ss_part@ss_sold_date_sk=2452638
 POSTHOOK: Lineage: ss_part PARTITION(ss_sold_date_sk=2452617).ss_net_paid_inc_tax SIMPLE [(ss_n0)ss_n0.FieldSchema(name:ss_net_paid_inc_tax, type:float, comment:null), ]
@@ -322,6 +324,7 @@ select ss_net_paid_inc_tax,
     distribute by ss_sold_date_sk
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@ss_n0
+POSTHOOK: Output: default@ss_part
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-2 depends on stages: Stage-1
@@ -415,6 +418,7 @@ select ss_net_paid_inc_tax,
     distribute by ss_sold_date_sk
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@ss_n0
+POSTHOOK: Output: default@ss_part
 POSTHOOK: Output: default@ss_part@ss_sold_date_sk=2452617
 POSTHOOK: Output: default@ss_part@ss_sold_date_sk=2452638
 POSTHOOK: Lineage: ss_part PARTITION(ss_sold_date_sk=2452617).ss_net_paid_inc_tax SIMPLE [(ss_n0)ss_n0.FieldSchema(name:ss_net_paid_inc_tax, type:float, comment:null), ]
@@ -564,6 +568,7 @@ select ss_net_paid_inc_tax,
     distribute by ss_sold_date_sk
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@ss_n0
+POSTHOOK: Output: default@ss_part
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-2 depends on stages: Stage-1
@@ -688,6 +693,7 @@ select ss_net_paid_inc_tax,
     distribute by ss_sold_date_sk
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@ss_n0
+POSTHOOK: Output: default@ss_part
 POSTHOOK: Output: default@ss_part@ss_sold_date_sk=2452617
 POSTHOOK: Output: default@ss_part@ss_sold_date_sk=2452638
 POSTHOOK: Lineage: ss_part PARTITION(ss_sold_date_sk=2452617).ss_net_paid_inc_tax SIMPLE [(ss_n0)ss_n0.FieldSchema(name:ss_net_paid_inc_tax, type:float, comment:null), ]
@@ -831,6 +837,7 @@ select ss_net_paid_inc_tax,
     distribute by ss_sold_date_sk
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@ss_n0
+POSTHOOK: Output: default@ss_part
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-2 depends on stages: Stage-1
@@ -944,6 +951,7 @@ select ss_net_paid_inc_tax,
     distribute by ss_sold_date_sk
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@ss_n0
+POSTHOOK: Output: default@ss_part
 POSTHOOK: Output: default@ss_part@ss_sold_date_sk=2452617
 POSTHOOK: Output: default@ss_part@ss_sold_date_sk=2452638
 POSTHOOK: Lineage: ss_part PARTITION(ss_sold_date_sk=2452617).ss_net_paid_inc_tax SIMPLE [(ss_n0)ss_n0.FieldSchema(name:ss_net_paid_inc_tax, type:float, comment:null), ]
@@ -1148,6 +1156,7 @@ select ss_net_paid_inc_tax,
     distribute by ss_sold_date_sk
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@ss_orc
+POSTHOOK: Output: default@ss_part_orc
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-2 depends on stages: Stage-1
@@ -1272,6 +1281,7 @@ select ss_net_paid_inc_tax,
     distribute by ss_sold_date_sk
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@ss_orc
+POSTHOOK: Output: default@ss_part_orc
 POSTHOOK: Output: default@ss_part_orc@ss_sold_date_sk=2452617
 POSTHOOK: Output: default@ss_part_orc@ss_sold_date_sk=2452638
 POSTHOOK: Lineage: ss_part_orc PARTITION(ss_sold_date_sk=2452617).ss_net_paid_inc_tax SIMPLE [(ss_orc)ss_orc.FieldSchema(name:ss_net_paid_inc_tax, type:float, comment:null), ]
@@ -1415,6 +1425,7 @@ select ss_net_paid_inc_tax,
     distribute by ss_sold_date_sk
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@ss_orc
+POSTHOOK: Output: default@ss_part_orc
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-2 depends on stages: Stage-1
@@ -1528,6 +1539,7 @@ select ss_net_paid_inc_tax,
     distribute by ss_sold_date_sk
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@ss_orc
+POSTHOOK: Output: default@ss_part_orc
 POSTHOOK: Output: default@ss_part_orc@ss_sold_date_sk=2452617
 POSTHOOK: Output: default@ss_part_orc@ss_sold_date_sk=2452638
 POSTHOOK: Lineage: ss_part_orc PARTITION(ss_sold_date_sk=2452617).ss_net_paid_inc_tax SIMPLE [(ss_orc)ss_orc.FieldSchema(name:ss_net_paid_inc_tax, type:float, comment:null), ]
@@ -1709,6 +1721,7 @@ from src
 group by "day", key
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@src
+POSTHOOK: Output: default@hive13_dp1
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-2 depends on stages: Stage-1
@@ -1847,6 +1860,7 @@ from src
 group by "day", key
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@src
+POSTHOOK: Output: default@hive13_dp1
 POSTHOOK: Output: default@hive13_dp1@day=day
 POSTHOOK: Lineage: hive13_dp1 PARTITION(day=day).k1 EXPRESSION [(src)src.FieldSchema(name:key, type:string, comment:default), ]
 POSTHOOK: Lineage: hive13_dp1 PARTITION(day=day).k2 EXPRESSION [(src)src.FieldSchema(name:value, type:string, comment:default), ]
@@ -1884,6 +1898,7 @@ from src
 group by "day", key
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@src
+POSTHOOK: Output: default@hive13_dp1
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-2 depends on stages: Stage-1
@@ -2022,6 +2037,7 @@ from src
 group by "day", key
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@src
+POSTHOOK: Output: default@hive13_dp1
 POSTHOOK: Output: default@hive13_dp1@day=day
 POSTHOOK: Lineage: hive13_dp1 PARTITION(day=day).k1 EXPRESSION [(src)src.FieldSchema(name:key, type:string, comment:default), ]
 POSTHOOK: Lineage: hive13_dp1 PARTITION(day=day).k2 EXPRESSION [(src)src.FieldSchema(name:value, type:string, comment:default), ]
