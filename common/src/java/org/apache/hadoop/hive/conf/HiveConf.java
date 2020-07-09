@@ -1525,7 +1525,7 @@ public class HiveConf extends Configuration {
     // session identifier
     HIVESESSIONID("hive.session.id", "", ""),
     // whether session is running in silent mode or not
-    HIVESESSIONSILENT("hive.session.silent", false, ""),
+    HIVESESSIONSILENT("hive.session.silent", true, ""),
 
     HIVE_LOCAL_TIME_ZONE("hive.local.time.zone", "LOCAL",
         "Sets the time-zone for displaying and interpreting time stamps. If this property value is set to\n" +

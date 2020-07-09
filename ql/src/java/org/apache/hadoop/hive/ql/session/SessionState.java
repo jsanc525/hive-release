@@ -1243,7 +1243,9 @@ public class SessionState {
      * @param detail Extra detail to log which will be not printed if null
      */
     public void printError(String error, String detail) {
-      getErrStream().println(error);
+      if(!getIsSilent()) {
+        getErrStream().println(error);
+      }
       LOG.error(error + StringUtils.defaultString(detail));
     }
   }
