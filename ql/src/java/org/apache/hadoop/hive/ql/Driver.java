@@ -134,7 +134,7 @@ public class Driver implements CommandProcessor {
   static final private Log LOG = LogFactory.getLog(CLASS_NAME);
   static final private LogHelper console = new LogHelper(LOG);
   static final int SHUTDOWN_HOOK_PRIORITY = 0;
-  private Runnable shutdownRunner = null;
+  private Runnable txnRollbackRunner = null;
 
   private static final Object compileMonitor = new Object();
 
@@ -416,19 +416,19 @@ public class Driver implements CommandProcessor {
       // In case when user Ctrl-C twice to kill Hive CLI JVM, we want to release locks
 
       // if compile is being called multiple times, clear the old shutdownhook
-      ShutdownHookManager.removeShutdownHook(shutdownRunner);
-      shutdownRunner = new Runnable() {
+      ShutdownHookManager.removeShutdownHook(txnRollbackRunner);
+      txnRollbackRunner = new Runnable() {
         @Override
         public void run() {
           try {
-            releaseLocksAndCommitOrRollback(ctx.getHiveLocks(), false, txnManager);
+            endTransactionAndCleanup(ctx.getHiveLocks(), false, txnManager);
           } catch (LockException e) {
             LOG.warn("Exception when releasing locks in ShutdownHook for Driver: " +
                 e.getMessage());
           }
         }
       };
-      ShutdownHookManager.addShutdownHook(shutdownRunner, SHUTDOWN_HOOK_PRIORITY);
+      ShutdownHookManager.addShutdownHook(txnRollbackRunner, SHUTDOWN_HOOK_PRIORITY);
 
       // we set the hadoop caller context to the query id as soon as we have one.
       // initially, the caller context is the session id (when creating temp directories)
@@ -1118,7 +1118,7 @@ public class Driver implements CommandProcessor {
    * @param txnManager an optional existing transaction manager retrieved earlier from the session
    *
    **/
-  private void releaseLocksAndCommitOrRollback(List<HiveLock> hiveLocks, boolean commit,
+  private void endTransactionAndCleanup(List<HiveLock> hiveLocks, boolean commit,
                                                HiveTxnManager txnManager) throws LockException {
     PerfLogger perfLogger = PerfLogger.getPerfLogger();
     perfLogger.PerfLogBegin(CLASS_NAME, PerfLogger.RELEASE_LOCKS);
@@ -1152,6 +1152,9 @@ public class Driver implements CommandProcessor {
     ctx.setHiveLocks(null);
 
     perfLogger.PerfLogEnd(CLASS_NAME, PerfLogger.RELEASE_LOCKS);
+
+    ShutdownHookManager.removeShutdownHook(txnRollbackRunner);
+    txnRollbackRunner = null;
   }
 
   @Override
@@ -1234,7 +1237,7 @@ public class Driver implements CommandProcessor {
     }
     if (ret != 0) {
       try {
-        releaseLocksAndCommitOrRollback(ctx.getHiveLocks(), false, null);
+        endTransactionAndCleanup(ctx.getHiveLocks(), false, null);
       } catch (LockException e) {
         LOG.warn("Exception in releasing locks. "
             + org.apache.hadoop.util.StringUtils.stringifyException(e));
@@ -1293,7 +1296,7 @@ public class Driver implements CommandProcessor {
       ret = acquireLocksAndOpenTxn();
       if (ret != 0) {
         try {
-          releaseLocksAndCommitOrRollback(ctx.getHiveLocks(), false, null);
+          endTransactionAndCleanup(ctx.getHiveLocks(), false, null);
         } catch (LockException e) {
           // Not much to do here
         }
@@ -1304,7 +1307,7 @@ public class Driver implements CommandProcessor {
     if (ret != 0) {
       //if needRequireLock is false, the release here will do nothing because there is no lock
       try {
-        releaseLocksAndCommitOrRollback(ctx.getHiveLocks(), false, null);
+        endTransactionAndCleanup(ctx.getHiveLocks(), false, null);
       } catch (LockException e) {
         // Nothing to do here
       }
@@ -1313,7 +1316,7 @@ public class Driver implements CommandProcessor {
 
     //if needRequireLock is false, the release here will do nothing because there is no lock
     try {
-      releaseLocksAndCommitOrRollback(ctx.getHiveLocks(), true, null);
+      endTransactionAndCleanup(ctx.getHiveLocks(), true, null);
     } catch (LockException e) {
       errorMessage = "FAILED: Hive Internal Error: " + Utilities.getNameMessage(e);
       SQLState = ErrorMsg.findSQLState(e.getMessage());
@@ -1893,13 +1896,13 @@ public class Driver implements CommandProcessor {
     destroyed = true;
     if (ctx != null) {
       try {
-        releaseLocksAndCommitOrRollback(ctx.getHiveLocks(), false, null);
+        endTransactionAndCleanup(ctx.getHiveLocks(), false, null);
       } catch (LockException e) {
         LOG.warn("Exception when releasing locking in destroy: " +
             e.getMessage());
       }
     }
-    ShutdownHookManager.removeShutdownHook(shutdownRunner);
+    ShutdownHookManager.removeShutdownHook(txnRollbackRunner);
   }
 
   public org.apache.hadoop.hive.ql.plan.api.Query getQueryPlan() throws IOException {
