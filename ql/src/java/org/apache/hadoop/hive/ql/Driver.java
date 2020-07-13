@@ -163,7 +163,7 @@ public class Driver implements IDriver {
   static final private LogHelper console = new LogHelper(LOG);
   static final int SHUTDOWN_HOOK_PRIORITY = 0;
   private final QueryInfo queryInfo;
-  private Runnable shutdownRunner = null;
+  private Runnable txnRollbackRunner = null;
 
   private int maxRows = 100;
   ByteStream.Output bos = new ByteStream.Output();
@@ -580,9 +580,9 @@ public class Driver implements IDriver {
 
       // In case when user Ctrl-C twice to kill Hive CLI JVM, we want to release locks
       // if compile is being called multiple times, clear the old shutdownhook
-      ShutdownHookManager.removeShutdownHook(shutdownRunner);
+      ShutdownHookManager.removeShutdownHook(txnRollbackRunner);
       final HiveTxnManager txnMgr = queryTxnMgr;
-      shutdownRunner = new Runnable() {
+      txnRollbackRunner = new Runnable() {
         @Override
         public void run() {
           try {
@@ -593,7 +593,7 @@ public class Driver implements IDriver {
           }
         }
       };
-      ShutdownHookManager.addShutdownHook(shutdownRunner, SHUTDOWN_HOOK_PRIORITY);
+      ShutdownHookManager.addShutdownHook(txnRollbackRunner, SHUTDOWN_HOOK_PRIORITY);
 
       checkInterrupted("before parsing and analysing the query", null, null);
 
@@ -1673,6 +1673,8 @@ public class Driver implements IDriver {
 
   public void releaseLocksAndCommitOrRollback(boolean commit) throws LockException {
     releaseLocksAndCommitOrRollback(commit, queryTxnMgr);
+    ShutdownHookManager.removeShutdownHook(txnRollbackRunner);
+    txnRollbackRunner = null;
   }
 
   /**
@@ -2917,7 +2919,7 @@ public class Driver implements IDriver {
               e.getMessage());
         }
       }
-      ShutdownHookManager.removeShutdownHook(shutdownRunner);
+      ShutdownHookManager.removeShutdownHook(txnRollbackRunner);
     }
     return 0;
   }
@@ -2969,7 +2971,7 @@ public class Driver implements IDriver {
             e.getMessage());
       }
     }
-    ShutdownHookManager.removeShutdownHook(shutdownRunner);
+    ShutdownHookManager.removeShutdownHook(txnRollbackRunner);
   }
 
 
