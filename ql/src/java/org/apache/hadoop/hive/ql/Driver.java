@@ -1105,9 +1105,9 @@ public class Driver implements IDriver {
       throw new HiveException("Operation should not be null");
     }
     HiveAuthorizationProvider authorizer = ss.getAuthorizer();
-    if (op.equals(HiveOperation.CREATEDATABASE)) {
-      authorizer.authorize(
-          op.getInputRequiredPrivileges(), op.getOutputRequiredPrivileges());
+    if (op.equals(HiveOperation.CREATEDATABASE) || op.equals(HiveOperation.ALTERDATABASE_LOCATION)) {
+      authorizer.authorizeDbLevelOperations(
+          op.getInputRequiredPrivileges(), op.getOutputRequiredPrivileges(), inputs, outputs);
     } else if (op.equals(HiveOperation.CREATETABLE_AS_SELECT)
         || op.equals(HiveOperation.CREATETABLE)) {
       authorizer.authorize(
