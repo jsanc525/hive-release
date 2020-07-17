@@ -2068,10 +2068,10 @@ public class ObjectStore implements RawStore, Configurable {
       }
     }
     Map<String, String> parameters = convertMap(mtbl.getParameters());
-    boolean isTxnTable = TxnUtils.isTransactionalTable(parameters);
+    boolean isAcidTable = TxnUtils.isAcidTable(parameters);
     final Table t = new Table(mtbl.getTableName(), mtbl.getDatabase().getName(), mtbl
         .getOwner(), mtbl.getCreateTime(), mtbl.getLastAccessTime(), mtbl
-        .getRetention(), convertToStorageDescriptor(mtbl.getSd(), false, isTxnTable),
+        .getRetention(), convertToStorageDescriptor(mtbl.getSd(), false, isAcidTable),
         convertToFieldSchemas(mtbl.getPartitionKeys()), parameters,
         mtbl.getViewOriginalText(), mtbl.getViewExpandedText(), tableType);
 
@@ -2223,24 +2223,24 @@ public class ObjectStore implements RawStore, Configurable {
   }
 
   private StorageDescriptor convertToStorageDescriptor(
-      MStorageDescriptor msd,
-      boolean noFS, boolean isTxnTable) throws MetaException {
+      MStorageDescriptor msd, boolean noFS, boolean isAcidTable) throws MetaException {
     if (msd == null) {
       return null;
     }
     List<MFieldSchema> mFieldSchemas = msd.getCD() == null ? null : msd.getCD().getCols();
-    List<Order> orderList = (isTxnTable) ? Collections.emptyList() : convertToOrders(msd.getSortCols());
+
+    List<Order> orderList = (isAcidTable) ? Collections.emptyList() : convertToOrders(msd.getSortCols());
     List<String> bucList = convertList(msd.getBucketCols());
     SkewedInfo skewedInfo = null;
 
-    Map<String, String> sdParams = isTxnTable ? Collections.emptyMap() : convertMap(msd.getParameters());
+    Map<String, String> sdParams = isAcidTable ? Collections.emptyMap() : convertMap(msd.getParameters());
     StorageDescriptor sd = new StorageDescriptor(noFS ? null : convertToFieldSchemas(mFieldSchemas),
         msd.getLocation(), msd.getInputFormat(), msd.getOutputFormat(), msd
         .isCompressed(), msd.getNumBuckets(),
-        (!isTxnTable) ? convertToSerDeInfo(msd.getSerDeInfo())
+        (!isAcidTable) ? convertToSerDeInfo(msd.getSerDeInfo())
             : new SerDeInfo(msd.getSerDeInfo().getName(), msd.getSerDeInfo().getSerializationLib(), Collections.emptyMap()),
         bucList , orderList, sdParams);
-    if (!isTxnTable) {
+    if (!isAcidTable) {
       skewedInfo = new SkewedInfo(convertList(msd.getSkewedColNames()),
           convertToSkewedValues(msd.getSkewedColValues()),
           covertToSkewedMap(msd.getSkewedColValueLocationMaps()));
@@ -2721,21 +2721,22 @@ public class ObjectStore implements RawStore, Configurable {
     return mpart;
   }
 
-  private Partition convertToPart(MPartition mpart, boolean isTxnTable) throws MetaException {
+  private Partition convertToPart(MPartition mpart, boolean isAcidTable) throws MetaException {
     if (mpart == null) {
       return null;
     }
     Map<String,String> params = convertMap(mpart.getParameters());
     Partition p = new Partition(convertList(mpart.getValues()), mpart.getTable().getDatabase()
         .getName(), mpart.getTable().getTableName(), mpart.getCreateTime(),
-        mpart.getLastAccessTime(), convertToStorageDescriptor(mpart.getSd(), false, isTxnTable),
+        mpart.getLastAccessTime(), convertToStorageDescriptor(mpart.getSd(), false, isAcidTable),
         params);
     p.setCatName(mpart.getTable().getDatabase().getCatalogName());
     p.setWriteId(mpart.getWriteId());
     return p;
   }
 
-  private Partition convertToPart(String catName, String dbName, String tblName, MPartition mpart, boolean isTxnTable)
+  private Partition convertToPart(String catName, String dbName, String tblName,
+      MPartition mpart, boolean isAcidTable)
       throws MetaException {
     if (mpart == null) {
       return null;
@@ -2743,7 +2744,7 @@ public class ObjectStore implements RawStore, Configurable {
     Map<String,String> params = convertMap(mpart.getParameters());
     Partition p = new Partition(convertList(mpart.getValues()), dbName, tblName,
         mpart.getCreateTime(), mpart.getLastAccessTime(),
-        convertToStorageDescriptor(mpart.getSd(), false, isTxnTable), params);
+        convertToStorageDescriptor(mpart.getSd(), false, isAcidTable), params);
     p.setCatName(catName);
     p.setWriteId(mpart.getWriteId());
     return p;
@@ -2985,11 +2986,11 @@ public class ObjectStore implements RawStore, Configurable {
   }
 
   private List<Partition> convertToParts(String catName, String dbName, String tblName,
-      List<MPartition> mparts, boolean isTxnTable)
+      List<MPartition> mparts, boolean isAcidTable)
       throws MetaException {
     List<Partition> parts = new ArrayList<>(mparts.size());
     for (MPartition mp : mparts) {
-      parts.add(convertToPart(catName, dbName, tblName, mp, isTxnTable));
+      parts.add(convertToPart(catName, dbName, tblName, mp, isAcidTable));
       Deadline.checkTimeout();
     }
     return parts;
@@ -3461,8 +3462,7 @@ public class ObjectStore implements RawStore, Configurable {
     tblName = normalizeIdentifier(tblName);
     MTable mTable = ensureGetMTable(catName, dbName, tblName);
     List<FieldSchema> partitionKeys = convertToFieldSchemas(mTable.getPartitionKeys());
-    boolean isTxnTbl = TxnUtils.isTransactionalTable(convertMap(mTable.getParameters()));
-    Map<String, String> parameters = mTable.getParameters();
+    boolean isAcidTable = TxnUtils.isAcidTable(mTable.getParameters());
     result.addAll(new GetListHelper<Partition>(catName, dbName, tblName, allowSql, allowJdo) {
       @Override
       protected List<Partition> getSqlResult(GetHelper<List<Partition>> ctx) throws MetaException {
@@ -3473,7 +3473,7 @@ public class ObjectStore implements RawStore, Configurable {
           if (directSql.generateSqlFilterForPushdown(catName, dbName, tblName, partitionKeys,
               exprTree, defaultPartitionName, filter)) {
             String catalogName = (catName != null) ? catName : DEFAULT_CATALOG_NAME;
-            return directSql.getPartitionsViaSqlFilter(catalogName, dbName, tblName, filter, null, isTxnTbl);
+            return directSql.getPartitionsViaSqlFilter(catalogName, dbName, tblName, filter, null, isAcidTable);
           }
         }
         // We couldn't do SQL filter pushdown. Get names via normal means.
@@ -3496,7 +3496,7 @@ public class ObjectStore implements RawStore, Configurable {
           List<String> partNames = new ArrayList<>();
           hasUnknownPartitions.set(getPartitionNamesPrunedByExprNoTxn(
                   catName, dbName, tblName, partitionKeys, expr, defaultPartitionName, maxParts, partNames));
-          result = getPartitionsViaOrmFilter(catName, dbName, tblName, partNames, isTxnTbl);
+          result = getPartitionsViaOrmFilter(catName, dbName, tblName, partNames, isAcidTable);
         }
         return result;
       }
@@ -3619,10 +3619,12 @@ public class ObjectStore implements RawStore, Configurable {
    * @param dbName Database name.
    * @param tblName Table name.
    * @param partNames Partition names to get the objects for.
+   * @param isAcidTable True if the table is ACID
    * @return Resulting partitions.
    */
-  private List<Partition> getPartitionsViaOrmFilter(String catName,
-      String dbName, String tblName, List<String> partNames, boolean isTxnTable) throws MetaException {
+  private List<Partition> getPartitionsViaOrmFilter(String catName, String dbName, String tblName,
+      List<String> partNames, boolean isAcidTable) throws MetaException {
+
     if (partNames.isEmpty()) {
       return new ArrayList<>();
     }
@@ -3634,7 +3636,7 @@ public class ObjectStore implements RawStore, Configurable {
     query.setOrdering("partitionName ascending");
     @SuppressWarnings("unchecked")
     List<MPartition> mparts = (List<MPartition>)query.executeWithMap(queryWithParams.getSecond());
-    List<Partition> partitions = convertToParts(catName, dbName, tblName, mparts, isTxnTable);
+    List<Partition> partitions = convertToParts(catName, dbName, tblName, mparts, isAcidTable);
     if (query != null) {
       query.closeAll();
     }
@@ -3963,7 +3965,7 @@ public class ObjectStore implements RawStore, Configurable {
     tblName = normalizeIdentifier(tblName);
     MTable mTable = ensureGetMTable(catName, dbName, tblName);
     List<FieldSchema> partitionKeys = convertToFieldSchemas(mTable.getPartitionKeys());
-    Map<String, String> parameters = mTable.getParameters();
+
     return new GetHelper<Integer>(catName, dbName, tblName, true, true) {
       private final SqlFilterForPushdown filter = new SqlFilterForPushdown();
 
@@ -4054,8 +4056,7 @@ public class ObjectStore implements RawStore, Configurable {
 
     MTable mTable = ensureGetMTable(catName, dbName, tblName);
     List<FieldSchema> partitionKeys = convertToFieldSchemas(mTable.getPartitionKeys());
-    boolean isTxnTable = TxnUtils.isTransactionalTable(convertMap(mTable.getParameters()));
-    Map<String, String> parameters = mTable.getParameters();
+    boolean isAcidTable = TxnUtils.isAcidTable(mTable.getParameters());
     final ExpressionTree tree = (filter != null && !filter.isEmpty())
         ? PartFilterExprUtil.getFilterParser(filter).tree : ExpressionTree.EMPTY_TREE;
     return new GetListHelper<Partition>(catName, dbName, tblName, allowSql, allowJdo) {
@@ -4068,7 +4069,7 @@ public class ObjectStore implements RawStore, Configurable {
 
       @Override
       protected List<Partition> getSqlResult(GetHelper<List<Partition>> ctx) throws MetaException {
-        return directSql.getPartitionsViaSqlFilter(catName, dbName, tblName, filter, (maxParts < 0) ? null : (int)maxParts, isTxnTable);
+        return directSql.getPartitionsViaSqlFilter(catName, dbName, tblName, filter, (maxParts < 0) ? null : (int)maxParts, isAcidTable);
       }
 
       @Override

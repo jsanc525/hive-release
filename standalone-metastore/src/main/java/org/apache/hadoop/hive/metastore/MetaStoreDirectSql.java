@@ -87,7 +87,6 @@ import org.apache.hadoop.hive.metastore.parser.ExpressionTree.LogicalOperator;
 import org.apache.hadoop.hive.metastore.parser.ExpressionTree.Operator;
 import org.apache.hadoop.hive.metastore.parser.ExpressionTree.TreeNode;
 import org.apache.hadoop.hive.metastore.parser.ExpressionTree.TreeVisitor;
-import org.apache.hadoop.hive.metastore.txn.TxnUtils;
 import org.apache.hadoop.hive.metastore.utils.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.utils.MetaStoreUtils.ColStatsObjWithSourceInfo;
 import org.apache.hadoop.hive.metastore.utils.MetaStoreUtils.FullTableName;
@@ -475,8 +474,15 @@ class MetaStoreDirectSql {
     });
   }
 
+  /**
+   * Gets partitions by using direct SQL queries.
+   * @param filter The filter.
+   * @param max The maximum number of partitions to return.
+   * @param isAcidTable True if the table is ACID
+   * @return List of partitions.
+   */
   public List<Partition> getPartitionsViaSqlFilter(String catName, String dbName, String tableName,
-      SqlFilterForPushdown filter, Integer max, boolean isTxnTable) throws MetaException {
+      SqlFilterForPushdown filter, Integer max, boolean isAcidTable) throws MetaException {
     List<Object> partitionIds = getPartitionIdsViaSqlFilter(catName,
         dbName, tableName, filter.filter, filter.params,
         filter.joins, max);
@@ -487,7 +493,7 @@ class MetaStoreDirectSql {
       @Override
       public List<Partition> run(List<Object> input) throws MetaException {
         return getPartitionsFromPartitionIds(catName, dbName,
-                tableName, null, input, isTxnTable);
+                tableName, null, input, isAcidTable);
       }
     });
   }
@@ -636,7 +642,7 @@ class MetaStoreDirectSql {
 
   /** Should be called with the list short enough to not trip up Oracle/etc. */
   private List<Partition> getPartitionsFromPartitionIds(String catName, String dbName, String tblName,
-      Boolean isView, List<Object> partIdList, boolean isTxnTable) throws MetaException {
+      Boolean isView, List<Object> partIdList, boolean isAcidTable) throws MetaException {
     boolean doTrace = LOG.isDebugEnabled();
 
     int idStringWidth = (int)Math.ceil(Math.log10(partIdList.size())) + 1; // 1 for comma
@@ -787,7 +793,7 @@ class MetaStoreDirectSql {
     String serdeIds = trimCommaList(serdeSb);
     String colIds = trimCommaList(colsSb);
 
-    if (!isTxnTable) {
+    if (!isAcidTable) {
       // Get all the stuff for SD. Don't do empty-list check - we expect partitions do have SDs.
       queryText = "select \"SD_ID\", \"PARAM_KEY\", \"PARAM_VALUE\" from " + SD_PARAMS + ""
           + " where \"SD_ID\" in (" + sdIds + ") and \"PARAM_KEY\" is not null"
@@ -804,7 +810,7 @@ class MetaStoreDirectSql {
     }
 
     boolean hasSkewedColumns = false;
-    if (!isTxnTable) {
+    if (!isAcidTable) {
       queryText = "select \"SD_ID\", \"COLUMN_NAME\", " + SORT_COLS + ".\"ORDER\"" + " from " + SORT_COLS + ""
           + " where \"SD_ID\" in (" + sdIds + ")" + " order by \"SD_ID\" asc, \"INTEGER_IDX\" asc";
       loopJoinOrderedResult(sds, queryText, 0, new ApplyFunc<StorageDescriptor>() {
@@ -826,7 +832,7 @@ class MetaStoreDirectSql {
       }});
 
     // Skewed columns stuff.
-    if (!isTxnTable) {
+    if (!isAcidTable) {
       queryText =
           "select \"SD_ID\", \"SKEWED_COL_NAME\" from " + SKEWED_COL_NAMES + "" + " where \"SD_ID\" in (" + sdIds + ")"
               + " order by \"SD_ID\" asc, \"INTEGER_IDX\" asc";
@@ -936,7 +942,7 @@ class MetaStoreDirectSql {
     }
 
     // Finally, get all the stuff for serdes - just the params.
-    if (!isTxnTable) {
+    if (!isAcidTable) {
       queryText =
           "select \"SERDE_ID\", \"PARAM_KEY\", \"PARAM_VALUE\" from " + SERDE_PARAMS + "" + " where \"SERDE_ID\" in (" + serdeIds + ") and \"PARAM_KEY\" is not null"
               + " order by \"SERDE_ID\" asc";

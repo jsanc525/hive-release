@@ -7372,6 +7372,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         //todo: should this be done for MM?  is it ok to use CombineHiveInputFormat with MM?
         checkAcidConstraints(qb, tableDescriptor, destinationTable);
       } else {
+        // Transactional tables can't be list bucketed or have skewed cols
         lbCtx = constructListBucketingCtx(destinationPartition.getSkewedColNames(),
             destinationPartition.getSkewedColValues(), destinationPartition.getSkewedColValueLocationMaps(),
             destinationPartition.isStoredAsSubDirectories());
