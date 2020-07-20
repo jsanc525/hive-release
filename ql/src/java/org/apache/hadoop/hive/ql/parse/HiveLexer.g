@@ -1,9 +1,9 @@
 /**
-   Licensed to the Apache Software Foundation (ASF) under one or more
-   contributor license agreements.  See the NOTICE file distributed with
+   Licensed to the Apache Software Foundation (ASF) under one or more 
+   contributor license agreements.  See the NOTICE file distributed with 
    this work for additional information regarding copyright ownership.
    The ASF licenses this file to You under the Apache License, Version 2.0
-   (the "License"); you may not use this file except in compliance with
+   (the "License"); you may not use this file except in compliance with 
    the License.  You may obtain a copy of the License at
 
        http://www.apache.org/licenses/LICENSE-2.0
@@ -25,11 +25,11 @@ import org.apache.hadoop.hive.conf.HiveConf;
 
 @lexer::members {
   private Configuration hiveConf;
-
+  
   public void setHiveConf(Configuration hiveConf) {
     this.hiveConf = hiveConf;
   }
-
+  
   protected boolean allowQuotedId() {
     if(hiveConf == null){
       return false;
@@ -44,7 +44,6 @@ import org.apache.hadoop.hive.conf.HiveConf;
 KW_TRUE : 'TRUE';
 KW_FALSE : 'FALSE';
 KW_ALL : 'ALL';
-KW_SOME : 'SOME';
 KW_NONE: 'NONE';
 KW_AND : 'AND';
 KW_OR : 'OR';
@@ -501,17 +500,17 @@ An Identifier can be:
 - macro name
 - hint name
 - window name
-*/
+*/    
 Identifier
     :
     (Letter | Digit) (Letter | Digit | '_')*
-    | {allowQuotedId()}? QuotedIdentifier  /* though at the language level we allow all Identifiers to be QuotedIdentifiers;
+    | {allowQuotedId()}? QuotedIdentifier  /* though at the language level we allow all Identifiers to be QuotedIdentifiers; 
                                               at the API level only columns are allowed to be of this form */
     | '`' RegexComponent+ '`'
     ;
 
-fragment
-QuotedIdentifier
+fragment    
+QuotedIdentifier 
     :
     '`'  ( '``' | ~('`') )* '`' { setText(getText().substring(1, getText().length() -1 ).replaceAll("``", "`")); }
     ;
