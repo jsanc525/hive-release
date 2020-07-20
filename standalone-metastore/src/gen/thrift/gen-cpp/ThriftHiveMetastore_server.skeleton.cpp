@@ -1117,6 +1117,11 @@ class ThriftHiveMetastoreHandler : virtual public ThriftHiveMetastoreIf {
     printf("get_runtime_stats\n");
   }
 
+  void get_open_txns_req(GetOpenTxnsResponse& _return, const GetOpenTxnsRequest& getOpenTxnsRequest) {
+    // Your implementation goes here
+    printf("get_open_txns_req\n");
+  }
+
 };
 
 int main(int argc, char **argv) {
