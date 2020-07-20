@@ -1756,6 +1756,10 @@ struct AlterTableRequest {
 struct AlterTableResponse {
 }
 
+struct GetOpenTxnsRequest {
+  1: required list<TxnType> excludeTxnTypes;
+}
+
 // Exceptions.
 
 exception MetaException {
@@ -2445,6 +2449,7 @@ service ThriftHiveMetastore extends fb303.FacebookService
   
   void add_runtime_stats(1: RuntimeStat stat) throws(1:MetaException o1)
   list<RuntimeStat> get_runtime_stats(1: GetRuntimeStatsRequest rqst) throws(1:MetaException o1)
+  GetOpenTxnsResponse get_open_txns_req(1: GetOpenTxnsRequest getOpenTxnsRequest)
 }
 
 // * Note about the DDL_TIME: When creating or altering a table or a partition,

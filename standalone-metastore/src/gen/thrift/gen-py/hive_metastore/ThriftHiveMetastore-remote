@@ -243,6 +243,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print('  bool heartbeat_lock_materialization_rebuild(string dbName, string tableName, i64 txnId)')
   print('  void add_runtime_stats(RuntimeStat stat)')
   print('   get_runtime_stats(GetRuntimeStatsRequest rqst)')
+  print('  GetOpenTxnsResponse get_open_txns_req(GetOpenTxnsRequest getOpenTxnsRequest)')
   print('  string getName()')
   print('  string getVersion()')
   print('  fb_status getStatus()')
@@ -1625,6 +1626,12 @@ elif cmd == 'get_runtime_stats':
     print('get_runtime_stats requires 1 args')
     sys.exit(1)
   pp.pprint(client.get_runtime_stats(eval(args[0]),))
+
+elif cmd == 'get_open_txns_req':
+  if len(args) != 1:
+    print('get_open_txns_req requires 1 args')
+    sys.exit(1)
+  pp.pprint(client.get_open_txns_req(eval(args[0]),))
 
 elif cmd == 'getName':
   if len(args) != 0:

@@ -7900,6 +7900,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       return getTxnHandler().getOpenTxns();
     }
 
+    @Override
+    public GetOpenTxnsResponse get_open_txns_req(GetOpenTxnsRequest getOpenTxnsRequest) throws TException {
+      return getTxnHandler().getOpenTxns(getOpenTxnsRequest.getExcludeTxnTypes());
+    }
+
     // Transaction and locking methods
     @Override
     public GetOpenTxnsInfoResponse get_open_txns_info() throws TException {
