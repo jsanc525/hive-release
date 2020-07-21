@@ -3566,11 +3566,11 @@ Stage-4
                               Output:["_col0","_col1"],keys:KEY._col0, KEY._col1
                             <-Union 3 [SIMPLE_EDGE]
                               <-Map 8 [CONTAINS] vectorized, llap
-                                Reduce Output Operator [RS_63]
+                                Reduce Output Operator [RS_64]
                                   PartitionCols:_col0, _col1
-                                  Group By Operator [GBY_62] (rows=1 width=272)
+                                  Group By Operator [GBY_63] (rows=1 width=272)
                                     Output:["_col0","_col1"],keys:_col0, _col1
-                                    Select Operator [SEL_61] (rows=500 width=10)
+                                    Select Operator [SEL_62] (rows=500 width=10)
                                       Output:["_col0","_col1"]
                                       TableScan [TS_48] (rows=500 width=10)
                                         Output:["key","value"]
