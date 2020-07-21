@@ -1397,9 +1397,12 @@ public class AcidUtils {
           } else {
             Path parentDirPath = fPath.getParent();
             if (acidTempDirFilter.accept(parentDirPath)) {
-              FileStatus parentDirFStatus = fs.getFileStatus(parentDirPath);
               HdfsDirSnapshot dirSnapshot = dirToSnapshots.get(parentDirPath);
               if (dirSnapshot == null) {
+                FileStatus parentDirFStatus = null;
+                if (!parentDirPath.equals(path)) {
+                  parentDirFStatus = fs.getFileStatus(parentDirPath);
+                }
                 dirSnapshot = new HdfsDirSnapshotImpl(parentDirPath, parentDirFStatus);
                 dirToSnapshots.put(parentDirPath, dirSnapshot);
               }
