@@ -2394,7 +2394,7 @@ public class StatsRulesProcFactory {
         }
       }
       if (neededColumns.size() != 0) {
-        long restColumnsDefaultSize =
+        int restColumnsDefaultSize =
             StatsUtils.estimateRowSizeFromSchema(conf, jop.getSchema().getSignature(), neededColumns);
         newDataSize = StatsUtils.safeAdd(newDataSize, StatsUtils.safeMult(restColumnsDefaultSize, newNumRows));
       }

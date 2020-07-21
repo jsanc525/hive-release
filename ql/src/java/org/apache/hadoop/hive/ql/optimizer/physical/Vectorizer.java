@@ -2676,11 +2676,7 @@ public class Vectorizer implements PhysicalPlanResolver {
       return false;
     }
 
-    //TODO: isGroupingSetsPresent() is returning false, even though
-    // ListGroupingSets is present. Need to check if there is hidden bug.
-    boolean isGroupingSetsPresent = (desc.getListGroupingSets() != null && !desc.getListGroupingSets().isEmpty());
-    if (!validateAggregationDescs(desc.getAggregators(), desc.getMode(),
-        isGroupingSetsPresent, hasKeys)) {
+    if (!validateAggregationDescs(desc.getAggregators(), desc.getMode(), hasKeys)) {
       return false;
     }
 
@@ -2935,12 +2931,10 @@ public class Vectorizer implements PhysicalPlanResolver {
   }
 
   private boolean validateAggregationDescs(List<AggregationDesc> descs,
-      GroupByDesc.Mode groupByMode, boolean isGroupingSetsPresent,
-      boolean hasKeys) {
+      GroupByDesc.Mode groupByMode, boolean hasKeys) {
 
     for (AggregationDesc d : descs) {
-      if (!validateAggregationDesc(d, groupByMode, isGroupingSetsPresent,
-          hasKeys)) {
+      if (!validateAggregationDesc(d, groupByMode, hasKeys)) {
         return false;
       }
     }
@@ -3097,7 +3091,7 @@ public class Vectorizer implements PhysicalPlanResolver {
   }
 
   private boolean validateAggregationDesc(AggregationDesc aggDesc, GroupByDesc.Mode groupByMode,
-      boolean isGroupingSetsPresent, boolean hasKeys) {
+      boolean hasKeys) {
 
     String udfName = aggDesc.getGenericUDAFName().toLowerCase();
     if (!supportedAggregationUdfs.contains(udfName)) {
@@ -3106,13 +3100,8 @@ public class Vectorizer implements PhysicalPlanResolver {
     }
 
     // The planner seems to pull this one out.
-    if (groupByMode != GroupByDesc.Mode.HASH && aggDesc.getDistinct()) {
+    if (aggDesc.getDistinct()) {
       setExpressionIssue("Aggregation Function", "DISTINCT not supported");
-      return false;
-    }
-
-    if (isGroupingSetsPresent && aggDesc.getDistinct()) {
-      setExpressionIssue("Aggregation Function", "DISTINCT with Groupingsets not supported");
       return false;
     }
 

@@ -237,7 +237,6 @@ public class VectorizedOrcAcidRowBatchReader
     // Set the range on the deleteEventReaderOptions to 0 to INTEGER_MAX because
     // we always want to read all the delete delta files.
     deleteEventReaderOptions.range(0, Long.MAX_VALUE);
-    deleteEventReaderOptions.searchArgument(null, null);
     keyInterval = findMinMaxKeys(orcSplit, conf, deleteEventReaderOptions);
     DeleteEventRegistry der;
     try {
@@ -385,8 +384,7 @@ public class VectorizedOrcAcidRowBatchReader
   private OrcRawRecordMerger.KeyInterval findMinMaxKeys(
       OrcSplit orcSplit, Configuration conf,
       Reader.Options deleteEventReaderOptions) throws IOException {
-    final boolean noDeleteDeltas = getDeleteDeltaDirsFromSplit(orcSplit).length == 0;
-    if(!HiveConf.getBoolVar(conf, ConfVars.FILTER_DELETE_EVENTS) || noDeleteDeltas) {
+    if(!HiveConf.getBoolVar(conf, ConfVars.FILTER_DELETE_EVENTS)) {
       LOG.debug("findMinMaxKeys() " + ConfVars.FILTER_DELETE_EVENTS + "=false");
       return new OrcRawRecordMerger.KeyInterval(null, null);
     }
@@ -713,7 +711,7 @@ public class VectorizedOrcAcidRowBatchReader
     int bucketProperty = BucketCodec.V1.encode(new AcidOutputFormat.Options(conf)
         //statementId is from directory name (or 0 if there is none)
       .statementId(syntheticTxnInfo.statementId).bucket(bucketId));
-    AcidUtils.Directory directoryState = AcidUtils.getAcidState(null, syntheticTxnInfo.folder, conf,
+    AcidUtils.Directory directoryState = AcidUtils.getAcidState( syntheticTxnInfo.folder, conf,
         validWriteIdList, Ref.from(false), true, null, false);
     for (HadoopShims.HdfsFileStatusWithId f : directoryState.getOriginalFiles()) {
       int bucketIdFromPath = AcidUtils.parseBucketId(f.getFileStatus().getPath());

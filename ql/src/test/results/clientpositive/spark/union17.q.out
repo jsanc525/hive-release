@@ -14,9 +14,9 @@ POSTHOOK: query: CREATE TABLE DEST2_n17(key STRING, val1 STRING, val2 STRING) ST
 POSTHOOK: type: CREATETABLE
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@DEST2_n17
-PREHOOK: query: explain
+PREHOOK: query: explain 
 FROM (select 'tst1' as key, cast(count(1) as string) as value from src s1
-                         UNION  ALL
+                         UNION  ALL  
       select s2.key as key, s2.value as value from src s2) unionsrc
 INSERT OVERWRITE TABLE DEST1_n78 SELECT unionsrc.key, COUNT(DISTINCT SUBSTR(unionsrc.value,5)) GROUP BY unionsrc.key
 INSERT OVERWRITE TABLE DEST2_n17 SELECT unionsrc.key, unionsrc.value, COUNT(DISTINCT SUBSTR(unionsrc.value,5)) GROUP BY unionsrc.key, unionsrc.value
@@ -24,9 +24,9 @@ PREHOOK: type: QUERY
 PREHOOK: Input: default@src
 PREHOOK: Output: default@dest1_n78
 PREHOOK: Output: default@dest2_n17
-POSTHOOK: query: explain
+POSTHOOK: query: explain 
 FROM (select 'tst1' as key, cast(count(1) as string) as value from src s1
-                         UNION  ALL
+                         UNION  ALL  
       select s2.key as key, s2.value as value from src s2) unionsrc
 INSERT OVERWRITE TABLE DEST1_n78 SELECT unionsrc.key, COUNT(DISTINCT SUBSTR(unionsrc.value,5)) GROUP BY unionsrc.key
 INSERT OVERWRITE TABLE DEST2_n17 SELECT unionsrc.key, unionsrc.value, COUNT(DISTINCT SUBSTR(unionsrc.value,5)) GROUP BY unionsrc.key, unionsrc.value
@@ -51,7 +51,7 @@ STAGE PLANS:
         Reducer 9 <- Map 1 (GROUP, 1)
 #### A masked pattern was here ####
       Vertices:
-        Map 1
+        Map 1 
             Map Operator Tree:
                 TableScan
                   alias: s1
@@ -64,11 +64,11 @@ STAGE PLANS:
                       outputColumnNames: _col0
                       Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: COMPLETE
                       Reduce Output Operator
-                        sort order:
+                        sort order: 
                         Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: COMPLETE
                         value expressions: _col0 (type: bigint)
             Execution mode: vectorized
-        Map 6
+        Map 6 
             Map Operator Tree:
                 TableScan
                   alias: s2
@@ -87,9 +87,8 @@ STAGE PLANS:
                         key expressions: _col0 (type: string), _col1 (type: string)
                         sort order: ++
                         Map-reduce partition columns: _col0 (type: string)
-                        Statistics: Num rows: 1 Data size: 275 Basic stats: COMPLETE Column stats: PARTIAL
-            Execution mode: vectorized
-        Map 7
+                        Statistics: Num rows: 1 Data size: 280 Basic stats: COMPLETE Column stats: PARTIAL
+        Map 7 
             Map Operator Tree:
                 TableScan
                   alias: s2
@@ -108,9 +107,8 @@ STAGE PLANS:
                         key expressions: _col0 (type: string), _col1 (type: string), _col2 (type: string)
                         sort order: +++
                         Map-reduce partition columns: _col0 (type: string), _col1 (type: string)
-                        Statistics: Num rows: 1 Data size: 459 Basic stats: COMPLETE Column stats: PARTIAL
-            Execution mode: vectorized
-        Reducer 3
+                        Statistics: Num rows: 1 Data size: 464 Basic stats: COMPLETE Column stats: PARTIAL
+        Reducer 3 
             Reduce Operator Tree:
               Group By Operator
                 aggregations: count(DISTINCT KEY._col1:0._col0)
@@ -130,7 +128,7 @@ STAGE PLANS:
                         output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                         serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                         name: default.dest1_n78
-        Reducer 4
+        Reducer 4 
             Reduce Operator Tree:
               Group By Operator
                 aggregations: count(DISTINCT KEY._col2:0._col0)
@@ -150,8 +148,7 @@ STAGE PLANS:
                         output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                         serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                         name: default.dest2_n17
-        Reducer 8
-            Execution mode: vectorized
+        Reducer 8 
             Reduce Operator Tree:
               Group By Operator
                 aggregations: count(VALUE._col0)
@@ -173,8 +170,7 @@ STAGE PLANS:
                       sort order: ++
                       Map-reduce partition columns: _col0 (type: string)
                       Statistics: Num rows: 1 Data size: 280 Basic stats: COMPLETE Column stats: PARTIAL
-        Reducer 9
-            Execution mode: vectorized
+        Reducer 9 
             Reduce Operator Tree:
               Group By Operator
                 aggregations: count(VALUE._col0)
@@ -226,7 +222,7 @@ STAGE PLANS:
       Basic Stats Work:
 
 PREHOOK: query: FROM (select 'tst1' as key, cast(count(1) as string) as value from src s1
-                         UNION  ALL
+                         UNION  ALL  
       select s2.key as key, s2.value as value from src s2) unionsrc
 INSERT OVERWRITE TABLE DEST1_n78 SELECT unionsrc.key, COUNT(DISTINCT SUBSTR(unionsrc.value,5)) GROUP BY unionsrc.key
 INSERT OVERWRITE TABLE DEST2_n17 SELECT unionsrc.key, unionsrc.value, COUNT(DISTINCT SUBSTR(unionsrc.value,5)) GROUP BY unionsrc.key, unionsrc.value
@@ -235,7 +231,7 @@ PREHOOK: Input: default@src
 PREHOOK: Output: default@dest1_n78
 PREHOOK: Output: default@dest2_n17
 POSTHOOK: query: FROM (select 'tst1' as key, cast(count(1) as string) as value from src s1
-                         UNION  ALL
+                         UNION  ALL  
       select s2.key as key, s2.value as value from src s2) unionsrc
 INSERT OVERWRITE TABLE DEST1_n78 SELECT unionsrc.key, COUNT(DISTINCT SUBSTR(unionsrc.value,5)) GROUP BY unionsrc.key
 INSERT OVERWRITE TABLE DEST2_n17 SELECT unionsrc.key, unionsrc.value, COUNT(DISTINCT SUBSTR(unionsrc.value,5)) GROUP BY unionsrc.key, unionsrc.value

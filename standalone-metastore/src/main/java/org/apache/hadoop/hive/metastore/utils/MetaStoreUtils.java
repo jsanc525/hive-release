@@ -1402,12 +1402,9 @@ public class MetaStoreUtils {
           org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.META_TABLE_LOCATION,
           sd.getLocation());
     }
-    int bucket_cnt = sd.getNumBuckets();
-    if (bucket_cnt > 0) {
-      schema.setProperty(org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.BUCKET_COUNT,
-              Integer.toString(bucket_cnt));
-    }
-
+    schema.setProperty(
+        org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.BUCKET_COUNT, Integer
+            .toString(sd.getNumBuckets()));
     if (sd.getBucketCols() != null && sd.getBucketCols().size() > 0) {
       schema.setProperty(
           org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.BUCKET_FIELD_NAME,
@@ -1421,6 +1418,10 @@ public class MetaStoreUtils {
       if (sd.getSerdeInfo().getSerializationLib() != null) {
         schema.setProperty(ColumnType.SERIALIZATION_LIB, sd .getSerdeInfo().getSerializationLib());
       }
+    }
+
+    if (sd.getCols() != null) {
+      schema.setProperty(ColumnType.SERIALIZATION_DDL, getDDLFromFieldSchema(tableName, sd.getCols()));
     }
 
     String partString = StringUtils.EMPTY;
@@ -1451,13 +1452,7 @@ public class MetaStoreUtils {
     if (parameters != null) {
       for (Map.Entry<String, String> e : parameters.entrySet()) {
         // add non-null parameters to the schema
-        String key = e.getKey();
-        if (!StatsSetupConst.COLUMN_STATS_ACCURATE.equals(key) &&
-            !hive_metastoreConstants.DDL_TIME.equals(key) &&
-            !StatsSetupConst.TOTAL_SIZE.equals(key) &&
-            !StatsSetupConst.RAW_DATA_SIZE.equals(key) &&
-            !StatsSetupConst.NUM_FILES.equals(key) &&
-            !StatsSetupConst.ROW_COUNT.equals(key) && e.getValue() != null) {
+        if ( e.getValue() != null) {
           schema.setProperty(e.getKey(), e.getValue());
         }
       }

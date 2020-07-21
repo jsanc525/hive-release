@@ -1348,7 +1348,7 @@ public class DagUtils {
    * Creates and initializes a JobConf object that can be used to execute
    * the DAG. This can skip the configs which are already included in AM configs.
    * @param hiveConf Current conf for the execution
-   * @param skipAMConf Skip the configs where are already set across all DAGs
+   * @param skipAMConf Skip the configs where are already set across all DAGs 
    * @return JobConf base configuration for job execution
    * @throws IOException
    */
@@ -1356,8 +1356,7 @@ public class DagUtils {
     hiveConf.setBoolean("mapred.mapper.new-api", false);
 
     Predicate<String> findDefaults =
-            (s) -> ((s != null) && ((s.endsWith(".xml") && !s.endsWith("hive-site.xml")) ||
-                (s.endsWith(".java") && !"HiveConf.java".equals(s))));
+        (s) -> ((s != null) && (s.endsWith(".xml") || (s.endsWith(".java") && !"HiveConf.java".equals(s))));
 
     // since this is an inclusion filter, negate the predicate
     JobConf conf =
@@ -1382,9 +1381,6 @@ public class DagUtils {
 
     // TODO: convert this to a predicate too
     hiveConf.stripHiddenConfigurations(conf);
-
-    // Remove hive configs which are used only in HS2 and not needed for execution
-    conf.unset(ConfVars.HIVE_AUTHORIZATION_SQL_STD_AUTH_CONFIG_WHITELIST.varname); 
     return conf;
   }
 
@@ -1488,7 +1484,7 @@ public class DagUtils {
     if (!hasChildren) {
       v.addDataSink("out_"+work.getName(), new DataSinkDescriptor(
           OutputDescriptor.create(MROutput.class.getName())
-          .setUserPayload(v.getProcessorDescriptor().getUserPayload()), null, null));
+          .setUserPayload(TezUtils.createUserPayloadFromConf(conf)), null, null));
     }
 
     return v;

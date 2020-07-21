@@ -94,14 +94,12 @@ import org.apache.tez.dag.api.TezUncheckedException;
 import org.apache.tez.dag.api.UserPayload;
 import org.apache.tez.dag.api.event.VertexStateUpdate;
 import org.apache.tez.dag.app.TezTaskCommunicatorImpl;
-import org.apache.tez.dag.app.dag.DAG;
 import org.apache.tez.dag.records.TezTaskAttemptID;
 import org.apache.tez.runtime.api.TaskFailureType;
 import org.apache.tez.runtime.api.impl.TaskSpec;
 import org.apache.tez.runtime.api.impl.TezHeartbeatRequest;
 import org.apache.tez.runtime.api.impl.TezHeartbeatResponse;
 import org.apache.tez.serviceplugins.api.ContainerEndReason;
-import org.apache.tez.serviceplugins.api.DagInfo;
 import org.apache.tez.serviceplugins.api.ServicePluginErrorDefaults;
 import org.apache.tez.serviceplugins.api.TaskAttemptEndReason;
 import org.apache.tez.serviceplugins.api.TaskCommunicatorContext;
@@ -396,9 +394,11 @@ public class LlapTaskCommunicator extends TezTaskCommunicatorImpl {
         credentialsChanged, priority);
     int dagId = taskSpec.getTaskAttemptID().getTaskID().getVertexID().getDAGId().getId();
     if (currentQueryIdentifierProto == null || (dagId != currentQueryIdentifierProto.getDagIndex())) {
-      String hiveQueryId = extractQueryIdFromContext();
+      // TODO HiveQueryId extraction by parsing the Processor payload is ugly. This can be improved
+      // once TEZ-2672 is fixed.
+      String hiveQueryId;
       try {
-        hiveQueryId = (hiveQueryId == null) ? extractQueryId(taskSpec) : hiveQueryId;
+        hiveQueryId = extractQueryId(taskSpec);
       } catch (IOException e) {
         throw new RuntimeException("Failed to extract query id from task spec: " + taskSpec, e);
       }
@@ -818,20 +818,10 @@ public class LlapTaskCommunicator extends TezTaskCommunicatorImpl {
     // is likely already happening.
   }
 
-  // Needed for GenericUDTFGetSplits, where TaskSpecs are generated
   private String extractQueryId(TaskSpec taskSpec) throws IOException {
     UserPayload processorPayload = taskSpec.getProcessorDescriptor().getUserPayload();
     Configuration conf = TezUtils.createConfFromUserPayload(processorPayload);
     return HiveConf.getVar(conf, HiveConf.ConfVars.HIVEQUERYID);
-  }
-
-  private String extractQueryIdFromContext() {
-    //TODO: Remove following instance of check, When TEZ-2672 exposes getConf from DagInfo
-    DagInfo dagInfo = getContext().getCurrentDagInfo();
-    if (dagInfo instanceof DAG) {
-      return ((DAG)dagInfo).getConf().get(ConfVars.HIVEQUERYID.varname);
-    }
-    return null;
   }
 
   private SubmitWorkRequestProto constructSubmitWorkRequest(ContainerId containerId,

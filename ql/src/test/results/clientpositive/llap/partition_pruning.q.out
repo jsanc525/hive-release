@@ -119,20 +119,30 @@ STAGE PLANS:
             partition values:
               dt 2001-01-01
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"customer":"true"}}
+              bucket_count -1
               column.name.delimiter ,
               columns customer
+              columns.comments 
               columns.types int
 #### A masked pattern was here ####
               name default.daysales
+              numFiles 1
+              numRows 1
               partition_columns dt
               partition_columns.types string
+              rawDataSize 1
+              serialization.ddl struct daysales { i32 customer}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+              totalSize 2
+#### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
+                bucket_count -1
                 bucketing_version 2
                 column.name.delimiter ,
                 columns customer
@@ -142,8 +152,10 @@ STAGE PLANS:
                 name default.daysales
                 partition_columns dt
                 partition_columns.types string
+                serialization.ddl struct daysales { i32 customer}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+#### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.daysales
             name: default.daysales
@@ -188,20 +200,30 @@ STAGE PLANS:
             partition values:
               dt 2001-01-01
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"customer":"true"}}
+              bucket_count -1
               column.name.delimiter ,
               columns customer
+              columns.comments 
               columns.types int
 #### A masked pattern was here ####
               name default.daysales
+              numFiles 1
+              numRows 1
               partition_columns dt
               partition_columns.types string
+              rawDataSize 1
+              serialization.ddl struct daysales { i32 customer}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+              totalSize 2
+#### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
+                bucket_count -1
                 bucketing_version 2
                 column.name.delimiter ,
                 columns customer
@@ -211,8 +233,10 @@ STAGE PLANS:
                 name default.daysales
                 partition_columns dt
                 partition_columns.types string
+                serialization.ddl struct daysales { i32 customer}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+#### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.daysales
             name: default.daysales
@@ -222,20 +246,30 @@ STAGE PLANS:
             partition values:
               dt 2001-01-03
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"customer":"true"}}
+              bucket_count -1
               column.name.delimiter ,
               columns customer
+              columns.comments 
               columns.types int
 #### A masked pattern was here ####
               name default.daysales
+              numFiles 1
+              numRows 1
               partition_columns dt
               partition_columns.types string
+              rawDataSize 1
+              serialization.ddl struct daysales { i32 customer}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+              totalSize 2
+#### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
+                bucket_count -1
                 bucketing_version 2
                 column.name.delimiter ,
                 columns customer
@@ -245,8 +279,10 @@ STAGE PLANS:
                 name default.daysales
                 partition_columns dt
                 partition_columns.types string
+                serialization.ddl struct daysales { i32 customer}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+#### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.daysales
             name: default.daysales
@@ -291,20 +327,30 @@ STAGE PLANS:
             partition values:
               dt 2001-01-01
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"customer":"true"}}
+              bucket_count -1
               column.name.delimiter ,
               columns customer
+              columns.comments 
               columns.types int
 #### A masked pattern was here ####
               name default.daysales
+              numFiles 1
+              numRows 1
               partition_columns dt
               partition_columns.types string
+              rawDataSize 1
+              serialization.ddl struct daysales { i32 customer}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+              totalSize 2
+#### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
+                bucket_count -1
                 bucketing_version 2
                 column.name.delimiter ,
                 columns customer
@@ -314,8 +360,10 @@ STAGE PLANS:
                 name default.daysales
                 partition_columns dt
                 partition_columns.types string
+                serialization.ddl struct daysales { i32 customer}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+#### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.daysales
             name: default.daysales
@@ -325,20 +373,30 @@ STAGE PLANS:
             partition values:
               dt 2001-01-03
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"customer":"true"}}
+              bucket_count -1
               column.name.delimiter ,
               columns customer
+              columns.comments 
               columns.types int
 #### A masked pattern was here ####
               name default.daysales
+              numFiles 1
+              numRows 1
               partition_columns dt
               partition_columns.types string
+              rawDataSize 1
+              serialization.ddl struct daysales { i32 customer}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+              totalSize 2
+#### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
+                bucket_count -1
                 bucketing_version 2
                 column.name.delimiter ,
                 columns customer
@@ -348,8 +406,10 @@ STAGE PLANS:
                 name default.daysales
                 partition_columns dt
                 partition_columns.types string
+                serialization.ddl struct daysales { i32 customer}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+#### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.daysales
             name: default.daysales

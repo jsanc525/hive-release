@@ -1018,15 +1018,14 @@ public class AcidUtils {
 
   /**
    * Is the given directory in ACID format?
-   * @param fileSystem file system instance
    * @param directory the partition directory to check
    * @param conf the query configuration
    * @return true, if it is an ACID directory
    * @throws IOException
    */
-  public static boolean isAcid(FileSystem fileSystem, Path directory,
+  public static boolean isAcid(Path directory,
                                Configuration conf) throws IOException {
-    FileSystem fs = fileSystem == null ? directory.getFileSystem(conf) : fileSystem;
+    FileSystem fs = directory.getFileSystem(conf);
     for(FileStatus file: fs.listStatus(directory)) {
       String filename = file.getPath().getName();
       if (filename.startsWith(BASE_PREFIX) ||
@@ -1054,7 +1053,6 @@ public class AcidUtils {
    * base and diff directories. Note that because major compactions don't
    * preserve the history, we can't use a base directory that includes a
    * write id that we must exclude.
-   * @param fileSystem file system instance
    * @param directory the partition directory to analyze
    * @param conf the configuration
    * @param writeIdList the list of write ids that we are reading
@@ -1062,10 +1060,10 @@ public class AcidUtils {
    * @throws IOException
    */
 
-  public static Directory getAcidState(FileSystem fileSystem, Path directory, Configuration conf,
-       ValidWriteIdList writeIdList, Ref<Boolean> useFileIds, boolean ignoreEmptyFiles,
-       Map<String, String> tblproperties, boolean generateDirSnapshots) throws IOException {
-    FileSystem fs = fileSystem == null ? directory.getFileSystem(conf) : fileSystem;
+  public static Directory getAcidState(Path directory, Configuration conf, ValidWriteIdList writeIdList,
+      Ref<Boolean> useFileIds, boolean ignoreEmptyFiles, Map<String, String> tblproperties,
+      boolean generateDirSnapshots) throws IOException {
+    FileSystem fs = directory.getFileSystem(conf);
     // The following 'deltas' includes all kinds of delta files including insert & delete deltas.
     final List<ParsedDelta> deltas = new ArrayList<ParsedDelta>();
     List<ParsedDelta> working = new ArrayList<ParsedDelta>();
@@ -1400,10 +1398,6 @@ public class AcidUtils {
               FileStatus parentDirFStatus = fs.getFileStatus(parentDirPath);
               HdfsDirSnapshot dirSnapshot = dirToSnapshots.get(parentDirPath);
               if (dirSnapshot == null) {
-                parentDirFStatus = null;
-                if (!parentDirPath.equals(path)) {
-                  parentDirFStatus = fs.getFileStatus(parentDirPath);
-                }
                 dirSnapshot = new HdfsDirSnapshotImpl(parentDirPath, parentDirFStatus);
                 dirToSnapshots.put(parentDirPath, dirSnapshot);
               }
@@ -2378,7 +2372,7 @@ public class AcidUtils {
           + " from " + jc.get(ValidTxnWriteIdList.VALID_TABLES_WRITEIDS_KEY));
       return null;
     }
-    Directory acidInfo = AcidUtils.getAcidState(null, dir, jc, idList, null, false, null, false);
+    Directory acidInfo = AcidUtils.getAcidState(dir, jc, idList, null, false, null, false);
     // Assume that for an MM table, or if there's only the base directory, we are good.
     if (!acidInfo.getCurrentDirectories().isEmpty() && AcidUtils.isFullAcidTable(table)) {
       Utilities.FILE_OP_LOGGER.warn(
@@ -2415,7 +2409,7 @@ public class AcidUtils {
 
     // If ACID/MM tables, then need to find the valid state wrt to given ValidWriteIdList.
     ValidWriteIdList validWriteIdList = new ValidReaderWriteIdList(validWriteIdStr);
-    Directory acidInfo = AcidUtils.getAcidState(null, dataPath, conf, validWriteIdList, null, false, null, false);
+    Directory acidInfo = AcidUtils.getAcidState(dataPath, conf, validWriteIdList, null, false, null, false);
 
     for (HdfsFileStatusWithId hfs : acidInfo.getOriginalFiles()) {
       pathList.add(hfs.getFileStatus().getPath());

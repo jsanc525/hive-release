@@ -44,7 +44,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsAction;
-import org.apache.hadoop.hdfs.DFSUtilClient;
 import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.common.ObjectPair;
 import org.apache.hadoop.hive.common.StatsSetupConst;
@@ -333,7 +332,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
    * that describes percentage and number.
    */
   private final HashMap<String, SplitSample> nameToSplitSample;
-  private final Map<GroupByOperator, Set<String>> groupOpToInputTables;
+  Map<GroupByOperator, Set<String>> groupOpToInputTables;
   Map<String, PrunedPartitionList> prunedPartitions;
   protected List<FieldSchema> resultSchema;
   protected CreateViewDesc createVwDesc;
@@ -2530,13 +2529,11 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
    * @throws HiveException If an error occurs while identifying the correct staging location.
    */
   private Path getStagingDirectoryPathname(QB qb) throws HiveException {
-    Path stagingPath = null, tablePath = null;
+    Path stagingPath = null, tablePath;
 
-    if (DFSUtilClient.isHDFSEncryptionEnabled(conf)) {
-      // Looks for the most encrypted table location
-      // It may return null if there are not tables encrypted, or are not part of HDFS
-      tablePath = getStrongestEncryptedTablePath(qb);
-    }
+    // Looks for the most encrypted table location
+    // It may return null if there are not tables encrypted, or are not part of HDFS
+    tablePath = getStrongestEncryptedTablePath(qb);
     if (tablePath != null) {
       // At this point, tablePath is part of HDFS and it is encrypted
       if (isPathReadOnly(tablePath)) {
@@ -6811,7 +6808,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     int numFiles = 1;
     int totalFiles = 1;
 
-    if (dest_tab.getNumBuckets() > 0 && !dest_tab.getBucketCols().isEmpty()) {
+    if (dest_tab.getNumBuckets() > 0) {
       enforceBucketing = true;
       if (updating(dest) || deleting(dest)) {
         partnCols = getPartitionColsFromBucketColsForUpdateDelete(input, true);
@@ -7248,6 +7245,11 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       idToTableNameMap.put(String.valueOf(destTableId), destinationTable.getTableName());
       currentTableId = destTableId;
       destTableId++;
+
+      lbCtx = constructListBucketingCtx(destinationTable.getSkewedColNames(),
+          destinationTable.getSkewedColValues(), destinationTable.getSkewedColValueLocationMaps(),
+          destinationTable.isStoredAsSubDirectories());
+
       // Create the work for moving the table
       // NOTE: specify Dynamic partitions in dest_tab for WriteEntity
       if (!isNonNativeTable) {
@@ -7256,10 +7258,6 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
           acidOp = getAcidType(tableDescriptor.getOutputFileFormatClass(), dest);
           //todo: should this be done for MM?  is it ok to use CombineHiveInputFormat with MM
           checkAcidConstraints(qb, tableDescriptor, destinationTable);
-        } else {
-          lbCtx = constructListBucketingCtx(destinationTable.getSkewedColNames(),
-                  destinationTable.getSkewedColValues(), destinationTable.getSkewedColValueLocationMaps(),
-                  destinationTable.isStoredAsSubDirectories());
         }
         try {
           if (ctx.getExplainConfig() != null) {
@@ -7365,17 +7363,14 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       currentTableId = destTableId;
       destTableId++;
 
+      lbCtx = constructListBucketingCtx(destinationPartition.getSkewedColNames(),
+          destinationPartition.getSkewedColValues(), destinationPartition.getSkewedColValueLocationMaps(),
+          destinationPartition.isStoredAsSubDirectories());
       AcidUtils.Operation acidOp = AcidUtils.Operation.NOT_ACID;
       if (destTableIsFullAcid) {
         acidOp = getAcidType(tableDescriptor.getOutputFileFormatClass(), dest);
         //todo: should this be done for MM?  is it ok to use CombineHiveInputFormat with MM?
         checkAcidConstraints(qb, tableDescriptor, destinationTable);
-      } else {
-        // Acid tables can't be list bucketed or have skewed cols
-        lbCtx = constructListBucketingCtx(destinationPartition.getSkewedColNames(),
-                destinationPartition.getSkewedColValues(), destinationPartition.getSkewedColValueLocationMaps(),
-                destinationPartition.isStoredAsSubDirectories());
-
       }
       try {
         if (ctx.getExplainConfig() != null) {
@@ -13876,9 +13871,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         }
       }
 
-      ArrayList childrenList = next.getChildren();
-      for (int i = childrenList.size() - 1; i >= 0; i--) {
-        stack.push((ASTNode)childrenList.get(i));
+      for (int i = next.getChildren().size() - 1; i >= 0; i--) {
+        stack.push((ASTNode)next.getChildren().get(i));
       }
     }
   }

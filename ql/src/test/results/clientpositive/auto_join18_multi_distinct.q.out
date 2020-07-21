@@ -1,15 +1,15 @@
 PREHOOK: query: explain
  SELECT sum(hash(a.key, a.value, b.key, b.value1,  b.value2))
- FROM
+ FROM 
   (
   SELECT src1.key as key, count(src1.value) AS value FROM src src1 group by src1.key
   ) a
- FULL OUTER JOIN
+ FULL OUTER JOIN 
  (
   SELECT src2.key as key, count(distinct(src2.value)) AS value1,
   count(distinct(src2.key)) AS value2
   FROM src1 src2 group by src2.key
- ) b
+ ) b 
  ON (a.key = b.key)
 PREHOOK: type: QUERY
 PREHOOK: Input: default@src
@@ -17,16 +17,16 @@ PREHOOK: Input: default@src1
 #### A masked pattern was here ####
 POSTHOOK: query: explain
  SELECT sum(hash(a.key, a.value, b.key, b.value1,  b.value2))
- FROM
+ FROM 
   (
   SELECT src1.key as key, count(src1.value) AS value FROM src src1 group by src1.key
   ) a
- FULL OUTER JOIN
+ FULL OUTER JOIN 
  (
   SELECT src2.key as key, count(distinct(src2.value)) AS value1,
   count(distinct(src2.key)) AS value2
   FROM src1 src2 group by src2.key
- ) b
+ ) b 
  ON (a.key = b.key)
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@src
@@ -124,7 +124,7 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             Reduce Output Operator
-              sort order:
+              sort order: 
               Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: NONE
               value expressions: _col0 (type: bigint)
       Execution mode: vectorized
@@ -162,8 +162,7 @@ STAGE PLANS:
                   key expressions: _col0 (type: string), _col1 (type: string)
                   sort order: ++
                   Map-reduce partition columns: _col0 (type: string)
-                  Statistics: Num rows: 12 Data size: 2292 Basic stats: COMPLETE Column stats: COMPLETE
-      Execution mode: vectorized
+                  Statistics: Num rows: 25 Data size: 191 Basic stats: COMPLETE Column stats: NONE
       Reduce Operator Tree:
         Group By Operator
           aggregations: count(DISTINCT KEY._col1:0._col0), count(DISTINCT KEY._col1:1._col0)
@@ -185,32 +184,32 @@ STAGE PLANS:
         ListSink
 
 PREHOOK: query: SELECT sum(hash(a.key, a.value, b.key, b.value1,  b.value2))
- FROM
+ FROM 
   (
   SELECT src1.key as key, count(src1.value) AS value FROM src src1 group by src1.key
   ) a
- FULL OUTER JOIN
+ FULL OUTER JOIN 
  (
   SELECT src2.key as key, count(distinct(src2.value)) AS value1,
   count(distinct(src2.key)) AS value2
   FROM src1 src2 group by src2.key
- ) b
+ ) b 
  ON (a.key = b.key)
 PREHOOK: type: QUERY
 PREHOOK: Input: default@src
 PREHOOK: Input: default@src1
 #### A masked pattern was here ####
 POSTHOOK: query: SELECT sum(hash(a.key, a.value, b.key, b.value1,  b.value2))
- FROM
+ FROM 
   (
   SELECT src1.key as key, count(src1.value) AS value FROM src src1 group by src1.key
   ) a
- FULL OUTER JOIN
+ FULL OUTER JOIN 
  (
   SELECT src2.key as key, count(distinct(src2.value)) AS value1,
   count(distinct(src2.key)) AS value2
   FROM src1 src2 group by src2.key
- ) b
+ ) b 
  ON (a.key = b.key)
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@src

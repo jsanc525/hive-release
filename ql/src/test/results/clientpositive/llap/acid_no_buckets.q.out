@@ -297,6 +297,8 @@ Compressed:         	No
 Num Buckets:        	-1                  	 
 Bucket Columns:     	[]                  	 
 Sort Columns:       	[]                  	 
+Storage Desc Params:	 	 
+	serialization.format	1                   
 PREHOOK: query: describe formatted srcpart_acid key
 PREHOOK: type: DESCTABLE
 PREHOOK: Input: default@srcpart_acid
@@ -407,6 +409,8 @@ Compressed:         	No
 Num Buckets:        	-1                  	 
 Bucket Columns:     	[]                  	 
 Sort Columns:       	[]                  	 
+Storage Desc Params:	 	 
+	serialization.format	1                   
 PREHOOK: query: describe formatted srcpart_acid key
 PREHOOK: type: DESCTABLE
 PREHOOK: Input: default@srcpart_acid

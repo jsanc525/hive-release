@@ -141,8 +141,7 @@ public class QueryTracker extends AbstractService {
     String dagName, String hiveQueryIdString, int dagIdentifier, String vertexName, int fragmentNumber,
     int attemptNumber,
     String user, SignableVertexSpec vertex, Token<JobTokenIdentifier> appToken,
-      String fragmentIdString, LlapTokenInfo tokenInfo, final LlapNodeId amNodeId,
-      ContainerRunnerImpl.UgiPool ugiPool) throws IOException {
+    String fragmentIdString, LlapTokenInfo tokenInfo, final LlapNodeId amNodeId) throws IOException {
 
     ReadWriteLock dagLock = getDagLock(queryIdentifier);
     // Note: This is a readLock to prevent a race with queryComplete. Operations
@@ -173,7 +172,7 @@ public class QueryTracker extends AbstractService {
                 dagIdentifier, user,
                 getSourceCompletionMap(queryIdentifier), localDirsBase, localFs,
                 tokenInfo.userName, tokenInfo.appId, amNodeId, vertex.getTokenIdentifier(), appToken,
-                vertex.getIsExternalSubmission(), ugiPool);
+                vertex.getIsExternalSubmission());
         QueryInfo old = queryInfoMap.putIfAbsent(queryIdentifier, queryInfo);
         if (old != null) {
           queryInfo = old;
@@ -193,9 +192,9 @@ public class QueryTracker extends AbstractService {
         LOG.debug("Registering request for {} with the ShuffleHandler", queryIdentifier);
       }
       if (!vertex.getIsExternalSubmission()) {
-        String[] localDirs = (ShuffleHandler.get().isDirWatcherEnabled()) ? queryInfo.getLocalDirs() : null;
         ShuffleHandler.get()
-            .registerDag(appIdString, dagIdentifier, appToken, user, localDirs);
+            .registerDag(appIdString, dagIdentifier, appToken,
+                user, queryInfo.getLocalDirs());
       }
 
       return queryInfo.registerFragment(

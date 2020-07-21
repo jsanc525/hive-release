@@ -47,15 +47,17 @@ public abstract class EncodedDataConsumer<BatchKey, BatchType extends EncodedCol
       LlapDaemonIOMetrics ioMetrics) {
     this.downstreamConsumer = consumer;
     this.ioMetrics = ioMetrics;
-    cvbPool = new FixedSizedObjectPool<>(CVB_POOL_SIZE, new Pool.PoolObjectHelper<ColumnVectorBatch>() {
-      @Override public ColumnVectorBatch create() {
-        return new ColumnVectorBatch(colCount);
-      }
-
-      @Override public void resetBeforeOffer(ColumnVectorBatch t) {
-        // Don't reset anything, we are reusing column vectors.
-      }
-    });
+    cvbPool = new FixedSizedObjectPool<ColumnVectorBatch>(CVB_POOL_SIZE,
+        new Pool.PoolObjectHelper<ColumnVectorBatch>() {
+          @Override
+          public ColumnVectorBatch create() {
+            return new ColumnVectorBatch(colCount);
+          }
+          @Override
+          public void resetBeforeOffer(ColumnVectorBatch t) {
+            // Don't reset anything, we are reusing column vectors.
+          }
+        });
   }
 
   public void init(ConsumerFeedback<BatchType> upstreamFeedback,
@@ -104,7 +106,6 @@ public abstract class EncodedDataConsumer<BatchKey, BatchType extends EncodedCol
   @Override
   public void setDone() throws InterruptedException {
     downstreamConsumer.setDone();
-    cvbPool.clear();
   }
 
   @Override

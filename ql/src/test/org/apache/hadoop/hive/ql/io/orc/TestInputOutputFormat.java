@@ -801,8 +801,8 @@ public class TestInputOutputFormat {
       int readsAfter = fs.statistics.getReadOps();
       System.out.println("STATS TRACE END - " + testCaseName.getMethodName());
       int delta = readsAfter - readsBefore;
-      //HIVE-16812 adds 1 read of the footer of each file (only if delete delta exists)
-      assertEquals(8, delta);
+      //HIVE-16812 adds 1 read of the footer of each file
+      assertEquals(24, delta);
     } finally {
       MockFileSystem.clearGlobalFiles();
     }
@@ -3681,7 +3681,14 @@ public class TestInputOutputFormat {
         readOpsDelta = statistics.getReadOps() - readOpsBefore;
       }
     }
-    assertEquals(6, readOpsDelta);
+    // call-1: open(mock:/mocktable7/0_0)
+    // call-2: open(mock:/mocktable7/0_0)
+    // call-3: listLocatedFileStatuses(mock:/mocktable7)
+    // call-4: getFileStatus(mock:/mocktable7/delta_0000001_0000001_0000/_metadata_acid)
+    // call-5: open(mock:/mocktable7/delta_0000001_0000001_0000/bucket_00001)
+    // call-6: getFileStatus(mock:/mocktable7/delta_0000001_0000001_0000/_metadata_acid)
+    // call-7: open(mock:/mocktable7/delta_0000001_0000001_0000/bucket_00001)
+    assertEquals(7, readOpsDelta);
 
     // revert back to local fs
     conf.set("fs.defaultFS", "file:///");
@@ -3753,7 +3760,12 @@ public class TestInputOutputFormat {
         readOpsDelta = statistics.getReadOps() - readOpsBefore;
       }
     }
-    assertEquals(6, readOpsDelta);
+    // call-1: open to read data - split 1 => mock:/mocktable8/0_0
+    // call-2: listLocatedFileStatus(mock:/mocktable8)
+    // call-3: getFileStatus(mock:/mocktable8/delta_0000001_0000001_0000/_metadata_acid)
+    // call-4: getFileStatus(mock:/mocktable8/delta_0000001_0000001_0000/_metadata_acid)
+    // call-5: open(mock:/mocktable8/delta_0000001_0000001_0000/bucket_00001)
+    assertEquals(5, readOpsDelta);
 
     // revert back to local fs
     conf.set("fs.defaultFS", "file:///");

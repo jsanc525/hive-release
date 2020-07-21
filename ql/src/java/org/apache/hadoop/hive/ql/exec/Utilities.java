@@ -255,14 +255,6 @@ public final class Utilities {
 
   public static Random randGen = new Random();
 
-  private static final Object INPUT_SUMMARY_LOCK = new Object();
-  private static final Object ROOT_HDFS_DIR_LOCK  = new Object();
-
-  @FunctionalInterface
-  public interface SupplierWithCheckedException<T, X extends Exception> {
-    T get() throws X;
-  }
-
   /**
    * ReduceField:
    * KEY: record key
@@ -528,6 +520,28 @@ public final class Utilities {
       conf.setBoolean(HAS_MAP_WORK, true);
     } else if (REDUCE_PLAN_NAME.equals(name)) {
       conf.setBoolean(HAS_REDUCE_WORK, true);
+    }
+  }
+
+  public static void setWorkflowAdjacencies(Configuration conf, QueryPlan plan) {
+    try {
+      Graph stageGraph = plan.getQueryPlan().getStageGraph();
+      if (stageGraph == null) {
+        return;
+      }
+      List<Adjacency> adjList = stageGraph.getAdjacencyList();
+      if (adjList == null) {
+        return;
+      }
+      for (Adjacency adj : adjList) {
+        List<String> children = adj.getChildren();
+        if (CollectionUtils.isEmpty(children)) {
+          return;
+        }
+        conf.setStrings("mapreduce.workflow.adjacency." + adj.getNode(),
+            children.toArray(new String[0]));
+      }
+    } catch (IOException e) {
     }
   }
 
@@ -2317,6 +2331,8 @@ public final class Utilities {
       }
     }
   }
+
+  private static final Object INPUT_SUMMARY_LOCK = new Object();
 
   /**
    * Returns the maximum number of executors required to get file information from several input locations.

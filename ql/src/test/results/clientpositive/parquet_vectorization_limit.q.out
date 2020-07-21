@@ -489,27 +489,13 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: alltypesparquet
-            Statistics: Num rows: 12288 Data size: 110096 Basic stats: COMPLETE Column stats: COMPLETE
-            TableScan Vectorization:
-                native: true
+            Statistics: Num rows: 12288 Data size: 147456 Basic stats: COMPLETE Column stats: NONE
             Select Operator
               expressions: ctinyint (type: tinyint), cdouble (type: double)
               outputColumnNames: ctinyint, cdouble
-              Select Vectorization:
-                  className: VectorSelectOperator
-                  native: true
-                  projectedOutputColumnNums: [0, 5]
-              Statistics: Num rows: 12288 Data size: 110096 Basic stats: COMPLETE Column stats: COMPLETE
+              Statistics: Num rows: 12288 Data size: 147456 Basic stats: COMPLETE Column stats: NONE
               Group By Operator
                 aggregations: count(DISTINCT cdouble)
-                Group By Vectorization:
-                    aggregators: VectorUDAFCount(col 5:double) -> bigint
-                    className: VectorGroupByOperator
-                    groupByMode: HASH
-                    keyExpressions: col 0:tinyint, col 5:double
-                    native: false
-                    vectorProcessingMode: HASH
-                    projectedOutputColumnNums: [0]
                 keys: ctinyint (type: tinyint), cdouble (type: double)
                 mode: hash
                 outputColumnNames: _col0, _col1, _col2
@@ -518,23 +504,14 @@ STAGE PLANS:
                   key expressions: _col0 (type: tinyint), _col1 (type: double)
                   sort order: ++
                   Map-reduce partition columns: _col0 (type: tinyint)
-                  Reduce Sink Vectorization:
-                      className: VectorReduceSinkOperator
-                      native: false
-                      nativeConditionsMet: hive.vectorized.execution.reducesink.new.enabled IS true, No PTF TopN IS true, BinarySortableSerDe for keys IS true, LazyBinarySerDe for values IS true
-                      nativeConditionsNotMet: hive.execution.engine mr IN [tez, spark] IS false, No DISTINCT columns IS false
-                  Statistics: Num rows: 6144 Data size: 104204 Basic stats: COMPLETE Column stats: COMPLETE
+                  Statistics: Num rows: 12288 Data size: 147456 Basic stats: COMPLETE Column stats: NONE
                   TopN Hash Memory Usage: 0.3
-      Execution mode: vectorized
       Map Vectorization:
           enabled: true
           enabledConditionsMet: hive.vectorized.use.vectorized.input.format IS true
-          inputFormatFeatureSupport: []
-          featureSupportInUse: []
           inputFileFormats: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
-          allNative: false
-          usesVectorUDFAdaptor: false
-          vectorized: true
+          notVectorizedReason: Aggregation Function expression for GROUPBY operator: DISTINCT not supported
+          vectorized: false
       Reduce Vectorization:
           enabled: false
           enableConditionsMet: hive.vectorized.execution.reduce.enabled IS true

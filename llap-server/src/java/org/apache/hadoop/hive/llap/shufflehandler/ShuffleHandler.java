@@ -431,10 +431,6 @@ public class ShuffleHandler implements AttemptRegistrationListener {
     return port;
   }
 
-  public boolean isDirWatcherEnabled() {
-    return dirWatcher != null;
-  }
-
   /**
    * Register an application and it's associated credentials and user information.
    *

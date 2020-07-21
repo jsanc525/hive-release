@@ -658,41 +658,37 @@ public class StatsUtils {
     return range;
   }
 
-  private static long getAvgColSize(final ColumnInfo columnInfo, HiveConf conf) {
-    ObjectInspector oi = columnInfo.getObjectInspector();
-    String colTypeLowerCase = columnInfo.getTypeName().toLowerCase();
-    if (colTypeLowerCase.equals(serdeConstants.STRING_TYPE_NAME)
-        || colTypeLowerCase.equals(serdeConstants.BINARY_TYPE_NAME)
-        || colTypeLowerCase.startsWith(serdeConstants.VARCHAR_TYPE_NAME)
-        || colTypeLowerCase.startsWith(serdeConstants.CHAR_TYPE_NAME)
-        || colTypeLowerCase.startsWith(serdeConstants.LIST_TYPE_NAME)
-        || colTypeLowerCase.startsWith(serdeConstants.MAP_TYPE_NAME)
-        || colTypeLowerCase.startsWith(serdeConstants.STRUCT_TYPE_NAME)
-        || colTypeLowerCase.startsWith(serdeConstants.UNION_TYPE_NAME)) {
-      return getAvgColLenOf(conf, oi, colTypeLowerCase);
-    } else {
-      return getAvgColLenOfFixedLengthTypes(colTypeLowerCase);
-    }
-  }
-
-  public static long estimateRowSizeFromSchema(HiveConf conf, List<ColumnInfo> schema) {
-    long avgRowSize = 0;
+  public static int estimateRowSizeFromSchema(HiveConf conf, List<ColumnInfo> schema) {
+    List<String> neededColumns = new ArrayList<>();
     for (ColumnInfo ci : schema) {
-      avgRowSize += getAvgColSize(ci, conf);
+      neededColumns.add(ci.getInternalName());
     }
-    return avgRowSize;
+    return estimateRowSizeFromSchema(conf, schema, neededColumns);
   }
 
-  public static long estimateRowSizeFromSchema(HiveConf conf, List<ColumnInfo> schema,
+  public static int estimateRowSizeFromSchema(HiveConf conf, List<ColumnInfo> schema,
       List<String> neededColumns) {
-    long avgRowSize = 0;
+    int avgRowSize = 0;
     for (String neededCol : neededColumns) {
       ColumnInfo ci = getColumnInfoForColumn(neededCol, schema);
       if (ci == null) {
         // No need to collect statistics of index columns
         continue;
       }
-      avgRowSize += getAvgColSize(ci, conf);
+      ObjectInspector oi = ci.getObjectInspector();
+      String colTypeLowerCase = ci.getTypeName().toLowerCase();
+      if (colTypeLowerCase.equals(serdeConstants.STRING_TYPE_NAME)
+          || colTypeLowerCase.equals(serdeConstants.BINARY_TYPE_NAME)
+          || colTypeLowerCase.startsWith(serdeConstants.VARCHAR_TYPE_NAME)
+          || colTypeLowerCase.startsWith(serdeConstants.CHAR_TYPE_NAME)
+          || colTypeLowerCase.startsWith(serdeConstants.LIST_TYPE_NAME)
+          || colTypeLowerCase.startsWith(serdeConstants.MAP_TYPE_NAME)
+          || colTypeLowerCase.startsWith(serdeConstants.STRUCT_TYPE_NAME)
+          || colTypeLowerCase.startsWith(serdeConstants.UNION_TYPE_NAME)) {
+        avgRowSize += getAvgColLenOf(conf, oi, colTypeLowerCase);
+      } else {
+        avgRowSize += getAvgColLenOfFixedLengthTypes(colTypeLowerCase);
+      }
     }
     return avgRowSize;
   }

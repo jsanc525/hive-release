@@ -1525,7 +1525,7 @@ public class HiveConf extends Configuration {
     // session identifier
     HIVESESSIONID("hive.session.id", "", ""),
     // whether session is running in silent mode or not
-    HIVESESSIONSILENT("hive.session.silent", true, ""),
+    HIVESESSIONSILENT("hive.session.silent", false, ""),
 
     HIVE_LOCAL_TIME_ZONE("hive.local.time.zone", "LOCAL",
         "Sets the time-zone for displaying and interpreting time stamps. If this property value is set to\n" +
@@ -2646,12 +2646,6 @@ public class HiveConf extends Configuration {
     HIVE_COMPACTOR_ABORTEDTXN_THRESHOLD("hive.compactor.abortedtxn.threshold", 1000,
         "Number of aborted transactions involving a given table or partition that will trigger\n" +
         "a major compaction."),
-
-    HIVE_MR_COMPACTOR_GATHER_STATS("hive.mr.compactor.gather.stats", true, "If set to true MAJOR compaction " +
-            "will gather stats if there are stats already associated with the table/partition.\n" +
-            "Turn this off to save some resources and the stats are not used anyway.\n" +
-            "Works only for MR based compaction, CRUD based compaction uses hive.stats.autogather."),
-
     /**
      * @deprecated Use MetastoreConf.COMPACTOR_INITIATOR_FAILED_THRESHOLD
      */
@@ -3998,16 +3992,13 @@ public class HiveConf extends Configuration {
         "MR LineRecordRedader into LLAP cache, if this feature is enabled. Safety flag."),
     LLAP_ORC_ENABLE_TIME_COUNTERS("hive.llap.io.orc.time.counters", true,
         "Whether to enable time counters for LLAP IO layer (time spent in HDFS, etc.)"),
-    LLAP_IO_VRB_QUEUE_LIMIT_MAX("hive.llap.io.vrb.queue.limit.max", 50000,
-        "The maximum queue size for VRBs produced by a LLAP IO thread when the processing is\n" +
+    LLAP_IO_VRB_QUEUE_LIMIT_BASE("hive.llap.io.vrb.queue.limit.base", 50000,
+        "The default queue size for VRBs produced by a LLAP IO thread when the processing is\n" +
         "slower than the IO. The actual queue size is set per fragment, and is adjusted down\n" +
-        "from the base, depending on the schema see LLAP_IO_CVB_BUFFERED_SIZE."),
-    LLAP_IO_VRB_QUEUE_LIMIT_MIN("hive.llap.io.vrb.queue.limit.min", 1,
+        "from the base, depending on the schema."),
+    LLAP_IO_VRB_QUEUE_LIMIT_MIN("hive.llap.io.vrb.queue.limit.min", 10,
         "The minimum queue size for VRBs produced by a LLAP IO thread when the processing is\n" +
         "slower than the IO (used when determining the size from base size)."),
-    LLAP_IO_CVB_BUFFERED_SIZE("hive.llap.io.cvb.memory.consumption.", 1L << 30,
-        "The amount of bytes used to buffer CVB between IO and Processor Threads default to 1GB, "
-            + "this will be used to compute a best effort queue size for VRBs produced by a LLAP IO thread."),
     LLAP_IO_SHARE_OBJECT_POOLS("hive.llap.io.share.object.pools", false,
         "Whether to used shared object pools in LLAP IO. A safety flag."),
     LLAP_AUTO_ALLOW_UBER("hive.llap.auto.allow.uber", false,
@@ -4440,8 +4431,6 @@ public class HiveConf extends Configuration {
       "Merge adjacent joins into a single n-way join"),
     HIVE_LOG_N_RECORDS("hive.log.every.n.records", 0L, new RangeValidator(0L, null),
       "If value is greater than 0 logs in fixed intervals of size n rather than exponentially."),
-    HIVE_TEZ_SKIP_LOCAL_XML("hive.tez.skip.local.xml", true, "Hive excludes local xml files"
-        + " when sending configuration options to Tez AM when true"),
     HIVE_MSCK_PATH_VALIDATION("hive.msck.path.validation", "throw",
         new StringSet("throw", "skip", "ignore"), "The approach msck should take with HDFS " +
        "directories that are partition-like but contain unsupported characters. 'throw' (an " +

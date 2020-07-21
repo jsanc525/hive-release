@@ -94,10 +94,15 @@ STAGE PLANS:
                     bucketing_version 2
                     column.name.delimiter ,
                     columns key,value,ds,hr
+                    columns.comments 
                     columns.types string:string:string:string
 #### A masked pattern was here ####
                     location hdfs://### HDFS PATH ###
                     name default.src_orc_n1
+                    numFiles 1
+                    numRows 10
+                    rawDataSize 3560
+                    serialization.ddl struct src_orc_n1 { string key, string value, string ds, string hr}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
                     totalSize 644
@@ -117,6 +122,10 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       location hdfs://### HDFS PATH ###
                       name default.src_orc_n1
+                      numFiles 1
+                      numRows 10
+                      rawDataSize 3560
+                      serialization.ddl struct src_orc_n1 { string key, string value, string ds, string hr}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.ql.io.orc.OrcSerde
                       totalSize 644

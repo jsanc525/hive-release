@@ -228,7 +228,6 @@ public class CompactorMR {
    * @param sd metastore storage descriptor
    * @param writeIds list of valid write ids
    * @param ci CompactionInfo
-   * @param su StatsUpdater which is null if no stats gathering is needed
    * @throws java.io.IOException if the job fails
    */
   void run(HiveConf conf, String jobName, Table t, Partition p, StorageDescriptor sd, ValidWriteIdList writeIds,
@@ -252,7 +251,7 @@ public class CompactorMR {
     // and discovering that in getSplits is too late as we then have no way to pass it to our
     // mapper.
 
-    AcidUtils.Directory dir = AcidUtils.getAcidState(null, new Path(sd.getLocation()), conf, writeIds, Ref.from(false), true,
+    AcidUtils.Directory dir = AcidUtils.getAcidState(new Path(sd.getLocation()), conf, writeIds, Ref.from(false), true,
         null, false);
     List<AcidUtils.ParsedDelta> parsedDeltas = dir.getCurrentDirectories();
     int maxDeltastoHandle = conf.getIntVar(HiveConf.ConfVars.COMPACTOR_MAX_NUM_DELTA);
@@ -278,7 +277,7 @@ public class CompactorMR {
           maxDeltastoHandle, -1, conf, txnHandler, ci.id, jobName);
       }
       //now recompute state since we've done minor compactions and have different 'best' set of deltas
-      dir = AcidUtils.getAcidState(null, new Path(sd.getLocation()), conf, writeIds, Ref.from(false), false,
+      dir = AcidUtils.getAcidState(new Path(sd.getLocation()), conf, writeIds, Ref.from(false), false,
           null, false);
     }
 
@@ -322,16 +321,14 @@ public class CompactorMR {
     launchCompactionJob(job, baseDir, ci.type, dirsToSearch, dir.getCurrentDirectories(),
       dir.getCurrentDirectories().size(), dir.getObsolete().size(), conf, txnHandler, ci.id, jobName);
 
-    if (su != null) {
-      su.gatherStats();
-    }
+    su.gatherStats();
   }
 
   private void runMmCompaction(HiveConf conf, Table t, Partition p,
       StorageDescriptor sd, ValidWriteIdList writeIds, CompactionInfo ci) throws IOException {
     LOG.debug("Going to delete directories for aborted transactions for MM table "
         + t.getDbName() + "." + t.getTableName());
-    AcidUtils.Directory dir = AcidUtils.getAcidState(null, new Path(sd.getLocation()),
+    AcidUtils.Directory dir = AcidUtils.getAcidState(new Path(sd.getLocation()),
         conf, writeIds, Ref.from(false), false, t.getParameters(), false);
     removeFilesForMmTable(conf, dir);
 

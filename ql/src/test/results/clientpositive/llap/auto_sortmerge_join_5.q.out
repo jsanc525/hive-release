@@ -119,11 +119,18 @@ STAGE PLANS:
                     bucketing_version 2
                     column.name.delimiter ,
                     columns key,value
+                    columns.comments 
                     columns.types string:string
 #### A masked pattern was here ####
                     name default.bucket_small_n0
+                    numFiles 4
+                    numRows 0
+                    rawDataSize 0
+                    serialization.ddl struct bucket_small_n0 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                    totalSize 226
+#### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 
                     input format: org.apache.hadoop.mapred.TextInputFormat
@@ -139,8 +146,14 @@ STAGE PLANS:
                       columns.types string:string
 #### A masked pattern was here ####
                       name default.bucket_small_n0
+                      numFiles 4
+                      numRows 0
+                      rawDataSize 0
+                      serialization.ddl struct bucket_small_n0 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                      totalSize 226
+#### A masked pattern was here ####
                     serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                     name: default.bucket_small_n0
                   name: default.bucket_small_n0
@@ -194,11 +207,18 @@ STAGE PLANS:
                     bucketing_version 2
                     column.name.delimiter ,
                     columns key,value
+                    columns.comments 
                     columns.types string:string
 #### A masked pattern was here ####
                     name default.bucket_big_n0
+                    numFiles 2
+                    numRows 0
+                    rawDataSize 0
+                    serialization.ddl struct bucket_big_n0 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                    totalSize 2750
+#### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 
                     input format: org.apache.hadoop.mapred.TextInputFormat
@@ -214,8 +234,14 @@ STAGE PLANS:
                       columns.types string:string
 #### A masked pattern was here ####
                       name default.bucket_big_n0
+                      numFiles 2
+                      numRows 0
+                      rawDataSize 0
+                      serialization.ddl struct bucket_big_n0 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                      totalSize 2750
+#### A masked pattern was here ####
                     serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                     name: default.bucket_big_n0
                   name: default.bucket_big_n0
@@ -327,11 +353,18 @@ STAGE PLANS:
                     bucketing_version 2
                     column.name.delimiter ,
                     columns key,value
+                    columns.comments 
                     columns.types string:string
 #### A masked pattern was here ####
                     name default.bucket_small_n0
+                    numFiles 4
+                    numRows 0
+                    rawDataSize 0
+                    serialization.ddl struct bucket_small_n0 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                    totalSize 226
+#### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 
                     input format: org.apache.hadoop.mapred.TextInputFormat
@@ -347,8 +380,14 @@ STAGE PLANS:
                       columns.types string:string
 #### A masked pattern was here ####
                       name default.bucket_small_n0
+                      numFiles 4
+                      numRows 0
+                      rawDataSize 0
+                      serialization.ddl struct bucket_small_n0 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                      totalSize 226
+#### A masked pattern was here ####
                     serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                     name: default.bucket_small_n0
                   name: default.bucket_small_n0
@@ -402,11 +441,18 @@ STAGE PLANS:
                     bucketing_version 2
                     column.name.delimiter ,
                     columns key,value
+                    columns.comments 
                     columns.types string:string
 #### A masked pattern was here ####
                     name default.bucket_big_n0
+                    numFiles 2
+                    numRows 0
+                    rawDataSize 0
+                    serialization.ddl struct bucket_big_n0 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                    totalSize 2750
+#### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 
                     input format: org.apache.hadoop.mapred.TextInputFormat
@@ -422,8 +468,14 @@ STAGE PLANS:
                       columns.types string:string
 #### A masked pattern was here ####
                       name default.bucket_big_n0
+                      numFiles 2
+                      numRows 0
+                      rawDataSize 0
+                      serialization.ddl struct bucket_big_n0 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                      totalSize 2750
+#### A masked pattern was here ####
                     serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                     name: default.bucket_big_n0
                   name: default.bucket_big_n0
@@ -535,11 +587,18 @@ STAGE PLANS:
                     bucketing_version 2
                     column.name.delimiter ,
                     columns key,value
+                    columns.comments 
                     columns.types string:string
 #### A masked pattern was here ####
                     name default.bucket_small_n0
+                    numFiles 4
+                    numRows 0
+                    rawDataSize 0
+                    serialization.ddl struct bucket_small_n0 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                    totalSize 226
+#### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 
                     input format: org.apache.hadoop.mapred.TextInputFormat
@@ -555,8 +614,14 @@ STAGE PLANS:
                       columns.types string:string
 #### A masked pattern was here ####
                       name default.bucket_small_n0
+                      numFiles 4
+                      numRows 0
+                      rawDataSize 0
+                      serialization.ddl struct bucket_small_n0 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                      totalSize 226
+#### A masked pattern was here ####
                     serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                     name: default.bucket_small_n0
                   name: default.bucket_small_n0
@@ -610,11 +675,18 @@ STAGE PLANS:
                     bucketing_version 2
                     column.name.delimiter ,
                     columns key,value
+                    columns.comments 
                     columns.types string:string
 #### A masked pattern was here ####
                     name default.bucket_big_n0
+                    numFiles 2
+                    numRows 0
+                    rawDataSize 0
+                    serialization.ddl struct bucket_big_n0 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                    totalSize 2750
+#### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 
                     input format: org.apache.hadoop.mapred.TextInputFormat
@@ -630,8 +702,14 @@ STAGE PLANS:
                       columns.types string:string
 #### A masked pattern was here ####
                       name default.bucket_big_n0
+                      numFiles 2
+                      numRows 0
+                      rawDataSize 0
+                      serialization.ddl struct bucket_big_n0 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                      totalSize 2750
+#### A masked pattern was here ####
                     serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                     name: default.bucket_big_n0
                   name: default.bucket_big_n0

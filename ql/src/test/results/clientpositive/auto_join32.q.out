@@ -39,11 +39,11 @@ STAGE PLANS:
   Stage: Stage-5
     Map Reduce Local Work
       Alias -> Map Local Tables:
-        $hdt$_0:s
+        $hdt$_0:s 
           Fetch Operator
             limit: -1
       Alias -> Map Local Operator Tree:
-        $hdt$_0:s
+        $hdt$_0:s 
           TableScan
             alias: s
             Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
@@ -90,8 +90,7 @@ STAGE PLANS:
                       key expressions: _col0 (type: string), _col1 (type: string)
                       sort order: ++
                       Map-reduce partition columns: _col0 (type: string)
-                      Statistics: Num rows: 1 Data size: 202 Basic stats: COMPLETE Column stats: NONE
-      Execution mode: vectorized
+                      Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
       Local Work:
         Map Reduce Local Work
       Reduce Operator Tree:

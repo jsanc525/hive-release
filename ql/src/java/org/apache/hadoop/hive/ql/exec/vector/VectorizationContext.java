@@ -2251,39 +2251,14 @@ public class VectorizationContext {
     final int size = vectorChildren.length;
     TypeInfo[] inputTypeInfos = new TypeInfo[size];
     DataTypePhysicalVariation[] inputDataTypePhysicalVariations = new DataTypePhysicalVariation[size];
-    DataTypePhysicalVariation outputDataTypePhysicalVariation = DataTypePhysicalVariation.DECIMAL_64;
-    boolean fixConstants = false;
-    for (int i = 0; i < vectorChildren.length; ++i) {
-      VectorExpression ve = vectorChildren[i];
+    int i = 0;
+    for (VectorExpression ve : vectorChildren) {
       inputColumns[i] = ve.getOutputColumnNum();
       inputTypeInfos[i] = ve.getOutputTypeInfo();
-      inputDataTypePhysicalVariations[i] = ve.getOutputDataTypePhysicalVariation();
-      if (inputDataTypePhysicalVariations[i] == DataTypePhysicalVariation.NONE) {
-        if (childExpr.get(i) instanceof ExprNodeConstantDesc && inputTypeInfos[i] instanceof DecimalTypeInfo &&
-            ((DecimalTypeInfo)inputTypeInfos[i]).precision() <= 18) {
-          fixConstants = true;
-        } else {
-          outputDataTypePhysicalVariation = DataTypePhysicalVariation.NONE;
-        }
-      }
+      inputDataTypePhysicalVariations[i++] = ve.getOutputDataTypePhysicalVariation();
     }
 
-    if (outputDataTypePhysicalVariation == DataTypePhysicalVariation.DECIMAL_64 && fixConstants) {
-      for (int i = 0; i < vectorChildren.length; ++i) {
-        if (inputDataTypePhysicalVariations[i] == DataTypePhysicalVariation.NONE &&
-            vectorChildren[i] instanceof ConstantVectorExpression) {
-          ConstantVectorExpression cve = ((ConstantVectorExpression)vectorChildren[i]);
-          HiveDecimal hd = cve.getDecimalValue();
-          Long longValue = new HiveDecimalWritable(hd).serialize64(((DecimalTypeInfo)cve.getOutputTypeInfo()).getScale());
-          ((ConstantVectorExpression)vectorChildren[i]).setLongValue(longValue);
-          vectorChildren[i].setOutputDataTypePhysicalVariation(DataTypePhysicalVariation.DECIMAL_64);
-          int scratchColIndex = vectorChildren[i].getOutputColumnNum() - ocm.initialOutputCol;
-          ocm.scratchDataTypePhysicalVariations[scratchColIndex] = DataTypePhysicalVariation.DECIMAL_64;
-        }
-      }
-    }
-
-    final int outputColumnNum = ocm.allocateOutputColumn(returnType, outputDataTypePhysicalVariation);
+    final int outputColumnNum = ocm.allocateOutputColumn(returnType);
     VectorCoalesce vectorCoalesce = new VectorCoalesce(inputColumns, outputColumnNum);
 
     vectorCoalesce.setChildExpressions(vectorChildren);
@@ -2292,7 +2267,7 @@ public class VectorizationContext {
     vectorCoalesce.setInputDataTypePhysicalVariations(inputDataTypePhysicalVariations);
 
     vectorCoalesce.setOutputTypeInfo(returnType);
-    vectorCoalesce.setOutputDataTypePhysicalVariation(outputDataTypePhysicalVariation);
+    vectorCoalesce.setOutputDataTypePhysicalVariation(DataTypePhysicalVariation.NONE);
 
     freeNonColumns(vectorChildren);
 
@@ -3587,12 +3562,8 @@ public class VectorizationContext {
           getVectorExpression(ifDesc, VectorExpressionDescriptor.Mode.PROJECTION);
       final VectorExpression elseExpr =
           getVectorExpression(elseDesc, VectorExpressionDescriptor.Mode.PROJECTION);
-      DataTypePhysicalVariation outputDataTypePhysicalVariation =
-          (elseExpr.getOutputDataTypePhysicalVariation() == null)
-              ? DataTypePhysicalVariation.NONE
-              : elseExpr.getOutputDataTypePhysicalVariation();
 
-      final int outputColumnNum = ocm.allocateOutputColumn(returnType, outputDataTypePhysicalVariation);
+      final int outputColumnNum = ocm.allocateOutputColumn(returnType);
 
       final VectorExpression resultExpr;
       if (!isElseCondExpr || isOnlyGood) {
@@ -3617,11 +3588,11 @@ public class VectorizationContext {
           elseExpr.getOutputTypeInfo());
       resultExpr.setInputDataTypePhysicalVariations(
           whenExpr.getOutputDataTypePhysicalVariation(),
-          outputDataTypePhysicalVariation,
+          DataTypePhysicalVariation.NONE,
           elseExpr.getOutputDataTypePhysicalVariation());
 
       resultExpr.setOutputTypeInfo(returnType);
-      resultExpr.setOutputDataTypePhysicalVariation(outputDataTypePhysicalVariation);
+      resultExpr.setOutputDataTypePhysicalVariation(DataTypePhysicalVariation.NONE);
 
       return resultExpr;
     }
@@ -3631,12 +3602,8 @@ public class VectorizationContext {
           getVectorExpression(ifDesc, VectorExpressionDescriptor.Mode.PROJECTION);
       final VectorExpression thenExpr =
           getVectorExpression(thenDesc, VectorExpressionDescriptor.Mode.PROJECTION);
-      DataTypePhysicalVariation outputDataTypePhysicalVariation =
-          (thenExpr.getOutputDataTypePhysicalVariation() == null)
-              ? DataTypePhysicalVariation.NONE
-              : thenExpr.getOutputDataTypePhysicalVariation();
 
-      final int outputColumnNum = ocm.allocateOutputColumn(returnType, outputDataTypePhysicalVariation);
+      final int outputColumnNum = ocm.allocateOutputColumn(returnType);
 
       final VectorExpression resultExpr;
       if (!isThenCondExpr || isOnlyGood) {
@@ -3662,10 +3629,10 @@ public class VectorizationContext {
       resultExpr.setInputDataTypePhysicalVariations(
           whenExpr.getOutputDataTypePhysicalVariation(),
           thenExpr.getOutputDataTypePhysicalVariation(),
-          outputDataTypePhysicalVariation);
+          DataTypePhysicalVariation.NONE);
 
       resultExpr.setOutputTypeInfo(returnType);
-      resultExpr.setOutputDataTypePhysicalVariation(outputDataTypePhysicalVariation);
+      resultExpr.setOutputDataTypePhysicalVariation(DataTypePhysicalVariation.NONE);
 
       return resultExpr;
     }
@@ -3680,13 +3647,8 @@ public class VectorizationContext {
 
       // Only proceed if the THEN/ELSE types were aligned.
       if (thenExpr.getOutputColumnVectorType() == elseExpr.getOutputColumnVectorType()) {
-        DataTypePhysicalVariation outputDataTypePhysicalVariation =
-            (thenExpr.getOutputDataTypePhysicalVariation() == elseExpr.getOutputDataTypePhysicalVariation()
-                && thenExpr.getOutputDataTypePhysicalVariation() != null)
-                ? thenExpr.getOutputDataTypePhysicalVariation()
-                : DataTypePhysicalVariation.NONE;
 
-        final int outputColumnNum = ocm.allocateOutputColumn(returnType, outputDataTypePhysicalVariation);
+        final int outputColumnNum = ocm.allocateOutputColumn(returnType);
 
         final VectorExpression resultExpr;
         if (isThenCondExpr && isElseCondExpr) {
@@ -3724,7 +3686,7 @@ public class VectorizationContext {
             elseExpr.getOutputDataTypePhysicalVariation());
 
         resultExpr.setOutputTypeInfo(returnType);
-        resultExpr.setOutputDataTypePhysicalVariation(outputDataTypePhysicalVariation);
+        resultExpr.setOutputDataTypePhysicalVariation(DataTypePhysicalVariation.NONE);
 
         return resultExpr;
       }

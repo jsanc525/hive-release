@@ -46,7 +46,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
-import org.apache.hadoop.hive.common.BlobStorageUtils;
 import org.apache.hadoop.hive.common.ValidReaderWriteIdList;
 import org.apache.hadoop.hive.common.ValidWriteIdList;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -192,7 +191,7 @@ public class OrcInputFormat implements InputFormat<NullWritable, OrcStruct>,
   @Override
   public boolean shouldSkipCombine(Path path,
                                    Configuration conf) throws IOException {
-    return (conf.get(AcidUtils.CONF_ACID_KEY) != null) || AcidUtils.isAcid(null, path, conf);
+    return (conf.get(AcidUtils.CONF_ACID_KEY) != null) || AcidUtils.isAcid(path, conf);
   }
 
 
@@ -624,8 +623,6 @@ public class OrcInputFormat implements InputFormat<NullWritable, OrcStruct>,
     private SplitStrategyKind splitStrategyKind;
     private final SearchArgument sarg;
     private final AcidOperationalProperties acidOperationalProperties;
-    private final boolean isAcid;
-    private final boolean isVectorMode;
 
     Context(Configuration conf) throws IOException {
       this(conf, 1, null);
@@ -639,8 +636,6 @@ public class OrcInputFormat implements InputFormat<NullWritable, OrcStruct>,
     Context(Configuration conf, final int minSplits, ExternalFooterCachesByConf efc)
         throws IOException {
       this.conf = conf;
-      this.isAcid = AcidUtils.isFullAcidScan(conf);
-      this.isVectorMode = Utilities.getIsVectorized(conf);
       this.forceThreadpool = HiveConf.getBoolVar(conf, ConfVars.HIVE_IN_TEST);
       this.sarg = ConvertAstToSearchArg.createFromConf(conf);
       minSize = HiveConf.getLongVar(conf, ConfVars.MAPREDMINSPLITSIZE, DEFAULT_MIN_SPLIT_SIZE);
@@ -649,6 +644,7 @@ public class OrcInputFormat implements InputFormat<NullWritable, OrcStruct>,
       if (ss == null || ss.equals(SplitStrategyKind.HYBRID.name())) {
         splitStrategyKind = SplitStrategyKind.HYBRID;
       } else {
+        LOG.info("Enforcing " + ss + " ORC split strategy");
         splitStrategyKind = SplitStrategyKind.valueOf(ss);
       }
       footerInSplits = HiveConf.getBoolVar(conf,
@@ -656,6 +652,7 @@ public class OrcInputFormat implements InputFormat<NullWritable, OrcStruct>,
       numBuckets =
           Math.max(conf.getInt(hive_metastoreConstants.BUCKET_COUNT, 0), 0);
       splitStrategyBatchMs = HiveConf.getIntVar(conf, ConfVars.HIVE_ORC_SPLIT_DIRECTORY_BATCH_MS);
+      LOG.debug("Number of buckets specified by conf file is " + numBuckets);
       long cacheMemSize = HiveConf.getSizeVar(
           conf, ConfVars.HIVE_ORC_CACHE_STRIPE_DETAILS_MEMORY_SIZE);
       int numThreads = HiveConf.getIntVar(conf, ConfVars.HIVE_ORC_COMPUTE_SPLITS_NUM_THREADS);
@@ -717,37 +714,8 @@ public class OrcInputFormat implements InputFormat<NullWritable, OrcStruct>,
 
       String value = conf.get(ValidWriteIdList.VALID_WRITEIDS_KEY);
       writeIdList = value == null ? new ValidReaderWriteIdList() : new ValidReaderWriteIdList(value);
-      LOG.info("Context:: " +
-          "isAcid: {} " +
-          "isVectorMode: {} " +
-          "sarg: {} " +
-          "minSplitSize: {} " +
-          "maxSplitSize: {} " +
-          "splitStrategy: {} " +
-          "footerInSplits: {} " +
-          "numBuckets: {} " +
-          "numThreads: {} " +
-          "cacheMemSize: {} " +
-          "cacheStripeDetails: {} " +
-          "useSoftReference: {} " +
-          "writeIdList: {} " +
-          "isTransactionalTable: {} " +
-          "txnProperties: {} ",
-        isAcid,
-        isVectorMode,
-        sarg,
-        minSize,
-        maxSize,
-        splitStrategyKind,
-        footerInSplits,
-        numBuckets,
-        numThreads,
-        cacheMemSize,
-        cacheStripeDetails,
-        useSoftReference,
-        writeIdList,
-        isTxnTable,
-        txnProperties);
+      LOG.debug("Context:: Read ValidWriteIdList: " + writeIdList.toString()
+              + " isTransactionalTable: " + isTxnTable + " properties: " + txnProperties);
     }
 
     @VisibleForTesting
@@ -1067,8 +1035,6 @@ public class OrcInputFormat implements InputFormat<NullWritable, OrcStruct>,
     private final boolean allowSyntheticFileIds;
     private final boolean isDefaultFs;
     private final Configuration conf;
-    private final boolean isAcid;
-    private final boolean vectorMode;
 
     /**
      * @param dir - root of partition dir
@@ -1085,13 +1051,13 @@ public class OrcInputFormat implements InputFormat<NullWritable, OrcStruct>,
       this.allowSyntheticFileIds = allowSyntheticFileIds;
       this.isDefaultFs = isDefaultFs;
       this.conf = context.conf;
-      this.isAcid = context.isAcid;
-      this.vectorMode = context.isVectorMode;
     }
 
     @Override
     public List<OrcSplit> getSplits() throws IOException {
       List<OrcSplit> splits = Lists.newArrayList();
+      boolean isAcid = AcidUtils.isFullAcidScan(conf);
+      boolean vectorMode = Utilities.getIsVectorized(conf);
       OrcSplit.OffsetAndBucketProperty offsetAndBucket = null;
       for (HdfsFileStatusWithId file : fileStatuses) {
         if (isOriginal && isAcid && vectorMode) {
@@ -1247,7 +1213,7 @@ public class OrcInputFormat implements InputFormat<NullWritable, OrcStruct>,
       }
       //todo: shouldn't ignoreEmptyFiles be set based on ExecutionEngine?
       AcidUtils.Directory dirInfo = AcidUtils.getAcidState(
-          fs, dir, context.conf, context.writeIdList, useFileIds, true, null, false);
+          dir, context.conf, context.writeIdList, useFileIds, true, null, false);
       // find the base files (original or new style)
       List<AcidBaseFileInfo> baseFiles = new ArrayList<>();
       if (dirInfo.getBaseDirectory() == null) {
@@ -1562,8 +1528,8 @@ public class OrcInputFormat implements InputFormat<NullWritable, OrcStruct>,
     }
 
     private List<OrcSplit> callInternal() throws IOException {
-      boolean isAcid = context.isAcid;
-      boolean vectorMode = context.isVectorMode;
+      boolean isAcid = AcidUtils.isFullAcidScan(context.conf);
+      boolean vectorMode = Utilities.getIsVectorized(context.conf);
 
       if (isOriginal && isAcid && vectorMode) {
         offsetAndBucket = VectorizedOrcAcidRowBatchReader.computeOffsetAndBucket(file, rootDir, isOriginal,
@@ -1982,8 +1948,9 @@ public class OrcInputFormat implements InputFormat<NullWritable, OrcStruct>,
   @Override
   public InputSplit[] getSplits(JobConf job,
                                 int numSplits) throws IOException {
-    long start = System.currentTimeMillis();
-    LOG.info("getSplits started");
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("getSplits started");
+    }
     Configuration conf = job;
     if (HiveConf.getBoolVar(job, HiveConf.ConfVars.HIVE_ORC_MS_FOOTER_CACHE_ENABLED)) {
       // Create HiveConf once, since this is expensive.
@@ -1991,8 +1958,9 @@ public class OrcInputFormat implements InputFormat<NullWritable, OrcStruct>,
     }
     List<OrcSplit> result = generateSplitsInfo(conf,
         new Context(conf, numSplits, createExternalCaches()));
-    long end = System.currentTimeMillis();
-    LOG.info("getSplits finished (#splits: {}). duration: {} ms", result.size(), (end - start));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("getSplits finished");
+    }
     return result.toArray(new InputSplit[result.size()]);
   }
 

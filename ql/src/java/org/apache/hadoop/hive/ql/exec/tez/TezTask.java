@@ -174,9 +174,8 @@ public class TezTask extends Task<TezWork> {
           ss.getHiveVariables().get("wmpool"), ss.getHiveVariables().get("wmapp"));
 
       WmContext wmContext = ctx.getWmContext();
-      boolean skipXmlConfs = conf.getBoolVar(HiveConf.ConfVars.HIVE_TEZ_SKIP_LOCAL_XML);
       // jobConf will hold all the configuration for hadoop, tez, and hive, which are not set in AM defaults
-      JobConf jobConf = utils.createConfiguration(conf, skipXmlConfs);
+      JobConf jobConf = utils.createConfiguration(conf, false);
 
       // Get all user jars from work (e.g. input format stuff).
       String[] allNonConfFiles = work.configureJobConfAndExtractJars(jobConf);
@@ -408,9 +407,6 @@ public class TezTask extends Task<TezWork> {
     JSONObject json = new JSONObject(new LinkedHashMap<>()).put("context", "Hive")
         .put("description", ctx.getCmd());
     String dagInfo = json.toString();
-
-    String queryId = HiveConf.getVar(conf, HiveConf.ConfVars.HIVEQUERYID);
-    dag.setConf(HiveConf.ConfVars.HIVEQUERYID.varname, queryId);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("DagInfo: " + dagInfo);

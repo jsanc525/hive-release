@@ -78,7 +78,6 @@ public class Worker extends CompactorThread {
 // don't go  through Initiator for user initiated compactions)
   @Override
   public void run() {
-    boolean computeStats = conf.getBoolVar(HiveConf.ConfVars.HIVE_MR_COMPACTOR_GATHER_STATS);
     do {
       boolean launchedJob = false;
       // Make sure nothing escapes this run method and kills the metastore at large,
@@ -164,10 +163,10 @@ public class Worker extends CompactorThread {
         }
 
         LOG.info("Starting " + ci.type.toString() + " compaction for " +
-            ci.getFullPartitionName() + " with compute stats set to " + computeStats);
+            ci.getFullPartitionName());
 
-        final StatsUpdater su = computeStats ? StatsUpdater.init(ci, txnHandler.findColumnsWithStats(ci), conf,
-          runJobAsSelf(runAs) ? runAs : t.getOwner()) : null;
+        final StatsUpdater su = StatsUpdater.init(ci, txnHandler.findColumnsWithStats(ci), conf,
+          runJobAsSelf(runAs) ? runAs : t.getOwner());
         final CompactorMR mr = new CompactorMR();
         launchedJob = true;
         try {

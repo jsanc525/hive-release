@@ -86,7 +86,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
 
 /**
  *
@@ -94,7 +93,7 @@ import java.util.function.Supplier;
 public class TaskRunnerCallable extends CallableWithNdc<TaskRunner2Result> {
   private static final Logger LOG = LoggerFactory.getLogger(TaskRunnerCallable.class);
   private final SubmitWorkRequestProto request;
-  private final Supplier<Configuration> conf;
+  private final Configuration conf;
   private final Map<String, String> envMap;
   private final String pid = null;
   private final ObjectRegistryImpl objectRegistry;
@@ -136,9 +135,8 @@ public class TaskRunnerCallable extends CallableWithNdc<TaskRunner2Result> {
 
   @VisibleForTesting
   public TaskRunnerCallable(SubmitWorkRequestProto request, QueryFragmentInfo fragmentInfo,
-                            Supplier<Configuration> conf, ExecutionContext executionContext,
-                            Map<String, String> envMap, Credentials credentials, long memoryAvailable,
-                            AMReporter amReporter, ConfParams confParams,
+                            Configuration conf, ExecutionContext executionContext, Map<String, String> envMap,
+                            Credentials credentials, long memoryAvailable, AMReporter amReporter, ConfParams confParams,
                             LlapDaemonExecutorMetrics metrics, KilledTaskHandler killedTaskHandler,
                             FragmentCompletionHandler fragmentCompleteHandler, HadoopShim tezHadoopShim,
                             TezTaskAttemptID attemptId, SignableVertexSpec vertex, TezEvent initialEvent,
@@ -194,7 +192,6 @@ public class TaskRunnerCallable extends CallableWithNdc<TaskRunner2Result> {
     setMDCFromNDC();
 
     try {
-      final Configuration config = conf.get();
       isStarted.set(true);
       this.startTime = System.currentTimeMillis();
       threadName = Thread.currentThread().getName();
@@ -257,7 +254,7 @@ public class TaskRunnerCallable extends CallableWithNdc<TaskRunner2Result> {
         @Override
         public LlapTaskUmbilicalProtocol run() throws Exception {
           return RPC.getProxy(LlapTaskUmbilicalProtocol.class,
-              LlapTaskUmbilicalProtocol.versionID, address, taskOwner, config, socketFactory);
+              LlapTaskUmbilicalProtocol.versionID, address, taskOwner, conf, socketFactory);
         }
       });
 
@@ -280,7 +277,7 @@ public class TaskRunnerCallable extends CallableWithNdc<TaskRunner2Result> {
       try {
         synchronized (this) {
           if (shouldRunTask) {
-            taskRunner = new TezTaskRunner2(config, fsTaskUgi, fragmentInfo.getLocalDirs(),
+            taskRunner = new TezTaskRunner2(conf, fsTaskUgi, fragmentInfo.getLocalDirs(),
                 taskSpec, vertex.getQueryIdentifier().getAppAttemptNumber(),
                 serviceConsumerMetadata, envMap, startedInputsMap, taskReporter, executor,
                 objectRegistry, pid, executionContext, memoryAvailable, false, tezHadoopShim);

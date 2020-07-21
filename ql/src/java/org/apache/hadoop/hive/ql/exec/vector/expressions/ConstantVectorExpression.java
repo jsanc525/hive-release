@@ -308,18 +308,6 @@ public class ConstantVectorExpression extends VectorExpression {
     }
   }
 
-  private void evaluateDecimal64(ColumnVector colVector) {
-    Decimal64ColumnVector dcv = (Decimal64ColumnVector) colVector;
-    dcv.isRepeating = true;
-    if (!isNullValue) {
-      dcv.isNull[0] = false;
-      dcv.vector[0] = longValue;
-    } else {
-      dcv.isNull[0] = true;
-      dcv.noNulls = false;
-    }
-  }
-
   private void evaluateTimestamp(ColumnVector colVector) {
     TimestampColumnVector tcv = (TimestampColumnVector) colVector;
     tcv.isRepeating = true;
@@ -383,11 +371,7 @@ public class ConstantVectorExpression extends VectorExpression {
       evaluateBytes(colVector);
       break;
     case DECIMAL:
-      if (outputDataTypePhysicalVariation == DataTypePhysicalVariation.DECIMAL_64) {
-        evaluateDecimal64(colVector);
-      } else {
-        evaluateDecimal(colVector);
-      }
+      evaluateDecimal(colVector);
       break;
     case TIMESTAMP:
       evaluateTimestamp(colVector);

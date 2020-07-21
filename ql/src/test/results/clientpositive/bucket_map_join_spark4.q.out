@@ -207,22 +207,31 @@ STAGE PLANS:
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
               SORTBUCKETCOLSPREFIX TRUE
               bucket_count 2
               bucket_field_name key
               bucketing_version 2
               column.name.delimiter ,
               columns key,value
+              columns.comments 
               columns.types int:string
 #### A masked pattern was here ####
               name default.tbl1_n0
+              numFiles 2
+              numRows 10
+              rawDataSize 70
+              serialization.ddl struct tbl1_n0 { i32 key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+              totalSize 80
+#### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
+                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
                 SORTBUCKETCOLSPREFIX TRUE
                 bucket_count 2
                 bucket_field_name key
@@ -233,8 +242,14 @@ STAGE PLANS:
                 columns.types int:string
 #### A masked pattern was here ####
                 name default.tbl1_n0
+                numFiles 2
+                numRows 10
+                rawDataSize 70
+                serialization.ddl struct tbl1_n0 { i32 key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                totalSize 80
+#### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.tbl1_n0
             name: default.tbl1_n0
@@ -244,22 +259,31 @@ STAGE PLANS:
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
               SORTBUCKETCOLSPREFIX TRUE
               bucket_count 2
               bucket_field_name key
               bucketing_version 2
               column.name.delimiter ,
               columns key,value
+              columns.comments 
               columns.types int:string
 #### A masked pattern was here ####
               name default.tbl2_n0
+              numFiles 2
+              numRows 10
+              rawDataSize 70
+              serialization.ddl struct tbl2_n0 { i32 key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+              totalSize 80
+#### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
+                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
                 SORTBUCKETCOLSPREFIX TRUE
                 bucket_count 2
                 bucket_field_name key
@@ -270,8 +294,14 @@ STAGE PLANS:
                 columns.types int:string
 #### A masked pattern was here ####
                 name default.tbl2_n0
+                numFiles 2
+                numRows 10
+                rawDataSize 70
+                serialization.ddl struct tbl2_n0 { i32 key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                totalSize 80
+#### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.tbl2_n0
             name: default.tbl2_n0
@@ -281,22 +311,31 @@ STAGE PLANS:
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
               SORTBUCKETCOLSPREFIX TRUE
               bucket_count 2
               bucket_field_name key
               bucketing_version 2
               column.name.delimiter ,
               columns key,value
+              columns.comments 
               columns.types int:string
 #### A masked pattern was here ####
               name default.tbl3
+              numFiles 2
+              numRows 10
+              rawDataSize 70
+              serialization.ddl struct tbl3 { i32 key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+              totalSize 80
+#### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
+                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
                 SORTBUCKETCOLSPREFIX TRUE
                 bucket_count 2
                 bucket_field_name key
@@ -307,8 +346,14 @@ STAGE PLANS:
                 columns.types int:string
 #### A masked pattern was here ####
                 name default.tbl3
+                numFiles 2
+                numRows 10
+                rawDataSize 70
+                serialization.ddl struct tbl3 { i32 key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                totalSize 80
+#### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.tbl3
             name: default.tbl3
@@ -542,22 +587,31 @@ STAGE PLANS:
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
               SORTBUCKETCOLSPREFIX TRUE
               bucket_count 2
               bucket_field_name key
               bucketing_version 2
               column.name.delimiter ,
               columns key,value
+              columns.comments 
               columns.types int:string
 #### A masked pattern was here ####
               name default.tbl1_n0
+              numFiles 2
+              numRows 10
+              rawDataSize 70
+              serialization.ddl struct tbl1_n0 { i32 key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+              totalSize 80
+#### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
+                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
                 SORTBUCKETCOLSPREFIX TRUE
                 bucket_count 2
                 bucket_field_name key
@@ -568,8 +622,14 @@ STAGE PLANS:
                 columns.types int:string
 #### A masked pattern was here ####
                 name default.tbl1_n0
+                numFiles 2
+                numRows 10
+                rawDataSize 70
+                serialization.ddl struct tbl1_n0 { i32 key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                totalSize 80
+#### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.tbl1_n0
             name: default.tbl1_n0
@@ -579,22 +639,31 @@ STAGE PLANS:
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
               SORTBUCKETCOLSPREFIX TRUE
               bucket_count 2
               bucket_field_name key
               bucketing_version 2
               column.name.delimiter ,
               columns key,value
+              columns.comments 
               columns.types int:string
 #### A masked pattern was here ####
               name default.tbl2_n0
+              numFiles 2
+              numRows 10
+              rawDataSize 70
+              serialization.ddl struct tbl2_n0 { i32 key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+              totalSize 80
+#### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
+                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
                 SORTBUCKETCOLSPREFIX TRUE
                 bucket_count 2
                 bucket_field_name key
@@ -605,8 +674,14 @@ STAGE PLANS:
                 columns.types int:string
 #### A masked pattern was here ####
                 name default.tbl2_n0
+                numFiles 2
+                numRows 10
+                rawDataSize 70
+                serialization.ddl struct tbl2_n0 { i32 key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                totalSize 80
+#### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.tbl2_n0
             name: default.tbl2_n0
@@ -616,22 +691,31 @@ STAGE PLANS:
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
               SORTBUCKETCOLSPREFIX TRUE
               bucket_count 2
               bucket_field_name key
               bucketing_version 2
               column.name.delimiter ,
               columns key,value
+              columns.comments 
               columns.types int:string
 #### A masked pattern was here ####
               name default.tbl3
+              numFiles 2
+              numRows 10
+              rawDataSize 70
+              serialization.ddl struct tbl3 { i32 key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+              totalSize 80
+#### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
+                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
                 SORTBUCKETCOLSPREFIX TRUE
                 bucket_count 2
                 bucket_field_name key
@@ -642,8 +726,14 @@ STAGE PLANS:
                 columns.types int:string
 #### A masked pattern was here ####
                 name default.tbl3
+                numFiles 2
+                numRows 10
+                rawDataSize 70
+                serialization.ddl struct tbl3 { i32 key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                totalSize 80
+#### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.tbl3
             name: default.tbl3
