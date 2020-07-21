@@ -4434,6 +4434,8 @@ public class HiveConf extends Configuration {
       "Merge adjacent joins into a single n-way join"),
     HIVE_LOG_N_RECORDS("hive.log.every.n.records", 0L, new RangeValidator(0L, null),
       "If value is greater than 0 logs in fixed intervals of size n rather than exponentially."),
+    HIVE_TEZ_SKIP_LOCAL_XML("hive.tez.skip.local.xml", true, "Hive excludes local xml files"
+        + " when sending configuration options to Tez AM when true"),
     HIVE_MSCK_PATH_VALIDATION("hive.msck.path.validation", "throw",
         new StringSet("throw", "skip", "ignore"), "The approach msck should take with HDFS " +
        "directories that are partition-like but contain unsupported characters. 'throw' (an " +
