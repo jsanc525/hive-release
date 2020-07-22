@@ -487,7 +487,7 @@ class MetaStoreDirectSql {
       @Override
       public List<Partition> run(List<Object> input) throws MetaException {
         return getPartitionsFromPartitionIds(catName, dbName,
-            filter.table.getTableName(), isViewTable, input, isTxnTable);
+                tableName, null, input, isTxnTable);
       }
     });
   }

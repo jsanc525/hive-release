@@ -2253,11 +2253,6 @@ public class ObjectStore implements RawStore, Configurable {
     return sd;
   }
 
-  private StorageDescriptor convertToStorageDescriptor(MStorageDescriptor msd)
-      throws MetaException {
-    return convertToStorageDescriptor(msd, false);
-  }
-
   /**
    * Convert a list of MStringList to a list of list string
    *
