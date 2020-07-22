@@ -688,9 +688,6 @@ public class Driver implements IDriver {
       // save the optimized sql for the explain
       plan.setOptimizedQueryString(ctx.getOptimizedSql());
 
-      conf.set("mapreduce.workflow.id", "hive_" + queryId);
-      conf.set("mapreduce.workflow.name", queryStr);
-
       // initialize FetchTask right here
       if (plan.getFetchTask() != null) {
         plan.getFetchTask().initialize(queryState, plan, null, ctx.getOpContext());
@@ -2688,8 +2685,6 @@ public class Driver implements IDriver {
       if (noName) {
         conf.set(MRJobConfig.JOB_NAME, jobname + " (" + tsk.getId() + ")");
       }
-      conf.set(DagUtils.MAPREDUCE_WORKFLOW_NODE_NAME, tsk.getId());
-      Utilities.setWorkflowAdjacencies(conf, plan);
       cxt.incCurJobNo(1);
       console.printInfo("Launching Job " + cxt.getCurJobNo() + " out of " + jobs);
     }
