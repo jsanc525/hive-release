@@ -417,10 +417,8 @@ STAGE PLANS:
                       name default.spart_n0
                       partition_columns ds/hr
                       partition_columns.types string:string
-                      serialization.ddl struct spart_n0 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.ql.io.orc.OrcSerde
-#### A masked pattern was here ####
                     serde: org.apache.hadoop.hive.ql.io.orc.OrcSerde
                     name: default.spart_n0
                   name: default.spart_n0
@@ -462,10 +460,8 @@ STAGE PLANS:
                       name default.spart_n0
                       partition_columns ds/hr
                       partition_columns.types string:string
-                      serialization.ddl struct spart_n0 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.ql.io.orc.OrcSerde
-#### A masked pattern was here ####
                     serde: org.apache.hadoop.hive.ql.io.orc.OrcSerde
                     name: default.spart_n0
                   name: default.spart_n0
@@ -829,10 +825,8 @@ STAGE PLANS:
                       name default.spart_n0
                       partition_columns ds/hr
                       partition_columns.types string:string
-                      serialization.ddl struct spart_n0 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.ql.io.orc.OrcSerde
-#### A masked pattern was here ####
                     serde: org.apache.hadoop.hive.ql.io.orc.OrcSerde
                     name: default.spart_n0
                   name: default.spart_n0
