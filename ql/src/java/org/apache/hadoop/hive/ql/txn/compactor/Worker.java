@@ -165,7 +165,6 @@ public class Worker extends CompactorThread {
 
         LOG.info("Starting " + ci.type.toString() + " compaction for " + ci.getFullPartitionName() +
             " with compute stats set to " + computeStats);
-        final StatsUpdater su = computeStats ? StatsUpdater.init(ci, msc.findColumnsWithStats(
         final StatsUpdater su = computeStats ? StatsUpdater.init(ci, txnHandler.findColumnsWithStats(ci), conf,
           runJobAsSelf(runAs) ? runAs : t.getOwner()) : null;
         final CompactorMR mr = new CompactorMR();
