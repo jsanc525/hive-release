@@ -64,7 +64,6 @@ public class Initiator extends CompactorThread {
   static final private Logger LOG = LoggerFactory.getLogger(CLASS_NAME);
 
   static final private String COMPACTORTHRESHOLD_PREFIX = "compactorthreshold.";
-  private Map<String, String> tblNameOwnersCache = new HashMap<>();
 
   private long checkInterval;
   private long prevStart = -1;
