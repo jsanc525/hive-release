@@ -29,8 +29,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.common.UgiFactory;
 import org.apache.hadoop.hive.llap.DaemonId;
@@ -286,7 +287,12 @@ public class ContainerRunnerImpl extends CompositeService implements ContainerRu
       // May need to setup localDir for re-localization, which is usually setup as Environment.PWD.
       // Used for re-localization, to add the user specified configuration (conf_pb_binary_stream)
 
-      Configuration callableConf = new Configuration(getConfig());
+      Supplier<Configuration> callableConf = Suppliers.memoize(new Supplier<Configuration>() {
+        @Override
+        public Configuration get() {
+          return new Configuration(getConfig());
+        }
+      });
       UserGroupInformation fsTaskUgi = fsUgiFactory == null ? null : fsUgiFactory.createUgi();
       boolean isGuaranteed = request.hasIsGuaranteed() && request.getIsGuaranteed();
       // TODO: ideally we'd register TezCounters here, but it seems impossible before registerTask.
