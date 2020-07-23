@@ -713,6 +713,7 @@ STAGE PLANS:
                         Map-reduce partition columns: _col0 (type: tinyint)
                         Statistics: Num rows: 12288 Data size: 2907994 Basic stats: COMPLETE Column stats: NONE
                         TopN Hash Memory Usage: 0.3
+            Execution mode: vectorized
         Reducer 2 
             Reduce Operator Tree:
               Group By Operator
