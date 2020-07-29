@@ -1755,53 +1755,6 @@ public class TestCompactor {
     }
   }
 
-  @Test
-  public void testDisableCompactionDuringReplLoad() throws Exception {
-    String tblName = "discomp";
-    String database = "discomp_db";
-    executeStatementOnDriver("drop database if exists " + database + " cascade", driver);
-    executeStatementOnDriver("create database " + database, driver);
-    executeStatementOnDriver("CREATE TABLE " + database + "." + tblName + "(a INT, b STRING) " +
-            " PARTITIONED BY(ds string)" +
-            " CLUSTERED BY(a) INTO 2 BUCKETS" + //currently ACID requires table to be bucketed
-            " STORED AS ORC TBLPROPERTIES ('transactional'='true')", driver);
-    executeStatementOnDriver("insert into " + database + "." + tblName + " partition (ds) values (1, 'fred', " +
-            "'today'), (2, 'wilma', 'yesterday')", driver);
-
-    executeStatementOnDriver("ALTER TABLE " + database + "." + tblName +
-            " SET TBLPROPERTIES ( 'hive.repl.first.inc.pending' = 'true')", driver);
-    List<ShowCompactResponseElement> compacts = getCompactionList();
-    Assert.assertEquals(0, compacts.size());
-
-    executeStatementOnDriver("alter database " + database +
-            " set dbproperties ('hive.repl.first.inc.pending' = 'true')", driver);
-    executeStatementOnDriver("ALTER TABLE " + database + "." + tblName +
-             " SET TBLPROPERTIES ( 'hive.repl.first.inc.pending' = 'false')", driver);
-    compacts = getCompactionList();
-    Assert.assertEquals(0, compacts.size());
-
-    executeStatementOnDriver("alter database " + database +
-            " set dbproperties ('hive.repl.first.inc.pending' = 'false')", driver);
-    executeStatementOnDriver("ALTER TABLE " + database + "." + tblName +
-            " SET TBLPROPERTIES ( 'hive.repl.first.inc.pending' = 'false')", driver);
-    compacts = getCompactionList();
-    Assert.assertEquals(2, compacts.size());
-    List<String> partNames = new ArrayList<String>();
-    for (int i = 0; i < compacts.size(); i++) {
-      Assert.assertEquals(database, compacts.get(i).getDbname());
-      Assert.assertEquals(tblName, compacts.get(i).getTablename());
-      Assert.assertEquals("initiated", compacts.get(i).getState());
-      partNames.add(compacts.get(i).getPartitionname());
-     }
-    Assert.assertEquals("ds=today", partNames.get(1));
-    Assert.assertEquals("ds=yesterday", partNames.get(0));
-    executeStatementOnDriver("drop database if exists " + database + " cascade", driver);
-
-    // Finish the scheduled compaction for ttp2
-    runWorker(conf);
-    runCleaner(conf);
-  }
-
   /**
    * Tests compaction of tables that were populated by LOAD DATA INPATH statements.
    *
@@ -1871,7 +1824,7 @@ public class TestCompactor {
     FileStatus[] files = fs.listStatus(new Path(table.getSd().getLocation()));
     // base dir
     assertEquals(1, files.length);
-    assertEquals("base_0000002_v0000012", files[0].getPath().getName());
+    assertEquals("base_0000002", files[0].getPath().getName());
     files = fs.listStatus(files[0].getPath(), AcidUtils.bucketFileFilter);
     // files
     assertEquals(2, files.length);
@@ -1904,7 +1857,7 @@ public class TestCompactor {
     files = fs.listStatus(new Path(table.getSd().getLocation()));
     // base dir
     assertEquals(1, files.length);
-    assertEquals("base_0000003_v0000015", files[0].getPath().getName());
+    assertEquals("base_0000003", files[0].getPath().getName());
     files = fs.listStatus(files[0].getPath(), AcidUtils.bucketFileFilter);
     // files
     assertEquals(2, files.length);
