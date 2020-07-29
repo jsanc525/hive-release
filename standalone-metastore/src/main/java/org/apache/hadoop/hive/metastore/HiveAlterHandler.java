@@ -50,16 +50,17 @@ import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.api.hive_metastoreConstants;
+import org.apache.hadoop.hive.metastore.utils.MetaStoreServerUtils;
 
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.HashMap;
 
 import static org.apache.hadoop.hive.metastore.HiveMetaHook.ALTERLOCATION;
 import static org.apache.hadoop.hive.metastore.HiveMetaHook.ALTER_TABLE_OPERATION_TYPE;
@@ -351,7 +352,12 @@ public class HiveAlterHandler implements AlterHandler {
 
         if (isPartitionedTable) {
           //Currently only column related changes can be cascaded in alter table
-          if(!MetaStoreUtils.areSameColumns(oldt.getSd().getCols(), newt.getSd().getCols())) {
+          boolean runPartitionMetadataUpdate =
+              (cascade && !MetaStoreServerUtils.areSameColumns(oldt.getSd().getCols(), newt.getSd().getCols()));
+          // we may skip the update entirely if there are only new columns added
+          runPartitionMetadataUpdate |=
+              !cascade && !MetaStoreServerUtils.arePrefixColumns(oldt.getSd().getCols(), newt.getSd().getCols());
+          if (runPartitionMetadataUpdate) {
             parts = msdb.getPartitions(catName, dbname, name, -1);
             for (Partition part : parts) {
               Partition oldPart = new Partition(part);
