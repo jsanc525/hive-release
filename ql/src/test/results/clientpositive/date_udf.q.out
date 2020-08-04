@@ -245,11 +245,11 @@ POSTHOOK: type: QUERY
 POSTHOOK: Input: _dummy_database@_dummy_table
 POSTHOOK: Output: default@testdatediff
 POSTHOOK: Lineage: testdatediff.datetimecol SCRIPT []
-PREHOOK: query: select datetimecol from testdatediff where datediff(cast(current_timestamp as string), datetimecol)<183
+PREHOOK: query: select datetimecol from testdatediff where datediff(cast(current_timestamp as string), datetimecol)>183
 PREHOOK: type: QUERY
 PREHOOK: Input: default@testdatediff
 #### A masked pattern was here ####
-POSTHOOK: query: select datetimecol from testdatediff where datediff(cast(current_timestamp as string), datetimecol)<183
+POSTHOOK: query: select datetimecol from testdatediff where datediff(cast(current_timestamp as string), datetimecol)>183
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@testdatediff
 #### A masked pattern was here ####
