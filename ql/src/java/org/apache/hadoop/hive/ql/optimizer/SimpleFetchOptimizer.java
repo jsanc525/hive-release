@@ -232,6 +232,9 @@ public class SimpleFetchOptimizer implements Transform {
           if (!checkExpressions((SelectOperator) op)) {
             return null;
           }
+          if (op.getChildOperators() == null || op.getChildOperators().size() != 1) {
+              return null;
+          }
           continue;
         }
 
