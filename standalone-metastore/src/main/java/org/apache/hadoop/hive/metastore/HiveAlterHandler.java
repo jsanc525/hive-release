@@ -356,25 +356,33 @@ public class HiveAlterHandler implements AlterHandler {
               (cascade && !MetaStoreServerUtils.areSameColumns(oldt.getSd().getCols(), newt.getSd().getCols()));
           // we may skip the update entirely if there are only new columns added
           runPartitionMetadataUpdate |=
-              !cascade && !MetaStoreServerUtils.arePrefixColumns(oldt.getSd().getCols(), newt.getSd().getCols());
+                  !cascade && !MetaStoreServerUtils.arePrefixColumns(oldt.getSd().getCols(), newt.getSd().getCols());
+
+          boolean retainOnColRemoval =
+                  MetastoreConf.getBoolVar(handler.getConf(), MetastoreConf.ConfVars.COLSTATS_RETAIN_ON_COLUMN_REMOVAL);
+
           if (runPartitionMetadataUpdate) {
-            parts = msdb.getPartitions(catName, dbname, name, -1);
-            for (Partition part : parts) {
-              Partition oldPart = new Partition(part);
-              List<FieldSchema> oldCols = part.getSd().getCols();
-              part.getSd().setCols(newt.getSd().getCols());
-              ColumnStatistics colStats = updateOrGetPartitionColumnStats(msdb, catName, dbname, name,
-                  part.getValues(), oldCols, oldt, part, null, null);
-              assert(colStats == null);
-              if (cascade) {
-                msdb.alterPartition(
+            if (cascade || retainOnColRemoval) {
+              parts = msdb.getPartitions(catName, dbname, name, -1);
+              for (Partition part : parts) {
+                Partition oldPart = new Partition(part);
+                List<FieldSchema> oldCols = part.getSd().getCols();
+                part.getSd().setCols(newt.getSd().getCols());
+                ColumnStatistics colStats = updateOrGetPartitionColumnStats(msdb, catName, dbname, name,
+                        part.getValues(), oldCols, oldt, part, null, null);
+                assert (colStats == null);
+                if (cascade) {
+                  msdb.alterPartition(
                     catName, dbname, name, part.getValues(), part, writeIdList);
-              } else {
-                // update changed properties (stats)
-                oldPart.setParameters(part.getParameters());
-                msdb.alterPartition(
-                    catName, dbname, name, part.getValues(), oldPart, writeIdList);
+                } else {
+                  // update changed properties (stats)
+                  oldPart.setParameters(part.getParameters());
+                  msdb.alterPartition(catName, dbname, name, part.getValues(), oldPart, writeIdList);
+                }
               }
+            } else {
+              // clear all column stats to prevent incorract behaviour in case same column is reintroduced
+              msdb.deleteAllPartitionColumnStatistics(catName, dbname, name, writeIdList);
             }
             // Don't validate table-level stats for a partitoned table.
             msdb.alterTable(catName, dbname, name, newt, null);

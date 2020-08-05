@@ -241,6 +241,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import org.datanucleus.identity.DatastoreId;
+
 
 /**
  * This class is the interface between the application logic and the database
@@ -9079,6 +9081,79 @@ public class ObjectStore implements RawStore, Configurable {
         catName, dbName, tableName, partNames, MPartitionColumnStatistics.class,
         "tableName", "dbName", "partition.partitionName", "catName");
     queryWithParams.getFirst().deletePersistentAll(queryWithParams.getSecond());
+  }
+
+  @Override
+  public void deleteAllPartitionColumnStatistics(String catName, String dbName, String tableName, String writeIdList) {
+
+    Query query = null;
+    dbName = org.apache.commons.lang3.StringUtils.defaultString(dbName, Warehouse.DEFAULT_DATABASE_NAME);
+    catName = normalizeIdentifier(catName);
+    if (tableName == null) {
+      throw new RuntimeException("Table name is null.");
+    }
+    boolean ret = false;
+    try {
+      openTransaction();
+      MTable mTable = getMTable(catName, dbName, tableName);
+
+      query = pm.newQuery(MPartitionColumnStatistics.class);
+
+      String filter = "dbName == t2 && tableName == t3 && catName == t4";
+      String parameters = "java.lang.String t2, java.lang.String t3, java.lang.String t4";
+
+      query.setFilter(filter);
+      query.declareParameters(parameters);
+
+      Long number = query.deletePersistentAll(normalizeIdentifier(dbName), normalizeIdentifier(tableName),
+          normalizeIdentifier(catName));
+
+      new GetHelper<Integer>(catName, dbName, tableName, true, true) {
+        private final SqlFilterForPushdown filter = new SqlFilterForPushdown();
+
+        @Override
+        protected String describeResult() {
+          return "Partition count";
+        }
+
+        @Override
+        protected boolean canUseDirectSql(GetHelper<Integer> ctx) throws MetaException {
+          return true;
+        }
+
+        @Override
+        protected Integer getSqlResult(GetHelper<Integer> ctx) throws MetaException {
+          Object dsId = JDOHelper.getObjectId(mTable);
+          Object tblId = ((DatastoreId)dsId).getKeyAsObject();
+          long l = ((Long)tblId).longValue();
+          LOG.info("tblId1 {}", Long.valueOf(l));
+          ObjectStore.this.directSql.deleteColumnStatsState(l);
+          return Integer.valueOf(0);
+        }
+
+        @Override
+        protected Integer getJdoResult(GetHelper<Integer> ctx) throws MetaException, NoSuchObjectException {
+          try {
+            List<Partition> parts = getPartitions(catName, dbName, tableName, -1);
+            for (Partition part : parts) {
+              Partition newPart = new Partition(part);
+              StatsSetupConst.clearColumnStatsState(newPart.getParameters());
+              alterPartition(catName, dbName, tableName, part.getValues(), newPart, writeIdList);
+            }
+            return parts.size();
+          } catch (InvalidObjectException e) {
+            LOG.error("error updating parts", e);
+            return -1;
+          }
+        }
+      }.run(true);
+
+      ret = commitTransaction();
+    } catch (Exception e) {
+      LOG.error("Couldn't clear stats for table", e);
+    } finally {
+      rollbackAndCleanup(ret, query);
+    }
   }
 
   @Override

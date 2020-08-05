@@ -1247,4 +1247,9 @@ public class DummyRawStoreForJdoConnection implements RawStore {
   public List<WriteEventInfo> getAllWriteEventInfo(long txnId, String dbName, String tableName) throws MetaException {
     return null;
   }
+
+  @Override
+  public void deleteAllPartitionColumnStatistics(String catName, String dbName, String tableName, String w) {
+    throw new RuntimeException("unimplemented");
+  }
 }

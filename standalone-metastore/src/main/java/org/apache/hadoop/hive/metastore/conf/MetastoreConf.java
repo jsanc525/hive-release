@@ -1008,6 +1008,12 @@ public class MetastoreConf {
             + " overridden by HIVE_CODAHALE_METRICS_REPORTER_CLASSES and METRICS_REPORTERS if " +
             "present. Comma separated list of JMX, CONSOLE, JSON_FILE, HADOOP2"),
 
+    COLSTATS_RETAIN_ON_COLUMN_REMOVAL("metastore.colstats.retain.on.column.removal",
+        "hive.metastore.colstats.retain.on.column.removal", true,
+        "Whether to retain column statistics during column removals in partitioned tables - disabling this "
+            + "purges all column statistics data "
+            + "for all partition to retain working consistency"),
+
     // These are all values that we put here just for testing
     STR_TEST_ENTRY("test.str", "hive.test.str", "defaultval", "comment"),
     STR_SET_ENTRY("test.str.set", "hive.test.str.set", "a", new StringSetValidator("a", "b", "c"), ""),

@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.common.StatsSetupConst;
@@ -2022,7 +2022,7 @@ public class CachedStore implements RawStore, Configurable {
     }
     return partitions;
   }
-  
+
   private String getPartNameMatcher(Table table, List<String> partSpecs) throws MetaException {
     List<FieldSchema> partCols = table.getPartitionKeys();
     int numPartKeys = partCols.size();
@@ -3089,4 +3089,10 @@ public class CachedStore implements RawStore, Configurable {
       String dbName, String tableName) throws MetaException, NoSuchObjectException {
     return rawStore.getPartitionColsWithStats(catName, dbName, tableName);
   }
+
+  @Override
+  public void deleteAllPartitionColumnStatistics(String catName, String dbName, String tableName, String w) {
+    rawStore.deleteAllPartitionColumnStatistics(catName, dbName, tableName, w);
+  }
+
 }

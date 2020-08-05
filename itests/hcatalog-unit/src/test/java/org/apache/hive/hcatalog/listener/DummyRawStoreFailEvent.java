@@ -1309,4 +1309,7 @@ public class DummyRawStoreFailEvent implements RawStore, Configurable {
     return null;
   }
 
+  public void deleteAllPartitionColumnStatistics(String catName, String dbName, String tableName,String s) {
+    objectStore.deleteAllPartitionColumnStatistics(catName, dbName, tableName, s);
+  }
 }

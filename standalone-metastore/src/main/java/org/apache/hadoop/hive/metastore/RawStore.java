@@ -1768,4 +1768,6 @@ public interface RawStore extends Configurable {
    * @param tableName the name of the table for which the dump is being taken
    */
   List<WriteEventInfo> getAllWriteEventInfo(long txnId, String dbName, String tableName) throws MetaException;
+
+  void deleteAllPartitionColumnStatistics(String catName, String dbName, String tableName, String writeIdList);
 }
