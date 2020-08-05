@@ -1263,4 +1263,9 @@ public class DummyRawStoreControlledCommit implements RawStore, Configurable {
       NoSuchObjectException {
     return null;
   }
+
+  @Override
+  public void deleteAllPartitionColumnStatistics(String catName, String dbName, String tableName, String w) {
+    objectStore.deleteAllPartitionColumnStatistics(catName, dbName, tableName, w);
+  }
 }

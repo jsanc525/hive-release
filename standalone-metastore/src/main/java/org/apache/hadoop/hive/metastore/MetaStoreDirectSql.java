@@ -96,6 +96,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
+import org.apache.hadoop.hive.common.StatsSetupConst;
 
 /**
  * This class contains the optimizations for MetaStore that rely on direct SQL access to
@@ -2838,6 +2839,23 @@ class MetaStoreDirectSql {
         LOG.warn("SQL error executing query while dropping dangling col descriptions", sqlException);
         throw new MetaException("Encountered error while dropping col descriptions");
       }
+    }
+  }
+
+  public void deleteColumnStatsState(long tbl_id) throws MetaException {
+    // @formatter:off
+    String queryText = ""
+        + "delete from " + PARTITION_PARAMS + " "
+            + " where "
+            + "   \"PART_ID\" in (select p.\"PART_ID\"  from " + PARTITIONS + " p where"
+            + "   p.\"TBL_ID\" =  " + tbl_id + ")"
+            + "  and \"PARAM_KEY\" = '"+StatsSetupConst.COLUMN_STATS_ACCURATE + "'";
+    // @formatter:on
+
+    try {
+      executeNoResult(queryText);
+    } catch (SQLException e) {
+      throw new MetaException("Error removing column stat states:" + e.getMessage());
     }
   }
 }
