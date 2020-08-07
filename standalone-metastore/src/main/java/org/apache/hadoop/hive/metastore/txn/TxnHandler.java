@@ -3171,8 +3171,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
    * Retry-by-caller note: this is only idempotent assuming it's only called by dropTable/Db/etc
    * operations.
    *
-   * HIVE_LOCKS is (presumably) expected to be removed by AcidHouseKeeperServices
-   * WS_SET is (presumably) expected to be removed by AcidWriteSetService
+   * HIVE_LOCKS and WS_SET are cleaned up by {@link AcidHouseKeeperService}, if turned on
    */
   @Override
   @RetrySemantics.Idempotent

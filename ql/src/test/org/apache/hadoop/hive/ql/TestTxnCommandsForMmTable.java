@@ -46,7 +46,6 @@ import org.apache.hadoop.hive.metastore.api.OpenTxnsResponse;
 import org.apache.hadoop.hive.metastore.api.ShowCompactRequest;
 import org.apache.hadoop.hive.metastore.api.ShowCompactResponse;
 import org.apache.hadoop.hive.metastore.api.ShowCompactResponseElement;
-import org.apache.hadoop.hive.metastore.txn.AcidCompactionHistoryService;
 import org.apache.hadoop.hive.metastore.txn.TxnDbUtil;
 import org.apache.hadoop.hive.metastore.txn.TxnStore;
 import org.apache.hadoop.hive.metastore.txn.TxnUtils;
@@ -539,127 +538,49 @@ public class TestTxnCommandsForMmTable extends TxnCommandsBaseForTests {
 
     Assert.assertEquals(TxnDbUtil.queryToString(hiveConf, "select * from COMPLETED_TXN_COMPONENTS"),
             2, TxnDbUtil.countQueryAgent(hiveConf, "select count(*) from COMPLETED_TXN_COMPONENTS"));
-    Assert.assertEquals(TxnDbUtil.queryToString(hiveConf, "select * from TXNS"),
-            0, TxnDbUtil.countQueryAgent(hiveConf, "select count(*) from TXNS"));
 
-    // Initiate a minor compaction request on the table.
+    // Initiate a major compaction request on the table.
     runStatementOnDriver("alter table " + TableExtended.MMTBL  + " compact 'MAJOR'");
 
     // Run worker.
     runWorker(hiveConf);
+    verifyDirAndResult(2, true);
 
     // Run Cleaner.
     runCleaner(hiveConf);
     Assert.assertEquals(TxnDbUtil.queryToString(hiveConf, "select * from COMPLETED_TXN_COMPONENTS"),
             0,
             TxnDbUtil.countQueryAgent(hiveConf, "select count(*) from COMPLETED_TXN_COMPONENTS"));
-    Assert.assertEquals(TxnDbUtil.queryToString(hiveConf, "select * from TXNS"),
-            0, TxnDbUtil.countQueryAgent(hiveConf, "select count(*) from TXNS"));
-  }
-
-  @Test
-  public void testSnapshotIsolationWithAbortedTxnOnMmTable() throws Exception {
-
-    // Insert two rows into the table.
-    runStatementOnDriver("insert into " + TableExtended.MMTBL + "(a,b) values(1,2)");
-    runStatementOnDriver("insert into " + TableExtended.MMTBL + "(a,b) values(3,4)");
-    // There should be 2 delta directories
-    verifyDirAndResult(2);
-
-    // Initiate a minor compaction request on the table.
-    runStatementOnDriver("alter table " + TableExtended.MMTBL  + " compact 'MINOR'");
-
-    // Run Compaction Worker to do compaction.
-    // But we do not compact a MM table but only transit the compaction request to
-    // "ready for cleaning" state in this case.
-    runWorker(hiveConf);
-    verifyDirAndResult(2);
-
-    // Start an INSERT statement transaction and roll back this transaction.
-    hiveConf.setBoolVar(HiveConf.ConfVars.HIVETESTMODEROLLBACKTXN, true);
-    runStatementOnDriver("insert into " + TableExtended.MMTBL  + " values (5, 6)");
-    hiveConf.setBoolVar(HiveConf.ConfVars.HIVETESTMODEROLLBACKTXN, false);
-    // There should be 3 delta directories. The new one is the aborted one.
-    verifyDirAndResult(3);
-
-    // Execute SELECT statement and verify the result set (should be two rows).
-    int[][] expected = new int[][] {{1, 2}, {3, 4}};
-    List<String> rs = runStatementOnDriver("select a,b from " + TableExtended.MMTBL + " order by a,b");
-    Assert.assertEquals(stringifyValues(expected), rs);
-
-    // Run Cleaner.
-    // This run doesn't do anything for the above aborted transaction since
-    // the current compaction request entry in the compaction queue is updated
-    // to have highest_write_id when the worker is run before the aborted
-    // transaction. Specifically the id is 2 for the entry but the aborted
-    // transaction has 3 as writeId. This run does transition the entry
-    // "successful".
-    runCleaner(hiveConf);
-    verifyDirAndResult(3);
-
-    // Execute SELECT and verify that aborted operation is not counted for MM table.
-    rs = runStatementOnDriver("select a,b from " + TableExtended.MMTBL + " order by a,b");
-    Assert.assertEquals(stringifyValues(expected), rs);
-
-    // Run initiator to execute CompactionTxnHandler.cleanEmptyAbortedTxns()
-    Assert.assertEquals(TxnDbUtil.queryToString(hiveConf, "select * from TXNS"),
-            1, TxnDbUtil.countQueryAgent(hiveConf, "select count(*) from TXNS"));
-    Initiator i = new Initiator();
-    i.setThreadId((int)i.getId());
-    i.setConf(hiveConf);
-    AtomicBoolean stop = new AtomicBoolean(true);
-    i.init(stop, new AtomicBoolean());
-    i.run();
-    // This run of Initiator doesn't add any compaction_queue entry
-    // since we only have one MM table with data - we don't compact MM tables.
-    verifyDirAndResult(3);
-    Assert.assertEquals(TxnDbUtil.queryToString(hiveConf, "select * from TXNS"),
-            1, TxnDbUtil.countQueryAgent(hiveConf, "select count(*) from TXNS"));
-
-    // Execute SELECT statement and verify that aborted INSERT statement is not counted.
-    rs = runStatementOnDriver("select a,b from " + TableExtended.MMTBL + " order by a,b");
-    Assert.assertEquals(stringifyValues(expected), rs);
-
-    // Initiate a minor compaction request on the table.
-    runStatementOnDriver("alter table " + TableExtended.MMTBL  + " compact 'MINOR'");
-
-    // Run worker to delete aborted transaction's delta directory.
-    runWorker(hiveConf);
-    Assert.assertEquals(TxnDbUtil.queryToString(hiveConf, "select * from TXNS"),
-            1, TxnDbUtil.countQueryAgent(hiveConf, "select count(*) from TXNS"));
-    Assert.assertEquals(TxnDbUtil.queryToString(hiveConf, "select * from TXN_COMPONENTS"),
-            1,
-            TxnDbUtil.countQueryAgent(hiveConf, "select count(*) from TXN_COMPONENTS"));
-    verifyDirAndResult(2);
-
-    // Run Cleaner to delete rows for the aborted transaction
-    // from TXN_COMPONENTS.
-    runCleaner(hiveConf);
-
-    // Run initiator to clean the row fro the aborted transaction from TXNS.
-    i.run();
-    Assert.assertEquals(TxnDbUtil.queryToString(hiveConf, "select * from TXNS"),
-            0, TxnDbUtil.countQueryAgent(hiveConf, "select count(*) from TXNS"));
-    Assert.assertEquals(TxnDbUtil.queryToString(hiveConf, "select * from TXN_COMPONENTS"),
-            0,
-            TxnDbUtil.countQueryAgent(hiveConf, "select count(*) from TXN_COMPONENTS"));
+    verifyDirAndResult(0, true);
   }
 
   private void verifyDirAndResult(int expectedDeltas) throws Exception {
+    verifyDirAndResult(expectedDeltas, false);
+  }
+
+  private void verifyDirAndResult(int expectedDeltas, boolean expectBaseDir) throws Exception {
     FileSystem fs = FileSystem.get(hiveConf);
     // Verify the content of subdirs
     FileStatus[] status = fs.listStatus(new Path(TEST_WAREHOUSE_DIR + "/" +
         (TableExtended.MMTBL).toString().toLowerCase()), FileUtils.HIDDEN_FILES_PATH_FILTER);
     int sawDeltaTimes = 0;
+    int sawBaseTimes = 0;
     for (int i = 0; i < status.length; i++) {
-      Assert.assertTrue(status[i].getPath().getName().matches("delta_.*"));
-      sawDeltaTimes++;
-      FileStatus[] files = fs.listStatus(status[i].getPath(), FileUtils.HIDDEN_FILES_PATH_FILTER);
-      Assert.assertEquals(1, files.length);
-      Assert.assertTrue(files[0].getPath().getName().equals("000000_0"));
+      if (status[i].getPath().getName().matches("delta_.*")) {
+        sawDeltaTimes++;
+        FileStatus[] files = fs.listStatus(status[i].getPath(), FileUtils.HIDDEN_FILES_PATH_FILTER);
+        Assert.assertEquals(1, files.length);
+        Assert.assertEquals("000000_0", files[0].getPath().getName());
+      } else {
+        sawBaseTimes++;
+      }
     }
     Assert.assertEquals(expectedDeltas, sawDeltaTimes);
-
+    if (expectBaseDir) {
+      Assert.assertEquals("1 base directory expected", 1, sawBaseTimes);
+    } else {
+      Assert.assertEquals("0 base directories expected", 0, sawBaseTimes);
+    }
     // Verify query result
     int [][] resultData = new int[][] {{1,2}, {3,4}};
     List<String> rs = runStatementOnDriver("select a,b from " + TableExtended.MMTBL + " order by a,b");
