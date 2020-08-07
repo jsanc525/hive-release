@@ -172,7 +172,6 @@ public class CompactionInfo implements Comparable<CompactionInfo> {
     pStmt.setLong(12, ci.highestWriteId);
     pStmt.setBytes(13, ci.metaInfo);
     pStmt.setString(14, ci.hadoopJobId);
-    pStmt.setString(15, ci.errorMessage);
   }
 
   public static CompactionInfo compactionStructToInfo(CompactionInfoStruct cr) {

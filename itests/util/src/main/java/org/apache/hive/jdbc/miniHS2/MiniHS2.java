@@ -40,6 +40,7 @@ import org.apache.hadoop.hive.llap.LlapItUtils;
 import org.apache.hadoop.hive.llap.daemon.MiniLlapCluster;
 import org.apache.hadoop.hive.metastore.MetaStoreTestUtils;
 import org.apache.hadoop.hive.metastore.conf.MetastoreConf;
+import org.apache.hadoop.hive.metastore.security.HadoopThriftAuthBridge;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.util.ZooKeeperHiveHelper;
 import org.apache.hadoop.hive.shims.HadoopShims.MiniDFSShim;
@@ -82,6 +83,7 @@ public class MiniHS2 extends AbstractHiveService {
   private MiniClusterType miniClusterType = MiniClusterType.LOCALFS_ONLY;
   private boolean usePortsFromConf = false;
   private PamAuthenticator pamAuthenticator;
+  private boolean createTransactionalTables;
 
   public enum MiniClusterType {
     MR,
@@ -102,6 +104,7 @@ public class MiniHS2 extends AbstractHiveService {
     private String authType = "KERBEROS";
     private boolean isHA = false;
     private boolean cleanupLocalDirOnStartup = true;
+    private boolean createTransactionalTables = true;
     private boolean isMetastoreSecure;
     private String metastoreServerPrincipal;
     private String metastoreServerKeyTab;
@@ -123,6 +126,11 @@ public class MiniHS2 extends AbstractHiveService {
 
     public Builder withAuthenticationType(String authType) {
       this.authType = authType;
+      return this;
+    }
+
+    public Builder withTransactionalTables(boolean createTransactionalTables) {
+      this.createTransactionalTables = createTransactionalTables;
       return this;
     }
 
@@ -178,7 +186,7 @@ public class MiniHS2 extends AbstractHiveService {
         hiveConf.setVar(ConfVars.HIVE_SERVER2_TRANSPORT_MODE, HS2_BINARY_MODE);
       }
       return new MiniHS2(hiveConf, miniClusterType, useMiniKdc, serverPrincipal, serverKeytab,
-          isMetastoreRemote, usePortsFromConf, authType, isHA, cleanupLocalDirOnStartup,
+          isMetastoreRemote, createTransactionalTables, usePortsFromConf, authType, isHA, cleanupLocalDirOnStartup,
           isMetastoreSecure, metastoreServerPrincipal, metastoreServerKeyTab);
     }
   }
@@ -216,7 +224,7 @@ public class MiniHS2 extends AbstractHiveService {
   }
 
   private MiniHS2(HiveConf hiveConf, MiniClusterType miniClusterType, boolean useMiniKdc,
-      String serverPrincipal, String serverKeytab, boolean isMetastoreRemote,
+      String serverPrincipal, String serverKeytab, boolean isMetastoreRemote, boolean createTransactionalTables,
       boolean usePortsFromConf, String authType, boolean isHA, boolean cleanupLocalDirOnStartup,
       boolean isMetastoreSecure,
       String metastoreServerPrincipal,
@@ -242,6 +250,7 @@ public class MiniHS2 extends AbstractHiveService {
     this.isMetastoreSecure = isMetastoreSecure;
     this.cleanupLocalDirOnStartup = cleanupLocalDirOnStartup;
     this.usePortsFromConf = usePortsFromConf;
+    this.createTransactionalTables = createTransactionalTables;
     baseDir = getBaseDir();
     localFS = FileSystem.getLocal(hiveConf);
     FileSystem fs;
@@ -339,13 +348,14 @@ public class MiniHS2 extends AbstractHiveService {
   public MiniHS2(HiveConf hiveConf, MiniClusterType clusterType, boolean usePortsFromConf)
       throws Exception {
     this(hiveConf, clusterType, false, null, null,
-        false, usePortsFromConf, "KERBEROS", false, true,
+        false, true, usePortsFromConf, "KERBEROS", false, true,
         false, null, null);
   }
 
   public void start(Map<String, String> confOverlay) throws Exception {
     if (isMetastoreRemote) {
-      MetaStoreTestUtils.startMetaStoreWithRetry(getHiveConf());
+      MetaStoreTestUtils.startMetaStoreWithRetry(HadoopThriftAuthBridge.getBridge(), getHiveConf(),
+              false, false, createTransactionalTables);
       setWareHouseDir(MetastoreConf.getVar(getHiveConf(), MetastoreConf.ConfVars.WAREHOUSE));
     }
 

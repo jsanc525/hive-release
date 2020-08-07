@@ -36,6 +36,7 @@ import org.apache.hadoop.hive.metastore.conf.MetastoreConf;
 import org.apache.hadoop.hive.metastore.conf.MetastoreConf.ConfVars;
 import org.apache.hadoop.hive.metastore.events.EventCleanerTask;
 import org.apache.hadoop.hive.metastore.security.HadoopThriftAuthBridge;
+import org.apache.hadoop.hive.metastore.txn.TxnDbUtil;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,7 +102,7 @@ public class MetaStoreTestUtils {
                                             boolean keepWarehousePath)
       throws Exception {
     return MetaStoreTestUtils.startMetaStoreWithRetry(HadoopThriftAuthBridge.getBridge(), conf,
-        keepJdbcUri, keepWarehousePath);
+        keepJdbcUri, keepWarehousePath, true);
   }
 
   public static int startMetaStoreWithRetry() throws Exception {
@@ -111,7 +112,7 @@ public class MetaStoreTestUtils {
 
   public static int startMetaStoreWithRetry(HadoopThriftAuthBridge bridge,
                                             Configuration conf) throws Exception {
-    return MetaStoreTestUtils.startMetaStoreWithRetry(bridge, conf, false, false);
+    return MetaStoreTestUtils.startMetaStoreWithRetry(bridge, conf, false, false,false);
   }
 
   /**
@@ -126,8 +127,10 @@ public class MetaStoreTestUtils {
    * @return The port on which the MetaStore finally started
    * @throws Exception
    */
-  public static int startMetaStoreWithRetry(HadoopThriftAuthBridge bridge,
-      Configuration conf, boolean keepJdbcUri, boolean keepWarehousePath) throws Exception {
+  // public static int startMetaStoreWithRetry(HadoopThriftAuthBridge bridge,
+  //     Configuration conf, boolean keepJdbcUri, boolean keepWarehousePath) throws Exception {
+  public static int startMetaStoreWithRetry(HadoopThriftAuthBridge bridge, Configuration conf, boolean keepJdbcUri,
+      boolean keepWarehousePath, boolean createTransactionalTables) throws Exception {
     Exception metaStoreException = null;
     String warehouseDir = MetastoreConf.getVar(conf, ConfVars.WAREHOUSE);
 
@@ -151,6 +154,15 @@ public class MetaStoreTestUtils {
 
         // Setting metastore instance specific metastore uri
         MetastoreConf.setVar(conf, ConfVars.THRIFT_URIS, "thrift://localhost:" + metaStorePort);
+
+        if (createTransactionalTables) {
+          // Some tests may have dummy txn manager. There is no harm in creating the transactional tables but
+          // we should not change the test config in case they purposefully do not use transactions
+          Configuration txnInitConf = new Configuration(conf);
+          TxnDbUtil.setConfValues(txnInitConf);
+          TxnDbUtil.prepDb(txnInitConf);
+        }
+
         MetaStoreTestUtils.startMetaStore(metaStorePort, bridge, conf);
 
         // Creating warehouse dir, if not exists
@@ -165,6 +177,7 @@ public class MetaStoreTestUtils {
 
         LOG.info("MetaStore Thrift Server started on port: {} with warehouse dir: {} with " +
             "jdbcUrl: {}", metaStorePort, warehouseDir, jdbcUrl);
+
         return metaStorePort;
       } catch (ConnectException ce) {
         metaStoreException = ce;
