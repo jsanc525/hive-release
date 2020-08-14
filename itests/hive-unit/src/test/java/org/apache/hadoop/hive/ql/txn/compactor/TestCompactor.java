@@ -1870,7 +1870,7 @@ public class TestCompactor {
     FileStatus[] files = fs.listStatus(new Path(table.getSd().getLocation()));
     // base dir
     assertEquals(1, files.length);
-    assertEquals("base_0000002_v0000012", files[0].getPath().getName());
+    assertEquals("base_0000002", files[0].getPath().getName());
     files = fs.listStatus(files[0].getPath(), AcidUtils.bucketFileFilter);
     // files
     assertEquals(2, files.length);
@@ -1903,7 +1903,7 @@ public class TestCompactor {
     files = fs.listStatus(new Path(table.getSd().getLocation()));
     // base dir
     assertEquals(1, files.length);
-    assertEquals("base_0000003_v0000015", files[0].getPath().getName());
+    assertEquals("base_0000003", files[0].getPath().getName());
     files = fs.listStatus(files[0].getPath(), AcidUtils.bucketFileFilter);
     // files
     assertEquals(2, files.length);
