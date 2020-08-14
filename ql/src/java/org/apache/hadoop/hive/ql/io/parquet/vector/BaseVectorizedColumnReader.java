@@ -137,7 +137,7 @@ public abstract class BaseVectorizedColumnReader implements VectorizedColumnRead
         this.dictionary = ParquetDataColumnReaderFactory
             .getDataColumnReaderByTypeOnDictionary(parquetType.asPrimitiveType(), hiveType,
                 dictionaryPage.getEncoding().initDictionary(descriptor, dictionaryPage),
-                skipTimestampConversion);
+                skipTimestampConversion, writerTimezone);
         this.isCurrentPageDictionaryEncoded = true;
       } catch (IOException e) {
         throw new IOException("could not decode the dictionary for " + descriptor, e);
@@ -189,11 +189,11 @@ public abstract class BaseVectorizedColumnReader implements VectorizedColumnRead
       }
       dataColumn = ParquetDataColumnReaderFactory.getDataColumnReaderByType(type.asPrimitiveType(), hiveType,
           dataEncoding.getDictionaryBasedValuesReader(descriptor, VALUES, dictionary
-              .getDictionary()), skipTimestampConversion);
+              .getDictionary()), skipTimestampConversion, writerTimezone);
       this.isCurrentPageDictionaryEncoded = true;
     } else {
       dataColumn = ParquetDataColumnReaderFactory.getDataColumnReaderByType(type.asPrimitiveType(), hiveType,
-          dataEncoding.getValuesReader(descriptor, VALUES), skipTimestampConversion);
+          dataEncoding.getValuesReader(descriptor, VALUES), skipTimestampConversion, writerTimezone);
       this.isCurrentPageDictionaryEncoded = false;
     }
 

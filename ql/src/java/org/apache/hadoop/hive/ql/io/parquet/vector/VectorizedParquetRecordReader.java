@@ -252,6 +252,8 @@ public class VectorizedParquetRecordReader extends ParquetRecordReaderBase
       this.totalRowCount += block.getRowCount();
     }
     this.fileSchema = footer.getFileMetaData().getSchema();
+    this.writerTimezone = DataWritableReadSupport
+        .getWriterTimeZoneId(footer.getFileMetaData().getKeyValueMetaData());
 
     colsToInclude = ColumnProjectionUtils.getReadColumnIDs(configuration);
     requestedSchema = DataWritableReadSupport

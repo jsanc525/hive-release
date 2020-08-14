@@ -490,6 +490,7 @@ public class DataWritableReadSupport extends ReadSupport<ArrayWritable> {
       throw new IllegalStateException("ReadContext not initialized properly. " +
         "Don't know the Hive Schema.");
     }
+
     String key = HiveConf.ConfVars.HIVE_PARQUET_TIMESTAMP_SKIP_CONVERSION.varname;
     if (!metadata.containsKey(key)) {
       metadata.put(key, String.valueOf(HiveConf.getBoolVar(

@@ -17,10 +17,10 @@
  */
 package org.apache.hadoop.hive.common.type;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.DateTimeException;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Instant;
 import java.time.LocalDateTime;
