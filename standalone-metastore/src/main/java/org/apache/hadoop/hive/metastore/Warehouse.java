@@ -237,6 +237,45 @@ public class Warehouse {
     return new Path(db.getLocationUri());
   }
 
+  /**
+   * Get the managed tables path specified by the database.  In the case of the default database the root of the
+   * warehouse is returned.
+   * @param db database to get the path of
+   * @return path to the database directory
+   * @throws MetaException when the file path cannot be properly determined from the configured
+   * file system.
+   */
+  public Path getDatabaseExternalPath(Database db) throws MetaException {
+      Path dbPath = new Path(db.getLocationUri());
+      if (FileUtils.isSubdirectory(getWhRoot().toString(), dbPath.toString() + Path.SEPARATOR)) {
+        // db metadata incorrect, find new location based on external warehouse root
+        dbPath = getDefaultExternalDatabasePath(db.getName());
+      }
+      return getDnsPath(dbPath);
+  }
+
+  /**
+   * Get the managed tables path specified by the database.  In the case of the default database the root of the
+   * warehouse is returned.
+   * @param db database to get the path of
+   * @return path to the database directory
+   * @throws MetaException when the file path cannot be properly determined from the configured
+   * file system.
+   */
+  public Path getDatabaseManagedPath(Database db) throws MetaException {
+    if (!db.getCatalogName().equalsIgnoreCase(DEFAULT_CATALOG_NAME)) {
+      return new Path(db.getLocationUri());
+    }
+    if (db.getName().equalsIgnoreCase(DEFAULT_DATABASE_NAME)) {
+      return getWhRoot();
+    }
+
+    if (FileUtils.isSubdirectory(getWhRoot().toString(), db.getLocationUri().toString() + Path.SEPARATOR)) {
+      return new Path(db.getLocationUri());
+    }
+    return new Path(getWhRoot(), db.getName().toLowerCase() + DATABASE_WAREHOUSE_SUFFIX);
+  }
+
   public Path getDefaultDatabasePath(String dbName) throws MetaException {
     // TODO CAT - I am fairly certain that most calls to this are in error.  This should only be
     // used when the database location is unset, which should never happen except when a
@@ -275,10 +314,14 @@ public class Warehouse {
 
   public Path getDefaultTablePath(Database db, String tableName, boolean isExternal) throws MetaException {
     Path dbPath = null;
-    if (isExternal && hasExternalWarehouseRoot()) {
-      dbPath = getDefaultExternalDatabasePath(db.getName());
+    if (isExternal) {
+      dbPath = new Path(db.getLocationUri());
+      if (FileUtils.isSubdirectory(getWhRoot().toString(), dbPath.toString() + Path.SEPARATOR)) {
+        // db metadata incorrect, find new location based on external warehouse root
+        dbPath = getDefaultExternalDatabasePath(db.getName());
+      }
     } else {
-      dbPath = getDatabasePath(db);
+      dbPath = getDatabaseManagedPath(db);
     }
     return getDnsPath(
         new Path(dbPath, MetaStoreUtils.encodeTableName(tableName.toLowerCase())));

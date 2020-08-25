@@ -13606,6 +13606,22 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
 
       tblProps = validateAndAddDefaultProperties(
           tblProps, isExt, storageFormat, dbDotTab, sortCols, isMaterialization, isTemporary, isTransactional);
+
+      boolean makeInsertOnly = HiveConf.getBoolVar(conf, ConfVars.HIVE_CREATE_TABLES_AS_INSERT_ONLY);
+      boolean makeAcid =
+          MetastoreConf.getBoolVar(conf, MetastoreConf.ConfVars.CREATE_TABLES_AS_ACID) &&
+              HiveConf.getBoolVar(conf, ConfVars.HIVE_SUPPORT_CONCURRENCY) &&
+              DbTxnManager.class.getCanonicalName().equals(HiveConf.getVar(conf, ConfVars.HIVE_TXN_MANAGER));
+
+      // if make acid is false set as external table
+      if (!makeInsertOnly && !makeAcid && !AcidUtils.isTransactionalTable(qb.getTableDesc())) {
+        isExt = true;
+        // this is a legacy managed table that will be translated to external, enable purge on drop
+        if (tblProps.get(MetaStoreUtils.EXTERNAL_TABLE_PURGE) == null) {
+          tblProps.put(MetaStoreUtils.EXTERNAL_TABLE_PURGE, "true");
+        }
+      }
+
       addDbAndTabToOutputs(qualifiedTabName, TableType.MANAGED_TABLE, isTemporary, tblProps);
       tableDesc = new CreateTableDesc(qualifiedTabName[0], dbDotTab, isExt, isTemporary, cols,
           partColNames, bucketCols, sortCols, numBuckets, rowFormatParams.fieldDelim,

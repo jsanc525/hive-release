@@ -1331,15 +1331,22 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         } else {
 
           try {
-            // Since this may be done as random user (if doAs=true) he may not have access
-            // to the managed directory. We run this as an admin user
-            madeManagedDir = UserGroupInformation.getLoginUser().doAs(new PrivilegedExceptionAction<Boolean>() {
-              @Override public Boolean run() throws MetaException {
-                if (!wh.isDir(dbPath)) {
-                  LOG.info("Creating database path in managed directory " + dbPath);
-                  if (!wh.mkdirs(dbPath)) {
-                    throw new MetaException(
-                        "Unable to create database managed path " + dbPath + ", failed to create database " + db.getName());
+            // Since this may be done as random user (if doAs=true) end user may not have access
+            // to the default managed directory. We run this as an admin user
+            // if user explicitly specifies location within create statement, then we run this as end user.
+            UserGroupInformation ugi;
+            if(wh.getDefaultDatabasePath(db.getName()).toString().equals(dbPath)) {
+              ugi = UserGroupInformation.getLoginUser();
+            } else {
+              ugi = UserGroupInformation.getCurrentUser();
+            }
+            madeManagedDir = ugi.doAs(new PrivilegedExceptionAction<Boolean>() {
+             @Override public Boolean run() throws MetaException {
+               if (!wh.isDir(dbPath)) {
+                 LOG.info("Creating database path in managed directory " + dbPath);
+                 if (!wh.mkdirs(dbPath)) {
+                   throw new MetaException(
+                     "Unable to create database managed path " + dbPath + ", failed to create database " + db.getName());
                   }
                   return true;
                 }
@@ -1766,7 +1773,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           } else {
             try {
               final Database dbFinal = db;
-              Boolean deleted = UserGroupInformation.getLoginUser().doAs(new PrivilegedExceptionAction<Boolean>() {
+              UserGroupInformation ugi;
+              // We run this as end-user if db location is not in default metastore warehouse directory
+               if(wh.getDefaultDatabasePath(db.getName()).toString().equals(db.getLocationUri())) {
+                 ugi = UserGroupInformation.getLoginUser();
+               } else {
+                 ugi = UserGroupInformation.getCurrentUser();
+               }
+               Boolean deleted = ugi.doAs(new PrivilegedExceptionAction<Boolean>() {
                 @Override public Boolean run() throws MetaException {
                   return wh.deleteDir(new Path(dbFinal.getLocationUri()), true, dbFinal);
                 }

@@ -30,6 +30,7 @@ import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.metastore.utils.FileUtils;
 import org.apache.hadoop.hive.metastore.utils.MetaStoreUtils;
 
 import java.util.ArrayList;
@@ -577,7 +578,8 @@ public class MetastoreDefaultTransformer implements IMetaStoreMetadataTransforme
         LOG.info("Modified table params are:" + params.toString());
         if (table.getSd().getLocation() == null) {
           try {
-            Path newPath = hmsHandler.getWh().getDefaultTablePath(table.getDbName(), table.getTableName(), true);
+            Database db = hmsHandler.getMS().getDatabase(table.getCatName(), table.getDbName());
+            Path newPath = hmsHandler.getWh().getDefaultTablePath(db, table.getTableName(), true);
             newTable.getSd().setLocation(newPath.toString());
             LOG.info("Modified location from null to " + newPath);
           } catch (Exception e) {
@@ -629,11 +631,16 @@ public class MetastoreDefaultTransformer implements IMetaStoreMetadataTransforme
 
     if (processorCapabilities == null || (!processorCapabilities.contains(HIVEMANAGEDINSERTWRITE) &&
             !processorCapabilities.contains(HIVEFULLACIDWRITE))) {
-      LOG.info("Processor does not have any of ACID write capabilities, changing current location from " +
-              db.getLocationUri() + " to external warehouse location");
-      Path extWhLocation = hmsHandler.getWh().getDefaultExternalDatabasePath(db.getName());
-      LOG.debug("Setting DBLocation to " + extWhLocation.toString());
-      db.setLocationUri(extWhLocation.toString());
+      LOG.info("Processor does not have any of ACID write capabilities, inspecting current location " + db.getLocationUri());
+      Path locationPath = Path.getPathWithoutSchemeAndAuthority(new Path(db.getLocationUri()));
+      Path whRootPath = Path.getPathWithoutSchemeAndAuthority(hmsHandler.getWh().getWhRoot());
+      if (FileUtils.isSubdirectory(whRootPath.toString(), locationPath.toString()) && !locationPath.equals(whRootPath)) { // legacy path
+        Path extWhLocation = hmsHandler.getWh().getDefaultExternalDatabasePath(db.getName());
+        LOG.info(
+            "Database's location is a managed location, setting to a new default path based on external warehouse path:"
+                + extWhLocation.toString());
+        db.setLocationUri(extWhLocation.toString());
+      }
     }
     LOG.info("Transformer returning database:" + db.toString());
     return db;
