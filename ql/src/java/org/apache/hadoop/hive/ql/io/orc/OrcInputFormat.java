@@ -1664,8 +1664,6 @@ public class OrcInputFormat implements InputFormat<NullWritable, OrcStruct>,
             : OrcConf.PROLEPTIC_GREGORIAN_DEFAULT.getBoolean(context.conf);
         stripeStats = orcTail.getStripeStatistics(writerUsedProlepticGregorian, true);
       }
-      stripes = orcTail.getStripes();
-      stripeStats = orcTail.getStripeStatistics();
       fileTypes = orcTail.getTypes();
       TypeDescription fileSchema = OrcUtils.convertTypeFromProtobuf(fileTypes, 0);
       Reader.Options readerOptions = new Reader.Options(context.conf);
