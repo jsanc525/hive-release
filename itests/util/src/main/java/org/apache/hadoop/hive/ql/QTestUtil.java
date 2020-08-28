@@ -34,7 +34,6 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
@@ -45,7 +44,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -159,7 +157,7 @@ public class QTestUtil {
   private static final String BUILD_DIR_PROPERTY = "build.dir"; // typically target
 
   public static final String TEST_SRC_TABLES_PROPERTY = "test.src.tables";
-  
+
   /**
    * The default Erasure Coding Policy to use in Erasure Coding tests.
    */
