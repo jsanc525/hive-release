@@ -297,6 +297,8 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
   public void setConf(Configuration conf) {
     this.conf = conf;
 
+    checkQFileTestHack();
+
     synchronized (TxnHandler.class) {
       if (connPool == null) {
         Connection dbConn = null;
@@ -3991,6 +3993,25 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
   // the lock type of the lock we are checking to the lock state of the lock
   // we are checking to the desired action.
   private static Map<LockType, Map<LockType, Map<LockState, LockAction>>> jumpTable;
+
+  private void checkQFileTestHack() {
+    boolean hackOn = MetastoreConf.getBoolVar(conf, ConfVars.HIVE_IN_TEST) ||
+      MetastoreConf.getBoolVar(conf, ConfVars.HIVE_IN_TEZ_TEST);
+    if (hackOn) {
+      LOG.info("Hacking in canned values for transaction manager");
+      // Set up the transaction/locking db in the derby metastore
+      TxnDbUtil.setConfValues(conf);
+      try {
+        TxnDbUtil.prepDb(conf);
+      } catch (Exception e) {
+        // We may have already created the tables and thus don't need to redo it.
+        if (e.getMessage() != null && !e.getMessage().contains("already exists")) {
+          throw new RuntimeException("Unable to set up transaction database for" +
+            " testing: " + e.getMessage(), e);
+        }
+      }
+    }
+  }
 
   private int abortTxns(Connection dbConn, List<Long> txnids, boolean isStrict) throws SQLException {
     return abortTxns(dbConn, txnids, -1, isStrict);
