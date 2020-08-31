@@ -636,14 +636,11 @@ File Version: 0.12 with ORC_135
 Rows: 242
 Compression: SNAPPY
 Compression size: 4096
+Calendar: Julian/Gregorian
 Type: struct<key:int,value:string>
 
 Stripe Statistics:
   Stripe 1:
-    Column 0: count: 152 hasNull: false
-    Column 1: count: 152 hasNull: false bytesOnDisk: 309 min: 0 max: 497 sum: 38034
-    Column 2: count: 152 hasNull: false bytesOnDisk: 679 min: val_0 max: val_97 sum: 1034
-  Stripe 2:
     Column 0: count: 90 hasNull: false
     Column 1: count: 90 hasNull: false bytesOnDisk: 185 min: 0 max: 495 sum: 22736
     Column 2: count: 90 hasNull: false bytesOnDisk: 428 min: val_0 max: val_86 sum: 612
@@ -688,7 +685,7 @@ Stripes:
     Row group indices for column 2:
       Entry 0: count: 90 hasNull: false min: val_0 max: val_86 sum: 612 positions: 0,0,0,0,0
 
-File length: 2155 bytes
+File length: 2159 bytes
 Padding length: 0 bytes
 Padding ratio: 0%
 ________________________________________________________________________________________________________________________
@@ -706,6 +703,7 @@ File Version: 0.12 with ORC_135
 Rows: 242
 Compression: SNAPPY
 Compression size: 4096
+Calendar: Julian/Gregorian
 Type: struct<key:int,value:string>
 
 Stripe Statistics:
@@ -758,7 +756,7 @@ Stripes:
     Row group indices for column 2:
       Entry 0: count: 90 hasNull: false min: val_0 max: val_86 sum: 612 positions: 0,0,0,0,0
 
-File length: 2155 bytes
+File length: 2159 bytes
 Padding length: 0 bytes
 Padding ratio: 0%
 ________________________________________________________________________________________________________________________
