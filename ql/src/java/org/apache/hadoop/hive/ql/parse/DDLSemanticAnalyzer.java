@@ -4292,28 +4292,28 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
      * Retrieve mappings from parser
      */
     Map<List<String>, String> locations = new HashMap<List<String>, String>();
-    ArrayList<Node> locNodes = ast.getChildren();
+    List<Node> locNodes = ast.getChildren();
     if (null == locNodes) {
       throw new SemanticException(ErrorMsg.ALTER_TBL_SKEWED_LOC_NO_LOC.getMsg());
     } else {
       for (Node locNode : locNodes) {
         // TOK_SKEWED_LOCATIONS
         ASTNode locAstNode = (ASTNode) locNode;
-        ArrayList<Node> locListNodes = locAstNode.getChildren();
+        List<Node> locListNodes = locAstNode.getChildren();
         if (null == locListNodes) {
           throw new SemanticException(ErrorMsg.ALTER_TBL_SKEWED_LOC_NO_LOC.getMsg());
         } else {
           for (Node locListNode : locListNodes) {
             // TOK_SKEWED_LOCATION_LIST
             ASTNode locListAstNode = (ASTNode) locListNode;
-            ArrayList<Node> locMapNodes = locListAstNode.getChildren();
+            List<Node> locMapNodes = locListAstNode.getChildren();
             if (null == locMapNodes) {
               throw new SemanticException(ErrorMsg.ALTER_TBL_SKEWED_LOC_NO_LOC.getMsg());
             } else {
               for (Node locMapNode : locMapNodes) {
                 // TOK_SKEWED_LOCATION_MAP
                 ASTNode locMapAstNode = (ASTNode) locMapNode;
-                ArrayList<Node> locMapAstNodeMaps = locMapAstNode.getChildren();
+                List<Node> locMapAstNodeMaps = locMapAstNode.getChildren();
                 if ((null == locMapAstNodeMaps) || (locMapAstNodeMaps.size() != 2)) {
                   throw new SemanticException(ErrorMsg.ALTER_TBL_SKEWED_LOC_NO_MAP.getMsg());
                 } else {

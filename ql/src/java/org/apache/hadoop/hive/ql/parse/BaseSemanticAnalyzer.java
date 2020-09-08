@@ -1951,7 +1951,7 @@ public abstract class BaseSemanticAnalyzer {
         }
         break;
       case HiveParser.TOK_TABCOLVALUE_PAIR:
-        ArrayList<Node> vLNodes = vAstNode.getChildren();
+        List<Node> vLNodes = vAstNode.getChildren();
         for (Node node : vLNodes) {
           if ( ((ASTNode) node).getToken().getType() != HiveParser.TOK_TABCOLVALUES) {
             throw new SemanticException(
