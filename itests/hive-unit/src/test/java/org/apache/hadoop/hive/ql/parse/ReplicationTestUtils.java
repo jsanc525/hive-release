@@ -17,8 +17,10 @@
  */
 package org.apache.hadoop.hive.ql.parse;
 
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.parse.WarehouseInstance;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * ReplicationTestUtils - static helper functions for replication test
@@ -487,5 +489,12 @@ public class ReplicationTestUtils {
         .run("select last_update_user from " + tableName + " order by last_update_user")
         .verifyResults(new String[] {"creation", "creation", "creation", "creation", "creation",
                 "creation", "creation", "merge_update", "merge_insert", "merge_insert"});
+  }
+
+  public static List<String> includeExternalTableClause(boolean enable) {
+    List<String> withClause = new ArrayList<>();
+    withClause.add("'" + HiveConf.ConfVars.REPL_INCLUDE_EXTERNAL_TABLES.varname + "'='" + enable + "'");
+    withClause.add("'distcp.options.pugpb'=''");
+    return withClause;
   }
 }

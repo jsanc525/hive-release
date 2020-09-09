@@ -37,7 +37,7 @@ public class AddPartitionDesc extends DDLDesc implements Serializable {
   public static class OnePartitionDesc {
     public OnePartitionDesc() {}
 
-    OnePartitionDesc(
+    public OnePartitionDesc(
         Map<String, String> partSpec, String location, Map<String, String> params) {
       this(partSpec, location);
       this.partParams = params;
@@ -180,6 +180,12 @@ public class AddPartitionDesc extends DDLDesc implements Serializable {
     this.dbName = dbName;
     this.tableName = tableName;
     this.ifNotExists = ifNotExists;
+  }
+
+  public AddPartitionDesc(
+          String dbName, String tableName, boolean ifNotExists, List<OnePartitionDesc> partitions) {
+    this(dbName, tableName, ifNotExists);
+    this.partitions = partitions;
   }
 
   /**
