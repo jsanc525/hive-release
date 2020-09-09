@@ -13614,7 +13614,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
               DbTxnManager.class.getCanonicalName().equals(HiveConf.getVar(conf, ConfVars.HIVE_TXN_MANAGER));
 
       // if make acid is false set as external table
-      if (!makeInsertOnly && !makeAcid && !AcidUtils.isTransactionalTable(qb.getTableDesc())) {
+      if (!makeInsertOnly && !makeAcid && !AcidUtils.isTransactionalTable(tblProps)) {
         isExt = true;
         // this is a legacy managed table that will be translated to external, enable purge on drop
         if (tblProps.get(MetaStoreUtils.EXTERNAL_TABLE_PURGE) == null) {
