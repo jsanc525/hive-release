@@ -402,6 +402,47 @@ public class TestReplicationScenariosExternalTables extends BaseReplicationAcros
   }
 
   @Test
+  public void externalTableWithPartitionsInBatch() throws Throwable {
+    Path externalTableLocation =
+      new Path("/" + testName.getMethodName() + "/t2/");
+    DistributedFileSystem fs = primary.miniDFSCluster.getFileSystem();
+    fs.mkdirs(externalTableLocation, new FsPermission("777"));
+
+    List<String> withClause = ReplicationTestUtils.includeExternalTableClause(true);
+    withClause.add("'" + HiveConf.ConfVars.REPL_LOAD_PARTITIONS_BATCH_SIZE.varname + "'='" + 1 + "'");
+
+    // This is needed to set proper external table base dir, in later versions this is set by default
+    externalTableBasePathWithClause();
+    withClause.add("'" + HiveConf.ConfVars.REPL_EXTERNAL_TABLE_BASE_DIR.varname + "'='"
+            + REPLICA_EXTERNAL_BASE + "'");
+
+    WarehouseInstance.Tuple tuple = primary.run("use " + primaryDbName)
+      .run("create external table t2 (place string) partitioned by (country string) row format "
+        + "delimited fields terminated by ',' location '" + externalTableLocation.toString()
+        + "'")
+      .run("insert into t2 partition(country='india') values ('bangalore')")
+      .run("insert into t2 partition(country='france') values ('paris')")
+      .run("insert into t2 partition(country='australia') values ('sydney')")
+      .dump(primaryDbName, null, withClause);
+
+    assertExternalFileInfo(
+      Collections.singletonList("t2"),
+      new Path(new Path(tuple.dumpLocation, primaryDbName.toLowerCase()), FILE_NAME));
+
+    replica.load(replicatedDbName, tuple.dumpLocation, withClause)
+      .run("use " + replicatedDbName)
+      .run("show tables like 't2'")
+      .verifyResults(new String[] { "t2" })
+      .run("select distinct(country) from t2")
+      .verifyResults(new String[] { "india", "france", "australia" })
+      .run("select place from t2")
+      .verifyResults(new String[] { "bangalore", "paris", "sydney" })
+      .verifyReplTargetProperty(replicatedDbName);
+
+    assertTablePartitionLocation(primaryDbName + ".t2", replicatedDbName + ".t2");
+  }
+
+  @Test
   public void externalTableIncrementalReplication() throws Throwable {
     WarehouseInstance.Tuple tuple = primary.dump("repl dump " + primaryDbName);
     replica.load(replicatedDbName, tuple.dumpLocation);

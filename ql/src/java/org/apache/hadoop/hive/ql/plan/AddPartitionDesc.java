@@ -48,6 +48,26 @@ public class AddPartitionDesc extends DDLDesc implements Serializable {
       this.location = location;
     }
 
+    public OnePartitionDesc(Map<String, String> partitionSpec, String location, Map<String, String> params,
+        String inputFormat, String outputFormat, int numBuckets, List<FieldSchema> columns, String serializationLib,
+        Map<String, String> serdeParams, List<String> bucketColumns, List<Order> sortColumns,
+        ColumnStatistics columnStats, long writeId) {
+      this.partSpec = partitionSpec;
+      this.location = location;
+      this.partParams = params;
+      this.inputFormat = inputFormat;
+      this.outputFormat = outputFormat;
+      this.numBuckets = numBuckets;
+      this.cols = columns;
+      this.serializationLib = serializationLib;
+      this.serdeParams = serdeParams;
+      this.bucketCols = bucketColumns;
+      this.sortCols = sortColumns;
+      this.colStats = columnStats;
+      this.writeId = writeId;
+    }
+
+
     Map<String, String> partSpec;
     Map<String, String> partParams;
     String location;
@@ -180,6 +200,12 @@ public class AddPartitionDesc extends DDLDesc implements Serializable {
     this.dbName = dbName;
     this.tableName = tableName;
     this.ifNotExists = ifNotExists;
+  }
+
+  public AddPartitionDesc(
+      String dbName, String tableName, boolean ifNotExists, List<OnePartitionDesc> partitions) {
+    this(dbName, tableName, ifNotExists);
+    this.partitions = partitions;
   }
 
   /**
