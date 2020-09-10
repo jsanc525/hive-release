@@ -136,6 +136,9 @@ STAGE PLANS:
           output format: org.apache.hadoop.hive.ql.io.RCFileOutputFormat
           serde name: org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe
           name: default.rcfile_createas1b
+          table properties:
+            external.table.purge true
+          isExternal: true
 
   Stage: Stage-3
     Stats Work
