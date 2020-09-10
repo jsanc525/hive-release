@@ -132,6 +132,9 @@ STAGE PLANS:
           output format: org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat
           serde name: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           name: default.M1
+          table properties:
+            external.table.purge true
+          isExternal: true
 
   Stage: Stage-2
     Stats Work
@@ -261,6 +264,9 @@ STAGE PLANS:
           output format: org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat
           serde name: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           name: default.M1
+          table properties:
+            external.table.purge true
+          isExternal: true
 
   Stage: Stage-2
     Stats Work
@@ -394,6 +400,9 @@ STAGE PLANS:
           output format: org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat
           serde name: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           name: default.M1
+          table properties:
+            external.table.purge true
+          isExternal: true
 
   Stage: Stage-2
     Stats Work
@@ -523,6 +532,9 @@ STAGE PLANS:
           output format: org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat
           serde name: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           name: default.V1_n0
+          table properties:
+            external.table.purge true
+          isExternal: true
 
   Stage: Stage-2
     Stats Work

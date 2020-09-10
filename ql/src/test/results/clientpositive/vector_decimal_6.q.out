@@ -619,6 +619,9 @@ STAGE PLANS:
           output format: org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat
           serde name: org.apache.hadoop.hive.ql.io.orc.OrcSerde
           name: default.DECIMAL_6_3
+          table properties:
+            external.table.purge true
+          isExternal: true
 
   Stage: Stage-2
     Stats Work

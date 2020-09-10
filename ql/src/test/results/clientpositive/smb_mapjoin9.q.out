@@ -323,6 +323,9 @@ STAGE PLANS:
           output format: org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat
           serde name: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           name: default.smb_mapjoin9_results
+          table properties:
+            external.table.purge true
+          isExternal: true
 
   Stage: Stage-2
     Stats Work

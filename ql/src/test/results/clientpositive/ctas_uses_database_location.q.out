@@ -104,6 +104,9 @@ STAGE PLANS:
           output format: org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat
           serde name: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           name: db1.table_db1
+          table properties:
+            external.table.purge true
+          isExternal: true
 
   Stage: Stage-2
     Stats Work
@@ -170,10 +173,13 @@ Database:           	db1
 #### A masked pattern was here ####
 Retention:          	0                   	 
 #### A masked pattern was here ####
-Table Type:         	MANAGED_TABLE       	 
+Table Type:         	EXTERNAL_TABLE      	 
 Table Parameters:	 	 
 	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\",\"COLUMN_STATS\":{\"key\":\"true\",\"value\":\"true\"}}
+	EXTERNAL            	TRUE                
 	bucketing_version   	2                   
+	discover.partitions 	true                
+	external.table.purge	true                
 	numFiles            	1                   
 	numRows             	500                 
 	rawDataSize         	5312                

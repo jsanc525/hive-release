@@ -291,6 +291,7 @@ Table Parameters:
 	EXTERNAL            	TRUE                
 	bucketing_version   	2                   
 	discover.partitions 	true                
+	external.table.purge	true                
 	numFiles            	0                   
 	numPartitions       	0                   
 	numRows             	0                   
@@ -406,6 +407,7 @@ Table Parameters:
 	EXTERNAL            	TRUE                
 	bucketing_version   	2                   
 	discover.partitions 	false               
+	external.table.purge	true                
 #### A masked pattern was here ####
 	numFiles            	2                   
 	numPartitions       	2                   

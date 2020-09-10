@@ -223,6 +223,9 @@ STAGE PLANS:
           output format: org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat
           serde name: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           name: default.tmp_unionall
+          table properties:
+            external.table.purge true
+          isExternal: true
 
   Stage: Stage-3
     Stats Work

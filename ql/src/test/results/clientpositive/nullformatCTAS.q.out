@@ -126,6 +126,9 @@ STAGE PLANS:
           output format: org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat
           serde name: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           name: default.null_tab3
+          table properties:
+            external.table.purge true
+          isExternal: true
 
   Stage: Stage-2
     Stats Work
@@ -195,7 +198,7 @@ PREHOOK: Input: default@null_tab3
 POSTHOOK: query: SHOW CREATE TABLE null_tab3
 POSTHOOK: type: SHOW_CREATETABLE
 POSTHOOK: Input: default@null_tab3
-CREATE TABLE `null_tab3`(
+CREATE EXTERNAL TABLE `null_tab3`(
   `a` string, 
   `b` string)
 ROW FORMAT SERDE 
@@ -210,6 +213,8 @@ LOCATION
 #### A masked pattern was here ####
 TBLPROPERTIES (
   'bucketing_version'='2', 
+  'discover.partitions'='true', 
+  'external.table.purge'='true', 
 #### A masked pattern was here ####
 1.01
 1.01

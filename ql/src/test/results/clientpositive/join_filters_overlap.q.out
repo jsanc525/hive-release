@@ -104,12 +104,15 @@ STAGE PLANS:
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
               COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
+              EXTERNAL TRUE
               bucket_count -1
               bucketing_version 2
               column.name.delimiter ,
               columns key,value
               columns.comments 
               columns.types int:int
+              discover.partitions true
+              external.table.purge true
 #### A masked pattern was here ####
               name default.a_n4
               numFiles 1
@@ -126,12 +129,15 @@ STAGE PLANS:
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
                 COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
+                EXTERNAL TRUE
                 bucket_count -1
                 bucketing_version 2
                 column.name.delimiter ,
                 columns key,value
                 columns.comments 
                 columns.types int:int
+                discover.partitions true
+                external.table.purge true
 #### A masked pattern was here ####
                 name default.a_n4
                 numFiles 1
@@ -310,12 +316,15 @@ STAGE PLANS:
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
               COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
+              EXTERNAL TRUE
               bucket_count -1
               bucketing_version 2
               column.name.delimiter ,
               columns key,value
               columns.comments 
               columns.types int:int
+              discover.partitions true
+              external.table.purge true
 #### A masked pattern was here ####
               name default.a_n4
               numFiles 1
@@ -332,12 +341,15 @@ STAGE PLANS:
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
                 COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
+                EXTERNAL TRUE
                 bucket_count -1
                 bucketing_version 2
                 column.name.delimiter ,
                 columns key,value
                 columns.comments 
                 columns.types int:int
+                discover.partitions true
+                external.table.purge true
 #### A masked pattern was here ####
                 name default.a_n4
                 numFiles 1
@@ -516,12 +528,15 @@ STAGE PLANS:
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
               COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
+              EXTERNAL TRUE
               bucket_count -1
               bucketing_version 2
               column.name.delimiter ,
               columns key,value
               columns.comments 
               columns.types int:int
+              discover.partitions true
+              external.table.purge true
 #### A masked pattern was here ####
               name default.a_n4
               numFiles 1
@@ -538,12 +553,15 @@ STAGE PLANS:
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
                 COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
+                EXTERNAL TRUE
                 bucket_count -1
                 bucketing_version 2
                 column.name.delimiter ,
                 columns key,value
                 columns.comments 
                 columns.types int:int
+                discover.partitions true
+                external.table.purge true
 #### A masked pattern was here ####
                 name default.a_n4
                 numFiles 1
@@ -741,12 +759,15 @@ STAGE PLANS:
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
               COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
+              EXTERNAL TRUE
               bucket_count -1
               bucketing_version 2
               column.name.delimiter ,
               columns key,value
               columns.comments 
               columns.types int:int
+              discover.partitions true
+              external.table.purge true
 #### A masked pattern was here ####
               name default.a_n4
               numFiles 1
@@ -763,12 +784,15 @@ STAGE PLANS:
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
                 COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
+                EXTERNAL TRUE
                 bucket_count -1
                 bucketing_version 2
                 column.name.delimiter ,
                 columns key,value
                 columns.comments 
                 columns.types int:int
+                discover.partitions true
+                external.table.purge true
 #### A masked pattern was here ####
                 name default.a_n4
                 numFiles 1
@@ -966,12 +990,15 @@ STAGE PLANS:
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
               COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
+              EXTERNAL TRUE
               bucket_count -1
               bucketing_version 2
               column.name.delimiter ,
               columns key,value
               columns.comments 
               columns.types int:int
+              discover.partitions true
+              external.table.purge true
 #### A masked pattern was here ####
               name default.a_n4
               numFiles 1
@@ -988,12 +1015,15 @@ STAGE PLANS:
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
                 COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
+                EXTERNAL TRUE
                 bucket_count -1
                 bucketing_version 2
                 column.name.delimiter ,
                 columns key,value
                 columns.comments 
                 columns.types int:int
+                discover.partitions true
+                external.table.purge true
 #### A masked pattern was here ####
                 name default.a_n4
                 numFiles 1

@@ -464,10 +464,13 @@ Database:           	default
 #### A masked pattern was here ####
 Retention:          	0                   	 
 #### A masked pattern was here ####
-Table Type:         	MANAGED_TABLE       	 
+Table Type:         	EXTERNAL_TABLE      	 
 Table Parameters:	 	 
 	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\",\"COLUMN_STATS\":{\"a\":\"true\",\"b\":\"true\"}}
+	EXTERNAL            	TRUE                
 	bucketing_version   	2                   
+	discover.partitions 	true                
+	external.table.purge	true                
 	numFiles            	1                   
 	numRows             	13                  
 	rawDataSize         	41                  
