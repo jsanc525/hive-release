@@ -25,6 +25,12 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore;
 import org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore.BehaviourInjection;
 import org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore.CallerArguments;
+import org.apache.hadoop.hive.metastore.Warehouse;
+import org.apache.hadoop.hive.metastore.api.Catalog;
+import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
+import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.SerDeInfo;
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.conf.MetastoreConf;
 import org.apache.hadoop.hive.metastore.messaging.json.gzip.GzipJSONMessageEncoder;
@@ -34,6 +40,8 @@ import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.parse.repl.PathBuilder;
+import org.apache.hadoop.hive.serde.serdeConstants;
+import org.apache.hadoop.hive.serde2.columnar.LazyBinaryColumnarSerDe;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -46,6 +54,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -53,6 +62,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
+import static org.apache.hadoop.hive.metastore.ReplChangeManager.SOURCE_OF_REPLICATION;
 import static org.apache.hadoop.hive.ql.exec.repl.ReplExternalTables.FILE_NAME;
 import static org.apache.hadoop.hive.ql.exec.repl.util.ReplUtils.INC_BOOTSTRAP_ROOT_DIR_NAME;
 import static org.apache.hadoop.hive.ql.exec.repl.util.ReplUtils.REPL_CLEAN_TABLES_FROM_BOOTSTRAP_CONFIG;
@@ -794,6 +804,78 @@ public class TestReplicationScenariosExternalTables extends BaseReplicationAcros
                     + externalTableLocation.toString() + "'",
             "'distcp.options.pugpb'=''"
     );
+  }
+
+  // @Test
+  public void differentCatalogIncrementalReplication() throws Throwable {
+    //Create the catalog
+    Catalog catalog = new Catalog();
+    catalog.setName("spark");
+    Warehouse wh = new Warehouse(conf);
+    catalog.setLocationUri(wh.getWhRootExternal().toString() + File.separator + catalog);
+    catalog.setDescription("Non-hive catalog");
+    Hive.get(primary.hiveConf).getMSC().createCatalog(catalog);
+
+    //Create database and table in spark catalog
+    String sparkDbName = "src_spark";
+    Database sparkdb = new Database();
+    sparkdb.setCatalogName("spark");
+    sparkdb.setName(sparkDbName);
+    Hive.get(primary.hiveConf).getMSC().createDatabase(sparkdb);
+
+    SerDeInfo serdeInfo = new SerDeInfo("LBCSerDe", LazyBinaryColumnarSerDe.class.getCanonicalName(),
+      new HashMap<String, String>());
+    ArrayList<FieldSchema> cols = new ArrayList<FieldSchema>(1);
+    cols.add(new FieldSchema("place", serdeConstants.STRING_TYPE_NAME, ""));
+    StorageDescriptor sd
+      = new StorageDescriptor(cols, null,
+      "org.apache.hadoop.hive.ql.io.orc.OrcInputFormat",
+      "org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat",
+      false, 0, serdeInfo, null, null, null);
+    Map<String, String> tableParameters = new HashMap<String, String>();
+
+    Table sparkTable = new Table("mgt1", sparkDbName, "", 0, 0, 0,
+      sd, null, tableParameters, "", "", "");
+    sparkTable.setCatName("spark");
+    Hive.get(primary.hiveConf).getMSC().createTable(sparkTable);
+
+    //create same db in hive catalog
+    Map<String, String> params = new HashMap<>();
+    params.put(SOURCE_OF_REPLICATION, "1");
+    Database hiveDb = new Database();
+    hiveDb.setCatalogName("hive");
+    hiveDb.setName(sparkDbName);
+    hiveDb.setParameters(params);
+    Hive.get(primary.hiveConf).getMSC().createDatabase(hiveDb);
+
+    WarehouseInstance.Tuple tuple = primary.dump(sparkDbName, null);
+    //spark tables are not replicated in bootstrap
+    replica.load(replicatedDbName, tuple.dumpLocation)
+      .run("use " + replicatedDbName)
+      .run("show tables like mgdt1")
+      .verifyResult(null);
+
+    Path externalTableLocation =
+      new Path("/" + testName.getMethodName() + "/t1/");
+    DistributedFileSystem fs = primary.miniDFSCluster.getFileSystem();
+    fs.mkdirs(externalTableLocation, new FsPermission("777"));
+
+    //Create another table in spark
+    sparkTable = new Table("mgt2", sparkDbName, "", 0, 0, 0,
+      sd, null, tableParameters, "", "", "");
+    sparkTable.setCatName("spark");
+    Hive.get(primary.hiveConf).getMSC().createTable(sparkTable);
+
+    //Incremental load shouldn't copy any events from spark catalog
+    tuple = primary.dump(sparkDbName, null);
+    replica.load(replicatedDbName, tuple.dumpLocation)
+      .run("use " + replicatedDbName)
+      .run("show tables like mgdt1")
+      .verifyResult(null)
+      .run("show tables like 'mgt2'")
+      .verifyResult(null);
+
+    primary.run("drop database if exists " + sparkDbName + " cascade");
   }
 
   private void assertExternalFileInfo(List<String> expected, Path externalTableInfoFile)
