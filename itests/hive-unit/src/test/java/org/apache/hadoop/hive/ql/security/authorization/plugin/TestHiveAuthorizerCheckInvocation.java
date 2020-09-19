@@ -39,6 +39,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.ql.Driver;
+import org.apache.hadoop.hive.ql.exec.Registry;
 import org.apache.hadoop.hive.ql.lockmgr.DbTxnManager;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.security.HiveAuthenticationProvider;
@@ -203,6 +204,24 @@ public class TestHiveAuthorizerCheckInvocation {
     assertEquals("no of columns used", 5, tableObj.getColumns().size());
     assertEquals("Columns used", Arrays.asList("city", "date", "i", "j", "k"),
         getSortedList(tableObj.getColumns()));
+  }
+
+  @Test
+  public void testWindowingFunction() throws Exception {
+
+    reset(mockedAuthorizer);
+    int status = driver.compile("select AVG(`i`) OVER (PARTITION BY `city`) AS iavg FROM " + tableName, true);
+    assertEquals(0, status);
+
+    List<HivePrivilegeObject> inputs = getHivePrivilegeObjectInputs().getLeft();
+    checkSingleTableInput(inputs);
+    HivePrivilegeObject tableObj = inputs.get(0);
+    // Make sure none of the hive privilege object contain DB name with WINDOW_FUNC_PREFIX prefix.
+    for (HivePrivilegeObject obj : inputs) {
+      assertTrue(!obj.getDbname().startsWith(Registry.WINDOW_FUNC_PREFIX));
+    }
+    assertEquals("no of columns used", 2, tableObj.getColumns().size());
+    assertEquals("Columns used", Arrays.asList("city", "i"), getSortedList(tableObj.getColumns()));
   }
 
   @Test
