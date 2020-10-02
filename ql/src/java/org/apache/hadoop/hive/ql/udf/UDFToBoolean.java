@@ -21,6 +21,7 @@ package org.apache.hadoop.hive.ql.udf;
 
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.exec.UDFMethodResolver;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedExpressions;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastDecimalToBoolean;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.CastStringToBoolean;
@@ -54,6 +55,11 @@ public class UDFToBoolean extends UDF {
   private final BooleanWritable booleanWritable = new BooleanWritable();
 
   public UDFToBoolean() {
+  }
+
+  @Override
+  public UDFMethodResolver getResolver() {
+    return new TimestampCastRestrictorResolver(super.getResolver());
   }
 
   /**
