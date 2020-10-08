@@ -162,6 +162,10 @@ public class Driver implements IDriver {
   private static final Logger LOG = LoggerFactory.getLogger(CLASS_NAME);
   static final private LogHelper console = new LogHelper(LOG);
   static final int SHUTDOWN_HOOK_PRIORITY = 0;
+
+  public static final String SNAPSHOT_WAS_OUTDATED_WHEN_LOCKS_WERE_ACQUIRED =
+    "snapshot was outdated when locks were acquired";
+
   private final QueryInfo queryInfo;
   private Runnable shutdownRunner = null;
 
@@ -870,12 +874,27 @@ public class Driver implements IDriver {
       if (nonSharedLocks.contains(fullQNameForLock)) {
         // Check if table is transactional
         if (AcidUtils.isTransactionalTable(tableInfo.getRight())) {
+          ValidWriteIdList writeIdList = txnWriteIdList.getTableValidWriteIdList(tableInfo.getLeft());
+          ValidWriteIdList currentWriteIdList = currentTxnWriteIds.getTableValidWriteIdList(tableInfo.getLeft());
+
           // Check that write id is still valid
-          if (!TxnIdUtils.checkEquivalentWriteIds(
-              txnWriteIdList.getTableValidWriteIdList(tableInfo.getLeft()),
-              currentTxnWriteIds.getTableValidWriteIdList(tableInfo.getLeft()))) {
+          if (!TxnIdUtils.checkEquivalentWriteIds(writeIdList, currentWriteIdList)) {
             // Write id has changed, it is not valid anymore,
             // we need to recompile
+            if (LOG.isDebugEnabled()) {
+              long writeId = queryTxnMgr.getTableWriteId(
+                  tableInfo.getRight().getTableName(), tableInfo.getRight().getDbName());
+
+              LOG.warn("writeIdList has been invalidated; txnId:{}, writeId:{}, tableName:{}",
+                  queryTxnMgr.getCurrentTxnId(), writeId, tableInfo.getLeft());
+
+              LOG.debug("txnList: {}", txnString);
+              LOG.debug("currentTxnList: {}", currentTxnString);
+              LOG.debug("txnWriteIdList:{}", writeIdList);
+              LOG.debug("currentTxnWriteIds:{}", currentWriteIdList);
+
+              LOG.debug("TXN_OVERWRITE_X_LOCK={}", HiveConf.getBoolVar(conf, HiveConf.ConfVars.TXN_OVERWRITE_X_LOCK));
+            }
             return false;
           }
         }
@@ -2008,9 +2027,12 @@ public class Driver implements IDriver {
 
       lockAndRespond();
 
+      int retryShapshotCnt = 0;
+      int maxRetrySnapshotCnt = HiveConf.getIntVar(conf, HiveConf.ConfVars.HIVE_TXN_MAX_RETRYSNAPSHOT_COUNT);
+
       try {
-        if (!isValidTxnListState()) {
-          LOG.info("Compiling after acquiring locks");
+        while (!isValidTxnListState() && ++retryShapshotCnt <= maxRetrySnapshotCnt) {
+          LOG.info("Re-compiling after acquiring locks, attempt #" + retryShapshotCnt);
           // Snapshot was outdated when locks were acquired, hence regenerate context,
           // txn list and retry
           // TODO: Lock acquisition should be moved before analyze, this is a bit hackish.
@@ -2026,19 +2048,17 @@ public class Driver implements IDriver {
             recordValidWriteIds(queryTxnMgr);
           }
 
-          if (!alreadyCompiled) {
-            // compile internal will automatically reset the perf logger
-            compileInternal(command, true);
-          } else {
-            // Since we're reusing the compiled plan, we need to update its start time for current run
-            plan.setQueryStartTime(queryDisplay.getQueryStartTime());
-          }
+          // Since we're reusing the compiled plan, we need to update its start time for current run
+          plan.setQueryStartTime(queryDisplay.getQueryStartTime());
+        }
 
-          if (!isValidTxnListState()) {
-            // Throw exception
-            throw handleHiveException(new HiveException("Operation could not be executed"), 14);
-          }
+        if (retryShapshotCnt > maxRetrySnapshotCnt) {
+          // Throw exception
+          HiveException e = new HiveException(
+            "Operation could not be executed, " + SNAPSHOT_WAS_OUTDATED_WHEN_LOCKS_WERE_ACQUIRED + ".");
+          throw handleHiveException(e, 14);
 
+        } else if (retryShapshotCnt != 0) {
           //Reset the PerfLogger
           perfLogger = SessionState.getPerfLogger(true);
 
