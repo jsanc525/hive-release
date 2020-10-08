@@ -102,7 +102,7 @@ POSTHOOK: type: LOAD
 #### A masked pattern was here ####
 POSTHOOK: Output: default@a_merge
 Found 2 items
--rw-r--r--   1 ### USER ### ### GROUP ###     295767 ### HDFS DATE ### hdfs://### HDFS PATH ###
+-rw-r--r--   3 ### USER ### ### GROUP ###     295767 ### HDFS DATE ### hdfs://### HDFS PATH ###
 -rw-r--r--   3 ### USER ### ### GROUP ###     295616 ### HDFS DATE ### hdfs://### HDFS PATH ###
 PREHOOK: query: select count(*) from a_merge
 PREHOOK: type: QUERY
@@ -154,7 +154,7 @@ POSTHOOK: Lineage: a_merge.ctimestamp2 SIMPLE [(alltypesorc)alltypesorc.FieldSch
 POSTHOOK: Lineage: a_merge.ctinyint SIMPLE [(alltypesorc)alltypesorc.FieldSchema(name:ctinyint, type:tinyint, comment:null), ]
 Found 2 items
 -rw-r--r--   3 ### USER ### ### GROUP ###     590718 ### HDFS DATE ### hdfs://### HDFS PATH ###
--rw-r--r--   1 ### USER ### ### GROUP ###     295767 ### HDFS DATE ### hdfs://### HDFS PATH ###
+-rw-r--r--   3 ### USER ### ### GROUP ###     295767 ### HDFS DATE ### hdfs://### HDFS PATH ###
 PREHOOK: query: select count(*) from a_merge
 PREHOOK: type: QUERY
 PREHOOK: Input: default@a_merge
