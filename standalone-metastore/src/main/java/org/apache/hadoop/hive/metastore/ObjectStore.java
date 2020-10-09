@@ -3459,7 +3459,7 @@ public class ObjectStore implements RawStore, Configurable {
     assert result != null;
 
     final ExpressionTree exprTree = PartFilterExprUtil.makeExpressionTree(expressionProxy, expr,
-                                                    getDefaultPartitionName(defaultPartitionName));
+                                                    getDefaultPartitionName(defaultPartitionName), conf);
     final AtomicBoolean hasUnknownPartitions = new AtomicBoolean(false);
     result.addAll(new GetListHelper<Partition>(catName, dbName, tblName, allowSql, allowJdo) {
       @Override
@@ -3966,7 +3966,7 @@ public class ObjectStore implements RawStore, Configurable {
   @Override
   public int getNumPartitionsByExpr(String catName, String dbName, String tblName,
                                     byte[] expr) throws MetaException, NoSuchObjectException {
-    final ExpressionTree exprTree = PartFilterExprUtil.makeExpressionTree(expressionProxy, expr, null);
+    final ExpressionTree exprTree = PartFilterExprUtil.makeExpressionTree(expressionProxy, expr, null, conf);
     final byte[] tempExpr = expr; // Need to be final to pass it to an inner class
 
 

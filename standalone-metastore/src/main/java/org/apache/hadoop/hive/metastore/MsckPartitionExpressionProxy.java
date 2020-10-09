@@ -38,7 +38,8 @@ import org.apache.hadoop.hive.ql.io.sarg.SearchArgument;
 public class MsckPartitionExpressionProxy implements PartitionExpressionProxy {
 
   @Override
-  public String convertExprToFilter(final byte[] exprBytes, final String defaultPartitionName) throws MetaException {
+  public String convertExprToFilter(final byte[] exprBytes, final String defaultPartitionName,
+                                    boolean decodeFilterExpToStr) throws MetaException {
     return new String(exprBytes, StandardCharsets.UTF_8);
   }
 
