@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hive.ql.io.orc;
 
+import org.apache.hadoop.hdfs.protocol.HdfsLocatedFileStatus;
 import org.apache.hadoop.hive.ql.plan.DynamicValue.NoDynamicValuesException;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
@@ -1066,12 +1067,39 @@ public class OrcInputFormat implements InputFormat<NullWritable, OrcStruct>,
           }
           TreeMap<Long, BlockLocation> blockOffsets = SHIMS.getLocationsWithOffset(fs, fileStatus);
           for (Map.Entry<Long, BlockLocation> entry : blockOffsets.entrySet()) {
-            if(entry.getKey() + entry.getValue().getLength() > logicalLen) {
+            long blockOffset = entry.getKey();
+            long blockLength = entry.getValue().getLength();
+            if (blockOffset > logicalLen) {
               //don't create splits for anything past logical EOF
-              continue;
+              //map is ordered, thus any possible entry in the iteration after this is bound to be > logicalLen
+              break;
             }
-            OrcSplit orcSplit = new OrcSplit(fileStatus.getPath(), fileKey, entry.getKey(),
-                entry.getValue().getLength(), entry.getValue().getHosts(), null, isOriginal, true,
+            long splitLength = blockLength;
+
+            long blockEndOvershoot = (blockOffset + blockLength) - logicalLen;
+            if (blockEndOvershoot > 0) {
+              // if logicalLen is placed within a block, we should make (this last) split out of the part of this block
+              // -> we should read less than block end
+              splitLength -= blockEndOvershoot;
+            } else if (blockOffsets.lastKey() == blockOffset && blockEndOvershoot < 0) {
+              // This is the last block but it ends before logicalLen
+              // This can happen with HDFS if hflush was called and blocks are not persisted to disk yet, but content
+              // is otherwise available for readers, as DNs have these buffers in memory at this time.
+              // -> we should read more than (persisted) block end, but only within the block
+              if (fileStatus instanceof HdfsLocatedFileStatus) {
+                HdfsLocatedFileStatus hdfsFileStatus = (HdfsLocatedFileStatus)fileStatus;
+                if (hdfsFileStatus.getLocatedBlocks().isUnderConstruction()) {
+                  // sanity check
+                  if (logicalLen > blockOffset + hdfsFileStatus.getBlockSize()) {
+                    throw new IOException("Side file indicates more data available after the last known block!");
+                  }
+                  // blockEndOvershoot is negative here...
+                  splitLength -= blockEndOvershoot;
+                }
+              }
+            }
+            OrcSplit orcSplit = new OrcSplit(fileStatus.getPath(), fileKey, blockOffset,
+                splitLength, entry.getValue().getHosts(), null, isOriginal, true,
                 deltas, -1, logicalLen, dir);
             splits.add(orcSplit);
           }
@@ -1352,6 +1380,7 @@ public class OrcInputFormat implements InputFormat<NullWritable, OrcStruct>,
     private SchemaEvolution evolution;
     //this is the root of the partition in which the 'file' is located
     private final Path rootDir;
+    boolean isAcidTableScan;
 
     public SplitGenerator(SplitInfo splitInfo, UserGroupInformation ugi,
         boolean allowSyntheticFileIds, boolean isDefaultFs) throws IOException {
@@ -1373,6 +1402,7 @@ public class OrcInputFormat implements InputFormat<NullWritable, OrcStruct>,
       this.deltaSplits = splitInfo.getSplits();
       this.allowSyntheticFileIds = allowSyntheticFileIds;
       this.ppdResult = splitInfo.ppdResult;
+      this.isAcidTableScan = AcidUtils.isFullAcidScan(context.conf);
     }
 
     public boolean isBlocking() {
@@ -1471,7 +1501,7 @@ public class OrcInputFormat implements InputFormat<NullWritable, OrcStruct>,
       }
 
       // scale the raw data size to split level based on ratio of split wrt to file length
-      final long fileLen = file.getLen();
+      final long fileLen = isAcidTableScan ? AcidUtils.getLogicalLength(fs, file) : file.getLen();
       final double splitRatio = (double) length / (double) fileLen;
       final long scaledProjSize = projColsUncompressedSize > 0 ?
           (long) (splitRatio * projColsUncompressedSize) : fileLen;
