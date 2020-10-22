@@ -2641,7 +2641,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
     try {
       List<FieldSchema> allCols = table.getCols();
       allCols.addAll(table.getPartCols());
-      List<FieldSchema> cols = getColumnsByPattern(allCols,showCols.getPattern());
+      List<FieldSchema> cols = getColumnsByPattern(allCols,showCols.getPattern(), showCols);
       // In case the query is served by HiveServer2, don't pad it with spaces,
       // as HiveServer2 output is consumed by JDBC/ODBC clients.
       boolean isOutputPadded = !SessionState.get().isHiveServerQuery();
@@ -2667,7 +2667,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
    *        we want to find columns similar to a column pattern.
    * @return sorted list of columns.
    */
-  private List<FieldSchema> getColumnsByPattern(List<FieldSchema> cols, String columnPattern) {
+  private List<FieldSchema> getColumnsByPattern(List<FieldSchema> cols, String columnPattern, ShowColumnsDesc desc) {
 
     if(columnPattern == null) {
       columnPattern = "*";
@@ -2677,21 +2677,22 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
     Pattern pattern = Pattern.compile(columnPattern);
     Matcher matcher = pattern.matcher("");
 
-    SortedSet<FieldSchema> sortedCol = new TreeSet<>( new Comparator<FieldSchema>() {
-      @Override
-      public int compare(FieldSchema f1, FieldSchema f2) {
-        return f1.getName().compareTo(f2.getName());
-      }
-    });
-
-    for(FieldSchema column : cols)  {
+    ArrayList<FieldSchema> result = new ArrayList<>();
+    for (FieldSchema column : cols) {
       matcher.reset(column.getName());
-      if(matcher.matches()) {
-        sortedCol.add(column);
+      if (matcher.matches()) {
+        result.add(column);
       }
     }
 
-    return new ArrayList<FieldSchema>(sortedCol);
+    if (desc.isSorted()) {
+      result.sort(new Comparator<FieldSchema>() {
+        @Override public int compare(FieldSchema f1, FieldSchema f2) {
+          return f1.getName().compareTo(f2.getName());
+        }
+      });
+    }
+    return result;
   }
 
   /**

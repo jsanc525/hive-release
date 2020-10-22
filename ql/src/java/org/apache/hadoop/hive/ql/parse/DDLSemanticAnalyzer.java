@@ -2703,8 +2703,8 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
 
   private void analyzeShowColumns(ASTNode ast) throws SemanticException {
 
-  // table name has to be present so min child 1 and max child 4
-    if (ast.getChildCount() > 4 || ast.getChildCount()<1) {
+    // table name has to be present so min child 1 and max child 5
+    if (ast.getChildCount() > 5 || ast.getChildCount() < 1) {
       throw new SemanticException(ErrorMsg.INVALID_AST_TREE.getMsg(ast.toStringTree()));
     }
 
@@ -2712,20 +2712,26 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
 
     ShowColumnsDesc showColumnsDesc = null;
     String pattern = null;
-    switch(ast.getChildCount()) {
+    boolean isSorted = (ast.getFirstChildWithType(HiveParser.KW_SORTED) != null);
+    int childCount = ast.getChildCount();
+    // If isSorted exist, remove one child count from childCount
+    if (isSorted) {
+      childCount--;
+    }
+    switch (childCount) {
       case 1: //  only tablename no pattern and db
-        showColumnsDesc = new ShowColumnsDesc(ctx.getResFile(), tableName);
+        showColumnsDesc = new ShowColumnsDesc(ctx.getResFile(), tableName, isSorted);
         break;
       case 2: // tablename and pattern
         pattern = unescapeSQLString(ast.getChild(1).getText());
-        showColumnsDesc = new ShowColumnsDesc(ctx.getResFile(), tableName, pattern);
+        showColumnsDesc = new ShowColumnsDesc(ctx.getResFile(), tableName, pattern, isSorted);
         break;
       case 3: // specifies db
         if (tableName.contains(".")) {
           throw new SemanticException("Duplicates declaration for database name");
         }
         tableName = getUnescapedName((ASTNode) ast.getChild(2)) + "." + tableName;
-        showColumnsDesc = new ShowColumnsDesc(ctx.getResFile(), tableName);
+        showColumnsDesc = new ShowColumnsDesc(ctx.getResFile(), tableName, isSorted);
         break;
       case 4: // specifies db and pattern
         if (tableName.contains(".")) {
@@ -2733,7 +2739,7 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
         }
         tableName = getUnescapedName((ASTNode) ast.getChild(2)) + "." + tableName;
         pattern = unescapeSQLString(ast.getChild(3).getText());
-        showColumnsDesc = new ShowColumnsDesc(ctx.getResFile(), tableName, pattern);
+        showColumnsDesc = new ShowColumnsDesc(ctx.getResFile(), tableName, pattern, isSorted);
         break;
       default:
         break;
