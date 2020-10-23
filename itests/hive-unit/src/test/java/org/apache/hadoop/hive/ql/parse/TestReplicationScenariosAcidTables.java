@@ -45,6 +45,7 @@ import org.junit.BeforeClass;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Collections;
@@ -142,26 +143,6 @@ public class TestReplicationScenariosAcidTables extends BaseReplicationScenarios
             .dump(primaryDbName, incDump.lastReplicationId);
     replica.load(replicatedDbName, inc2Dump.dumpLocation);
     verifyInc2Load(replicatedDbName, inc2Dump.lastReplicationId);
-  }
-
-  @Test
-  public void testAcidTablesMoveOptimizationBootStrap() throws Throwable {
-    WarehouseInstance.Tuple bootstrapDump = prepareDataAndDump(primaryDbName, null, null);
-    replica.load(replicatedDbName, bootstrapDump.dumpLocation,
-            Collections.singletonList("'hive.repl.enable.move.optimization'='true'"));
-    verifyLoadExecution(replicatedDbName, bootstrapDump.lastReplicationId, true);
-  }
-
-  @Test
-  public void testAcidTablesMoveOptimizationIncremental() throws Throwable {
-    WarehouseInstance.Tuple bootstrapDump = primary.dump(primaryDbName, null);
-    replica.load(replicatedDbName, bootstrapDump.dumpLocation,
-            Collections.singletonList("'hive.repl.enable.move.optimization'='true'"));
-    WarehouseInstance.Tuple incrDump = prepareDataAndDump(primaryDbName,
-            bootstrapDump.lastReplicationId, null);
-    replica.load(replicatedDbName, incrDump.dumpLocation,
-            Collections.singletonList("'hive.repl.enable.move.optimization'='true'"));
-    verifyLoadExecution(replicatedDbName, incrDump.lastReplicationId, true);
   }
 
   @Test
@@ -953,5 +934,29 @@ public class TestReplicationScenariosAcidTables extends BaseReplicationScenarios
     replica.run("drop database " + primaryDbName + " cascade");
     replica.run("drop database " + dbName1 + " cascade");
     replica.run("drop database " + dbName2 + " cascade");
+  }
+
+  @Test
+  public void testTableWithPartitionsInBatch() throws Throwable {
+
+    List<String> withClause = new ArrayList<>();
+    withClause.add("'" + HiveConf.ConfVars.REPL_LOAD_PARTITIONS_WITH_DATA_COPY_BATCH_SIZE.varname + "'='" + 1 + "'");
+
+    WarehouseInstance.Tuple bootstrapDump = primary.run("use " + primaryDbName)
+      .run("create table t2 (place string) partitioned by (country string)")
+      .run("insert into t2 partition(country='india') values ('bangalore')")
+      .run("insert into t2 partition(country='france') values ('paris')")
+      .run("insert into t2 partition(country='australia') values ('sydney')")
+      .dump(primaryDbName, null, withClause);
+
+    replica.load(replicatedDbName, bootstrapDump.dumpLocation, withClause)
+      .run("use " + replicatedDbName)
+      .run("show tables like 't2'")
+      .verifyResults(new String[] { "t2" })
+      .run("select distinct(country) from t2")
+      .verifyResults(new String[] { "india", "france", "australia" })
+      .run("select place from t2")
+      .verifyResults(new String[] { "bangalore", "paris", "sydney" })
+      .verifyReplTargetProperty(replicatedDbName);
   }
 }

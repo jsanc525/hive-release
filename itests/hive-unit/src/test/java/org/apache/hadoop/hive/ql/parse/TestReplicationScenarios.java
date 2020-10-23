@@ -394,7 +394,6 @@ public class TestReplicationScenarios {
 
   private Task getReplLoadRootTask(String replicadb, boolean isIncrementalDump, Tuple tuple) throws Throwable {
     HiveConf confTemp = new HiveConf();
-    confTemp.set("hive.repl.enable.move.optimization", "true");
     ReplLoadWork replLoadWork = new ReplLoadWork(confTemp, tuple.dumpLocation, replicadb,
             null, null, isIncrementalDump, Long.valueOf(tuple.lastReplId),
         Collections.emptyList());
@@ -3386,8 +3385,7 @@ public class TestReplicationScenarios {
 
     String replDbName = dbName + "_replica";
     Tuple dump = replDumpDb(dbName, null, null, null);
-    run("REPL LOAD " + replDbName + " FROM '" + dump.dumpLocation +
-            "' with ('hive.repl.enable.move.optimization'='true')", driverMirror);
+    run("REPL LOAD " + replDbName + " FROM '" + dump.dumpLocation + "'", driverMirror);
     verifyRun("REPL STATUS " + replDbName, dump.lastReplId, driverMirror);
 
     run(" use " + replDbName, driverMirror);
@@ -3421,8 +3419,7 @@ public class TestReplicationScenarios {
     verifySetup("SELECT * from " + dbName + ".unptned_late ORDER BY a", unptn_data, driver);
 
     Tuple incrementalDump = replDumpDb(dbName, replDumpId, null, null);
-    run("REPL LOAD " + replDbName + " FROM '" + incrementalDump.dumpLocation +
-            "' with ('hive.repl.enable.move.optimization'='true')", driverMirror);
+    run("REPL LOAD " + replDbName + " FROM '" + incrementalDump.dumpLocation + "'", driverMirror);
     verifyRun("REPL STATUS " + replDbName, incrementalDump.lastReplId, driverMirror);
     replDumpId = incrementalDump.lastReplId;
 
@@ -3439,8 +3436,7 @@ public class TestReplicationScenarios {
     verifySetup("SELECT a from " + dbName + ".unptned", data_after_ovwrite, driver);
 
     incrementalDump = replDumpDb(dbName, replDumpId, null, null);
-    run("REPL LOAD " + replDbName + " FROM '" + incrementalDump.dumpLocation +
-            "' with ('hive.repl.enable.move.optimization'='true')", driverMirror);
+    run("REPL LOAD " + replDbName + " FROM '" + incrementalDump.dumpLocation + "'", driverMirror);
     verifyRun("REPL STATUS " + replDbName, incrementalDump.lastReplId, driverMirror);
 
     verifyRun("SELECT a from " + replDbName + ".unptned_late ORDER BY a", unptn_data_after_ins, driverMirror);

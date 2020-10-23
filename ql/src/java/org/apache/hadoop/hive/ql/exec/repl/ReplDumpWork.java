@@ -34,6 +34,7 @@ public class ReplDumpWork implements Serializable {
   final String dbNameOrPattern, astRepresentationForErrorMsg, resultTempPath;
   final Long eventFrom;
   Long eventTo;
+  private boolean isBootstrap;
   private Integer maxEventLimit;
   static String testInjectDumpDir = null;
 
@@ -52,10 +53,6 @@ public class ReplDumpWork implements Serializable {
     this.astRepresentationForErrorMsg = astRepresentationForErrorMsg;
     this.maxEventLimit = maxEventLimit;
     this.resultTempPath = resultTempPath;
-  }
-
-  boolean isBootStrapDump() {
-    return eventFrom == null;
   }
 
   int maxEventLimit() throws Exception {
@@ -90,5 +87,9 @@ public class ReplDumpWork implements Serializable {
       LoggerFactory.getLogger(this.getClass())
           .debug("eventTo not specified, using current event id : {}", eventTo);
     }
+  }
+
+  void setBootstrap(boolean bootstrap) {
+    isBootstrap = bootstrap;
   }
 }

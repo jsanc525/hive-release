@@ -101,6 +101,12 @@ public class AddPartitionDesc extends DDLDesc implements Serializable {
       return partParams;
     }
 
+    public void addPartParams(Map<String, String> partParams) {
+      if (this.partParams != null) {
+        this.partParams.putAll(partParams);
+      }
+    }
+
     public void setPartParams(Map<String, String> partParams) {
       this.partParams = partParams;
     }
@@ -327,6 +333,10 @@ public class AddPartitionDesc extends DDLDesc implements Serializable {
 
   public OnePartitionDesc getPartition(int i) {
     return this.partitions.get(i);
+  }
+
+  public List<OnePartitionDesc> getPartitions() {
+    return partitions;
   }
 
   /**

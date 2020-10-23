@@ -85,7 +85,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.REPL_ENABLE_MOVE_OPTIMIZATION;
 import static org.apache.hadoop.hive.ql.util.HiveStrictManagedMigration.getHiveUpdater;
 
 /**
@@ -461,8 +460,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     boolean needRecycle = false;
     boolean copyToMigratedTxnTable = replicationSpec.isMigratingToTxnTable();
 
-    if (replicationSpec.isInReplicationScope() && (copyToMigratedTxnTable ||
-            x.getCtx().getConf().getBoolean(REPL_ENABLE_MOVE_OPTIMIZATION.varname, false))) {
+    if (replicationSpec.isInReplicationScope()) {
       lft = LoadFileType.IGNORE;
       destPath = loadPath = tgtPath;
       isAutoPurge = "true".equalsIgnoreCase(table.getProperty("auto.purge"));
@@ -473,7 +471,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
         needRecycle = db != null && ReplChangeManager.isSourceOfReplication(db);
       }
     } else {
-      if (AcidUtils.isTransactionalTable(table) && !replicationSpec.isInReplicationScope()) {
+      if (AcidUtils.isTransactionalTable(table)) {
         String mmSubdir = replace ? AcidUtils.baseDir(writeId)
                 : AcidUtils.deltaSubdir(writeId, writeId, stmtId);
         destPath = new Path(tgtPath, mmSubdir);
@@ -609,8 +607,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
 
       LoadFileType loadFileType;
       Path destPath;
-      if (replicationSpec.isInReplicationScope() && (copyToMigratedTxnTable ||
-              x.getCtx().getConf().getBoolean(REPL_ENABLE_MOVE_OPTIMIZATION.varname, false))) {
+      if (replicationSpec.isInReplicationScope()) {
         loadFileType = LoadFileType.IGNORE;
         destPath = tgtLocation;
         isAutoPurge = "true".equalsIgnoreCase(table.getProperty("auto.purge"));
