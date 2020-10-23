@@ -17,19 +17,35 @@
  */
 package org.apache.hadoop.hive.ql.exec.repl.bootstrap.load;
 
-import org.apache.hadoop.hive.ql.plan.AddPartitionDesc;
-
 import java.io.Serializable;
+
+import org.apache.hadoop.hive.ql.plan.AddPartitionDesc;
 
 public class ReplicationState implements Serializable {
 
   public static class PartitionState {
     final String tableName;
     public final AddPartitionDesc lastReplicatedPartition;
+    public AddPartitionDesc.OnePartitionDesc partSpec;
+    public Stage stage;
+
+    public enum Stage {
+      COPY,
+      PARTITION
+    }
 
     public PartitionState(String tableName, AddPartitionDesc lastReplicatedPartition) {
       this.tableName = tableName;
       this.lastReplicatedPartition = lastReplicatedPartition;
+      this.stage = Stage.PARTITION;
+    }
+
+    public PartitionState(String tableName, AddPartitionDesc lastReplicatedPartition,
+                          AddPartitionDesc.OnePartitionDesc lastProcessedPartSpec, Stage stage) {
+      this.tableName = tableName;
+      this.lastReplicatedPartition = lastReplicatedPartition;
+      this.partSpec = lastProcessedPartSpec;
+      this.stage = stage;
     }
   }
 

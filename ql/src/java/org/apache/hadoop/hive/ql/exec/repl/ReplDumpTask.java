@@ -126,7 +126,9 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
       ReplChangeManager.getInstance(conf);
       Path cmRoot = new Path(conf.getVar(HiveConf.ConfVars.REPLCMDIR));
       Long lastReplId;
-      if (work.isBootStrapDump()) {
+      boolean isBootstrap = work.eventFrom == null;
+      work.setBootstrap(isBootstrap);
+      if (isBootstrap) {
         lastReplId = bootStrapDump(dumpRoot, dmd, cmRoot, hiveDb);
       } else {
         lastReplId = incrementalDump(dumpRoot, dmd, cmRoot, hiveDb);
@@ -260,6 +262,7 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
     // waiting for the concurrent transactions to finish, we start dumping the incremental events
     // and wait only for the remaining time if any.
     if (needBootstrapAcidTablesDuringIncrementalDump()) {
+      work.setBootstrap(true);
       bootDumpBeginReplId = queryState.getConf().getLong(ReplUtils.LAST_REPL_ID_KEY, -1L);
       assert (bootDumpBeginReplId >= 0);
       LOG.info("Dump for bootstrapping ACID tables during an incremental dump for db {}",

@@ -51,7 +51,6 @@ import org.apache.hadoop.hive.ql.plan.api.StageType;
 import org.apache.hadoop.util.StringUtils;
 
 import static org.apache.hadoop.hive.common.FileUtils.HIDDEN_FILES_PATH_FILTER;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.REPL_ENABLE_MOVE_OPTIMIZATION;
 
 public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
 
@@ -247,7 +246,7 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
 
       LOG.debug("ReplCopyTask numFiles: {}", srcFiles.size());
 
-      // in case of move optimization, file is directly copied to destination. So we need to clear the old content, if
+      // in case of acid tables, file is directly copied to destination. So we need to clear the old content, if
       // its a replace (insert overwrite ) operation.
       if (work.getDeleteDestIfExist() && dstFs.exists(toPath)) {
         LOG.debug(" path " + toPath + " is cleaned before renaming");
@@ -328,12 +327,12 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
 
   public static Task<?> getLoadCopyTask(ReplicationSpec replicationSpec, Path srcPath, Path dstPath,
                                         HiveConf conf, boolean isAutoPurge, boolean needRecycle,
-                                        boolean copyToMigratedTxnTable) {
+                                        boolean copyToMigratedTxnTable, boolean deleteDestination) {
     Task<?> copyTask = null;
     LOG.debug("ReplCopyTask:getLoadCopyTask: {}=>{}", srcPath, dstPath);
     if ((replicationSpec != null) && replicationSpec.isInReplicationScope()){
       ReplCopyWork rcwork = new ReplCopyWork(srcPath, dstPath, false);
-      if (replicationSpec.isReplace() && (conf.getBoolVar(REPL_ENABLE_MOVE_OPTIMIZATION) || copyToMigratedTxnTable)) {
+      if (replicationSpec.isReplace() && (copyToMigratedTxnTable || deleteDestination)) {
         rcwork.setDeleteDestIfExist(true);
         rcwork.setAutoPurge(isAutoPurge);
         rcwork.setNeedRecycle(needRecycle);
@@ -362,7 +361,13 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
   }
 
   public static Task<?> getLoadCopyTask(ReplicationSpec replicationSpec, Path srcPath, Path dstPath,
+                                        HiveConf conf, boolean isAutoPurge, boolean needRecycle,
+                                        boolean copyToMigratedTxnTable) {
+      return getLoadCopyTask(replicationSpec, srcPath, dstPath, conf, isAutoPurge, needRecycle, copyToMigratedTxnTable, true);
+  }
+
+  public static Task<?> getLoadCopyTask(ReplicationSpec replicationSpec, Path srcPath, Path dstPath,
                                         HiveConf conf) {
-    return getLoadCopyTask(replicationSpec, srcPath, dstPath, conf, false, false, false);
+    return getLoadCopyTask(replicationSpec, srcPath, dstPath, conf, false, false, false, true);
   }
 }

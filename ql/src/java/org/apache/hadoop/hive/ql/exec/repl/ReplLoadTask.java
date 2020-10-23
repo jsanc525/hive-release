@@ -221,7 +221,8 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
           TableContext tableContext = new TableContext(dbTracker, work.dbNameToLoadIn);
           LoadPartitions loadPartitions =
               new LoadPartitions(context, iterator.replLogger(), tableContext, loadTaskTracker,
-                      event.asTableEvent(), work.dbNameToLoadIn, event.lastPartitionReplicated());
+                      event.asTableEvent(), work.dbNameToLoadIn, event.lastPartitionReplicated(),
+                      event.lastPartSpecReplicated(), event.lastStageReplicated());
           /*
                the tableTracker here should be a new instance and not an existing one as this can
                only happen when we break in between loading partitions.
