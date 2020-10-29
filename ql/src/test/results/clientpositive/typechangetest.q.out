@@ -1294,10 +1294,10 @@ POSTHOOK: query: select cId, cBoolean from testAltColORC_n0 order by cId
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@testaltcolorc_n0
 #### A masked pattern was here ####
-1	1
-2	0
-3	1
-4	0
+1	TRUE
+2	FALSE
+3	TRUE
+4	FALSE
 PREHOOK: query: alter table testAltColORC_n0 replace columns
 (cId        TINYINT,
  cTimeStamp VARCHAR(100),
@@ -1370,10 +1370,10 @@ POSTHOOK: query: select cId, cBoolean from testAltColORC_n0 order by cId
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@testaltcolorc_n0
 #### A masked pattern was here ####
-1	1
-2	0
-3	1
-4	0
+1	TRUE
+2	FALSE
+3	TRUE
+4	FALSE
 PREHOOK: query: alter table testAltColORC_n0 replace columns
 (cId        TINYINT,
  cTimeStamp CHAR(100),
@@ -1446,10 +1446,10 @@ POSTHOOK: query: select cId, cBoolean from testAltColORC_n0 order by cId
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@testaltcolorc_n0
 #### A masked pattern was here ####
-1	1                                                                                                   
-2	0                                                                                                   
-3	1                                                                                                   
-4	0                                                                                                   
+1	TRUE                                                                                                
+2	FALSE                                                                                               
+3	TRUE                                                                                                
+4	FALSE                                                                                               
 PREHOOK: query: alter table testAltColORC_n0 replace columns
 (cId        TINYINT,
  cTimeStamp VARCHAR(4),
@@ -1522,10 +1522,10 @@ POSTHOOK: query: select cId, cBoolean from testAltColORC_n0 order by cId
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@testaltcolorc_n0
 #### A masked pattern was here ####
-1	1
-2	0
-3	1
-4	0
+1	TRUE
+2	FALS
+3	TRUE
+4	FALS
 PREHOOK: query: alter table testAltColORC_n0 replace columns
 (cId        TINYINT,
  cTimeStamp CHAR(4),
@@ -1598,10 +1598,10 @@ POSTHOOK: query: select cId, cBoolean from testAltColORC_n0 order by cId
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@testaltcolorc_n0
 #### A masked pattern was here ####
-1	1   
-2	0   
-3	1   
-4	0   
+1	TRUE
+2	FALS
+3	TRUE
+4	FALS
 PREHOOK: query: drop table if exists testAltColORC_n0
 PREHOOK: type: DROPTABLE
 PREHOOK: Input: default@testaltcolorc_n0
