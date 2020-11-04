@@ -6900,6 +6900,7 @@ POSTHOOK: Input: default@srcpart@ds=2008-04-08/hr=11
 POSTHOOK: Input: default@srcpart@ds=2008-04-08/hr=12
 POSTHOOK: Input: default@srcpart@ds=2008-04-09/hr=11
 POSTHOOK: Input: default@srcpart@ds=2008-04-09/hr=12
+POSTHOOK: Output: default@srcpart_parquet
 POSTHOOK: Output: default@srcpart_parquet@ds=2008-04-08/hr=11
 POSTHOOK: Output: default@srcpart_parquet@ds=2008-04-08/hr=12
 POSTHOOK: Output: default@srcpart_parquet@ds=2008-04-09/hr=11
