@@ -572,9 +572,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       listeners = MetaStoreUtils.getMetaStoreListeners(MetaStoreEventListener.class, conf,
           MetastoreConf.getVar(conf, ConfVars.EVENT_LISTENERS));
       listeners.add(new SessionPropertiesListener(conf));
-      listeners.add(new AcidEventListener(conf));
-      transactionalListeners = MetaStoreUtils.getMetaStoreListeners(TransactionalMetaStoreEventListener.class,
-          conf, MetastoreConf.getVar(conf, ConfVars.TRANSACTIONAL_EVENT_LISTENERS));
+      transactionalListeners = new ArrayList() {{
+        add(new AcidEventListener(conf));
+      }};
+      transactionalListeners.addAll(MetaStoreUtils.getMetaStoreListeners(
+              TransactionalMetaStoreEventListener.class, conf,
+              MetastoreConf.getVar(conf, ConfVars.TRANSACTIONAL_EVENT_LISTENERS)));
       if (Metrics.getRegistry() != null) {
         listeners.add(new HMSMetricsListener(conf));
       }
@@ -6787,7 +6790,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
            final List<String> partNames, boolean getColStats) throws TException {
       return get_partitions_by_names(dbName, tblName, partNames, getColStats, null, null);
     }
- 
+
     public List<Partition> get_partitions_by_names(final String dbName, final String tblName,
            final List<String> partNames, boolean getColStats, List<String> processorCapabilities,
            String processorId) throws TException {
