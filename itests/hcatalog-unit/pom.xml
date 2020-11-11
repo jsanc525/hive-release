@@ -25,7 +25,7 @@
   <parent>
     <groupId>org.apache.hive</groupId>
     <artifactId>hive-it</artifactId>
-    <version>3.1.1000-SNAPSHOT</version>
+    <version>3.1.0.3.1.5.155-1</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
