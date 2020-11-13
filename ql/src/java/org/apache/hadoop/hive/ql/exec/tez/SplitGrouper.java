@@ -42,6 +42,7 @@ import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.split.TezGroupedSplit;
 import org.apache.hadoop.mapred.split.TezMapredSplitsGrouper;
+import org.apache.hadoop.mapreduce.split.TezMapReduceSplitsGrouper;
 import org.apache.tez.dag.api.TaskLocationHint;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -135,7 +136,8 @@ public class SplitGrouper {
                                                                     InputSplit[] splits,
                                                                     float waves, int availableSlots)
       throws Exception {
-    return generateGroupedSplits(jobConf, conf, splits, waves, availableSlots, null, true);
+	  boolean groupAcrossFiles = conf.getBoolean(TezMapReduceSplitsGrouper.TEZ_GROUPING_ACROSS_FILES, TezMapReduceSplitsGrouper.TEZ_GROUPING_ACROSS_FILES_DEFAULT);
+    return generateGroupedSplits(jobConf, conf, splits, waves, availableSlots, null, groupAcrossFiles);
   }
 
   /** Generate groups of splits, separated by schema evolution boundaries */
