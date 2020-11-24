@@ -114,7 +114,7 @@ class CompactionTxnHandler extends TxnHandler {
         final String sCheckAborted = "SELECT \"TC_DATABASE\", \"TC_TABLE\", \"TC_PARTITION\","
             + "MIN(\"TXN_STARTED\"), COUNT(*)"
             + "FROM \"TXNS\", \"TXN_COMPONENTS\" "
-            + "WHERE \"TXN_ID\" = \"TC_TXNID\" AND \"TXN_STATE\" = '" + TXN_ABORTED + "' "
+            + "WHERE \"TXN_ID\" = \"TC_TXNID\" AND \"TXN_STATE\" = " + TxnStatus.ABORTED + " "
             + "GROUP BY \"TC_DATABASE\", \"TC_TABLE\", \"TC_PARTITION\""
             + (checkAbortedTimeThreshold ? "" : " HAVING COUNT(*) > " + abortedThreshold);
 
@@ -485,8 +485,8 @@ class CompactionTxnHandler extends TxnHandler {
          * aborted TXN_COMPONENTS above tc_writeid (and consequently about aborted txns).
          * See {@link ql.txn.compactor.Cleaner.removeFiles()}
          */
-        s = "select distinct txn_id from TXNS, TXN_COMPONENTS where txn_id = tc_txnid and txn_state = '" +
-          TXN_ABORTED + "' and tc_database = ? and tc_table = ?";
+        s = "select distinct txn_id from TXNS, TXN_COMPONENTS where txn_id = tc_txnid and txn_state = " +
+            TxnStatus.ABORTED + " and tc_database = ? and tc_table = ?";
         if (info.highestWriteId != 0) s += " and tc_writeid <= ?";
         if (info.partName != null) s += " and tc_partition = ?";
 
@@ -618,7 +618,7 @@ class CompactionTxnHandler extends TxnHandler {
 
         // If there are aborted txns, then the minimum aborted txnid could be the min_uncommitted_txnid
         // if lesser than both NEXT_TXN_ID.ntxn_next and min(MIN_HISTORY_LEVEL .mhl_min_open_txnid).
-        s = "select min(txn_id) from TXNS where txn_state = " + quoteChar(TXN_ABORTED);
+        s = "select min(txn_id) from TXNS where txn_state = " + TxnStatus.ABORTED;
         LOG.debug("Going to execute query <" + s + ">");
         rs = stmt.executeQuery(s);
         if (rs.next()) {
@@ -671,7 +671,7 @@ class CompactionTxnHandler extends TxnHandler {
         stmt = dbConn.createStatement();
         String s = "select txn_id from TXNS where " +
             "txn_id not in (select tc_txnid from TXN_COMPONENTS) and " +
-            "txn_state = '" + TXN_ABORTED + "'";
+            "txn_state = " + TxnStatus.ABORTED;
         LOG.debug("Going to execute query <" + s + ">");
         rs = stmt.executeQuery(s);
         List<Long> txnids = new ArrayList<>();
