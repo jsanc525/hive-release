@@ -34,6 +34,7 @@ import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.TableEvent;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.ReplicationState;
 import org.apache.hadoop.hive.ql.exec.repl.util.TaskTracker;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.util.Context;
+import org.apache.hadoop.hive.ql.io.AcidUtils;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.Table;
@@ -280,6 +281,13 @@ public class LoadPartitions {
         continue;
       }
       lastProcessedStageFound = true;
+      if (event.replicationSpec().isInReplicationScope() && event.replicationSpec().isMigratingToTxnTable()) {
+        // Migrating to transactional tables in bootstrap load phase.
+        // It is enough to copy all the original files under base_1 dir and so write-id is hardcoded to 1.
+        // ReplTxnTask added earlier in the DAG ensure that the write-id=1 is made valid in HMS metadata.
+        replicaWarehousePartitionLocation = new Path(replicaWarehousePartitionLocation,
+                AcidUtils.baseDir(ReplUtils.REPL_BOOTSTRAP_MIGRATION_BASE_WRITE_ID));
+      }
       Path partDataPath = new Path(event.metadataPath().toString(), Warehouse.makePartPath(partSpec.getPartSpec()));
       Task<?> copyTask = ReplCopyTask.getLoadCopyTask(
         event.replicationSpec(),
