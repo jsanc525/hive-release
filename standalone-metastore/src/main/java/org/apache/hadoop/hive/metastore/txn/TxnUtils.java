@@ -42,11 +42,30 @@ import java.util.Map;
 public class TxnUtils {
   private static final Logger LOG = LoggerFactory.getLogger(TxnUtils.class);
 
-  // Transactional stats states
-  static final public char STAT_OPEN = 'o';
-  static final public char STAT_INVALID = 'i';
-  static final public char STAT_COMMITTED = 'c';
-  static final public char STAT_OBSOLETE = 's';
+  public static ValidTxnList createValidTxnListForCleaner(GetOpenTxnsResponse txns, long minOpenTxnGLB) {
+    long highWaterMark = minOpenTxnGLB - 1;
+    long[] abortedTxns = new long[txns.getOpen_txnsSize()];
+    BitSet abortedBits = BitSet.valueOf(txns.getAbortedBits());
+    int i = 0;
+    for(long txnId : txns.getOpen_txns()) {
+      if(txnId > highWaterMark) {
+        break;
+      }
+      if(abortedBits.get(i)) {
+        abortedTxns[i] = txnId;
+      }
+      else {
+        assert false : JavaUtils.txnIdToString(txnId) + " is open and <= hwm:" + highWaterMark;
+      }
+      ++i;
+    }
+    abortedTxns = Arrays.copyOf(abortedTxns, i);
+    BitSet bitSet = new BitSet(abortedTxns.length);
+    bitSet.set(0, abortedTxns.length);
+    //add ValidCleanerTxnList? - could be problematic for all the places that read it from
+    // string as they'd have to know which object to instantiate
+    return new ValidReadTxnList(abortedTxns, bitSet, highWaterMark, Long.MAX_VALUE);
+  }
 
   /**
    * Transform a {@link org.apache.hadoop.hive.metastore.api.GetOpenTxnsResponse} to a
