@@ -18,9 +18,13 @@
 package org.apache.hadoop.hive.ql.txn.compactor;
 
 import org.apache.hadoop.hive.common.FileUtils;
+import org.apache.hadoop.hive.common.ValidTxnList;
 import org.apache.hadoop.hive.metastore.ReplChangeManager;
+import org.apache.hadoop.hive.metastore.api.GetValidWriteIdsRequest;
+import org.apache.hadoop.hive.metastore.api.GetValidWriteIdsResponse;
 import org.apache.hadoop.hive.metastore.txn.TxnStore;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
+import org.apache.hadoop.hive.metastore.txn.TxnUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.fs.FileStatus;
@@ -98,6 +102,7 @@ public class Cleaner extends CompactorThread {
       try {
         handle = txnHandler.getMutexAPI().acquireLock(TxnStore.MUTEX_KEY.Cleaner.name());
         startedAt = System.currentTimeMillis();
+        long minOpenTxnId = txnHandler.findMinOpenTxnId();
         // First look for all the compactions that are waiting to be cleaned.  If we have not
         // seen an entry before, look for all the locks held on that table or partition and
         // record them.  We will then only clean the partition once all of those locks have been
@@ -168,7 +173,7 @@ public class Cleaner extends CompactorThread {
                 // we can't do it in the loop or we'll get a concurrent modification exception.
                 compactionsCleaned.add(queueEntry.getKey());
                 //Future thought: this may be expensive so consider having a thread pool run in parallel
-                clean(compactId2CompactInfoMap.get(queueEntry.getKey()));
+                clean(compactId2CompactInfoMap.get(queueEntry.getKey()), minOpenTxnId);
               } else {
                 // Remove the locks we didn't see so we don't look for them again next time
                 for (Long lockId : expiredLocks) {
@@ -248,7 +253,7 @@ public class Cleaner extends CompactorThread {
     return currentLocks;
   }
 
-  private void clean(CompactionInfo ci) throws MetaException {
+  private void clean(CompactionInfo ci, long minOpenTxnGLB) throws MetaException {
     LOG.info("Starting cleaning for " + ci);
     try {
       Table t = resolveTable(ci);
@@ -273,6 +278,11 @@ public class Cleaner extends CompactorThread {
       StorageDescriptor sd = resolveStorageDescriptor(t, p);
       final String location = sd.getLocation();
 
+      ValidTxnList validTxnList =
+          TxnUtils.createValidTxnListForCleaner(txnHandler.getOpenTxns(), minOpenTxnGLB);
+      //save it so that getAcidState() sees it
+      conf.set(ValidTxnList.VALID_TXNS_KEY, validTxnList.writeToString());
+
       /**
        * Each Compaction only compacts as far as the highest txn id such that all txns below it
        * are resolved (i.e. not opened).  This is what "highestWriteId" tracks.  This is only tracked
@@ -289,10 +299,18 @@ public class Cleaner extends CompactorThread {
        * Now removeFiles() (more specifically AcidUtils.getAcidState()) will declare D3 to be obsolete
        * unless ValidWriteIdList is "capped" at highestWriteId.
        */
-      final ValidWriteIdList validWriteIdList = (ci.highestWriteId > 0)
-          ? new ValidReaderWriteIdList(ci.getFullTableName(), new long[0], new BitSet(),
-          ci.highestWriteId)
-          : new ValidReaderWriteIdList();
+      List<String> tblNames = Collections.singletonList(
+          TxnUtils.getFullTableName(t.getDbName(), t.getTableName()));
+      GetValidWriteIdsRequest rqst = new GetValidWriteIdsRequest(tblNames);
+      rqst.setValidTxnList(validTxnList.writeToString());
+      GetValidWriteIdsResponse rsp = txnHandler.getValidWriteIds(rqst);
+      //we could have no write IDs for a table if it was never written to but
+      // since we are in the Cleaner phase of compactions, there must have
+      // been some delta/base dirs
+      assert rsp != null && rsp.getTblValidWriteIdsSize() == 1;
+      //Creating 'reader' list since we are interested in the set of 'obsolete' files
+      ValidReaderWriteIdList validWriteIdList =
+          TxnUtils.createValidReaderWriteIdList(rsp.getTblValidWriteIds().get(0));
 
       if (runJobAsSelf(ci.runAs)) {
         removeFiles(location, validWriteIdList, ci);
@@ -330,6 +348,16 @@ public class Cleaner extends CompactorThread {
     AcidUtils.Directory dir = AcidUtils.getAcidState(locPath, conf, writeIdList, Ref.from(
         false), false, null, false);
     List<Path> obsoleteDirs = dir.getObsolete();
+    /**
+     * add anything in 'dir'  that only has data from aborted transactions - no one should be
+     * trying to read anything in that dir (except getAcidState() that only reads the name of
+     * this dir itself)
+     * So this may run ahead of {@link CompactionInfo#highestWriteId} but it's ok (suppose there
+     * are no active txns when cleaner runs).  The key is to not delete metadata about aborted
+     * txns with write IDs > {@link CompactionInfo#highestWriteId}.
+     * See {@link TxnStore#markCleaned(CompactionInfo)}
+     */
+    obsoleteDirs.addAll(dir.getAbortedDirectories());
     List<Path> filesToDelete = new ArrayList<Path>(obsoleteDirs.size());
     StringBuilder extraDebugInfo = new StringBuilder("[");
     for (Path stat : obsoleteDirs) {

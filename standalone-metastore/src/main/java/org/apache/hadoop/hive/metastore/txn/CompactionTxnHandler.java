@@ -362,6 +362,57 @@ class CompactionTxnHandler extends TxnHandler {
     }
   }
 
+  @Override
+  public long findMinOpenTxnId() throws MetaException {
+    Connection dbConn = null;
+    Statement stmt = null;
+    ResultSet rs = null;
+    try {
+      try {
+        dbConn = getDbConn(Connection.TRANSACTION_READ_COMMITTED);
+        stmt = dbConn.createStatement();
+        return findMinOpenTxnGLB(stmt);
+      } catch (SQLException e) {
+        LOG.error("Unable to findMinOpenTxnId() due to:" + e.getMessage());
+        rollbackDBConn(dbConn);
+        checkRetryable(dbConn, e, "findMinOpenTxnId");
+        throw new MetaException("Unable to execute findMinOpenTxnId() " +
+            StringUtils.stringifyException(e));
+      } finally {
+        close(rs, stmt, dbConn);
+      }
+    } catch (RetryException e) {
+      return findMinOpenTxnId();
+    }
+  }
+
+  /**
+   * See doc at {@link TxnStore#findMinOpenTxnId()}
+   * Note that {@link #openTxns(OpenTxnRequest)} makes update of NEXT_TXN and MIN_HISTORY_LEVEL
+   * a single atomic operation (and no one else should update these tables except the cleaner
+   * which deletes rows from MIN_HISTORY_LEVEL which can only allow minOpenTxn to move higher)
+   */
+  private long findMinOpenTxnGLB(Statement stmt) throws MetaException, SQLException {
+    String s = "select ntxn_next from NEXT_TXN_ID";
+    LOG.debug("Going to execute query <" + s + ">");
+    ResultSet rs = stmt.executeQuery(s);
+    if (!rs.next()) {
+      throw new MetaException("Transaction tables not properly " +
+          "initialized, no record found in next_txn_id");
+    }
+    long hwm = rs.getLong(1);
+    s = "select min(mhl_min_open_txnid) from MIN_HISTORY_LEVEL";
+    LOG.debug("Going to execute query <" + s + ">");
+    rs = stmt.executeQuery(s);
+    rs.next();
+    long minOpenTxnId = rs.getLong(1);
+    if(rs.wasNull()) {
+      return hwm;
+    }
+    //since generating new txnid uses select for update on single row in NEXT_TXN_ID
+    assert hwm >= minOpenTxnId : "(hwm, minOpenTxnId)=(" + hwm + "," + minOpenTxnId + ")";
+    return minOpenTxnId;
+  }
   /**
    * This will remove an entry from the queue after
    * it has been compacted.
@@ -424,11 +475,16 @@ class CompactionTxnHandler extends TxnHandler {
           pStmt.setLong(paramCount++, info.highestWriteId);
         }
         LOG.debug("Going to execute update <" + s + ">");
-        if (pStmt.executeUpdate() < 1) {
+        if ((updCount = pStmt.executeUpdate()) < 1) {
           LOG.error("Expected to remove at least one row from completed_txn_components when " +
             "marking compaction entry as clean!");
         }
-
+        /**
+         * compaction may remove data from aborted txns above tc_writeid bit it only guarantees to
+         * remove it up to (inclusive) tc_writeid, so it's critical to not remove metadata about
+         * aborted TXN_COMPONENTS above tc_writeid (and consequently about aborted txns).
+         * See {@link ql.txn.compactor.Cleaner.removeFiles()}
+         */
         s = "select distinct txn_id from TXNS, TXN_COMPONENTS where txn_id = tc_txnid and txn_state = '" +
           TXN_ABORTED + "' and tc_database = ? and tc_table = ?";
         if (info.highestWriteId != 0) s += " and tc_writeid <= ?";
