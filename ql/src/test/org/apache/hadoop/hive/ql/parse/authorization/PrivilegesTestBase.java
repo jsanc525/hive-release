@@ -21,6 +21,7 @@ import junit.framework.Assert;
 
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.PrincipalType;
+import org.apache.hadoop.hive.ql.Context;
 import org.apache.hadoop.hive.ql.QueryState;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.plan.DDLWork;
@@ -37,9 +38,10 @@ public class PrivilegesTestBase {
 
   public static void grantUserTable(String privStr, PrivilegeType privType, QueryState queryState, Hive db)
       throws Exception {
-    DDLWork work = AuthorizationTestUtil.analyze("GRANT " + privStr + " ON TABLE " + TABLE + " TO USER " + USER, queryState, db);
+    Context ctx=new Context(new HiveConf());
+    DDLWork work = AuthorizationTestUtil.analyze(
+        "GRANT " + privStr + " ON TABLE " + TABLE + " TO USER " + USER, queryState, db, ctx);
     GrantDesc grantDesc = work.getGrantDesc();
-    Assert.assertNotNull("Grant should not be null", grantDesc);
 
     //check privileges
     for(PrivilegeDesc privilege : ListSizeMatcher.inList(grantDesc.getPrivileges()).ofSize(1)) {

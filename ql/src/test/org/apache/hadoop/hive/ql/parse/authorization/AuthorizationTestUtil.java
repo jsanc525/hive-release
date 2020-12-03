@@ -54,20 +54,12 @@ public class AuthorizationTestUtil {
     return (DDLWork) inList(rootTasks).ofSize(1).get(0).getWork();
   }
 
-  /**
-   * Create DDLWork from given command string
-   * @param command
-   * @param conf
-   * @param db
-   * @return
-   * @throws Exception
-   */
-  public static DDLWork analyze(String command, QueryState queryState, Hive db) throws Exception {
-    return analyze(parse(command), queryState, db);
+  public static DDLWork analyze(String command, QueryState queryState, Hive db, Context ctx) throws Exception {
+    return analyze(parse(command, ctx), queryState, db);
   }
 
-  private static ASTNode parse(String command) throws Exception {
-    return ParseUtils.parse(command);
+  private static ASTNode parse(String command, Context ctx) throws Exception {
+    return ParseUtils.parse(command, ctx);
   }
 
   /**
@@ -91,4 +83,3 @@ public class AuthorizationTestUtil {
   }
 
 }
-

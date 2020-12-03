@@ -483,7 +483,7 @@ public class TestHiveAuthorizationTaskFactory {
   }
 
   private DDLWork analyze(String command) throws Exception {
-    return AuthorizationTestUtil.analyze(command, queryState, db);
+    return AuthorizationTestUtil.analyze(command, queryState, db, new Context(queryState.getConf()));
   }
 
 

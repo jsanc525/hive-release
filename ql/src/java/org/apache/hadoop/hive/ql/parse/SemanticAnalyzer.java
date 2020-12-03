@@ -12153,7 +12153,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       // check if we need to ctx.setCmd(rewrittenQuery);
       ParseDriver pd = new ParseDriver();
       try {
-        rewrittenTree = ParseUtils.parse(rewrittenQuery);
+        rewrittenTree = ParseUtils.parse(rewrittenQuery,ctx);
       } catch (ParseException e) {
         throw new SemanticException(e);
       }
