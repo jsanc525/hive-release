@@ -713,7 +713,7 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@union_top
-POSTHOOK: Lineage: union_top.key EXPRESSION [(src)src.FieldSchema(name:key, type:string, comment:default), (src)src.FieldSchema(name:key, type:string, comment:default), (src)src.FieldSchema(name:key, type:string, comment:default), ]
+POSTHOOK: Lineage: union_top.key EXPRESSION [(src)src.FieldSchema(name:key, type:string, comment:default), ]
 POSTHOOK: Lineage: union_top.value EXPRESSION []
 PREHOOK: query: select * from union_top
 PREHOOK: type: QUERY
@@ -1345,7 +1345,7 @@ POSTHOOK: type: CREATEVIEW
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@union_top_view
-POSTHOOK: Lineage: union_top_view.key EXPRESSION [(src)src.FieldSchema(name:key, type:string, comment:default), (src)src.FieldSchema(name:key, type:string, comment:default), (src)src.FieldSchema(name:key, type:string, comment:default), ]
+POSTHOOK: Lineage: union_top_view.key EXPRESSION [(src)src.FieldSchema(name:key, type:string, comment:default), ]
 POSTHOOK: Lineage: union_top_view.value EXPRESSION []
 PREHOOK: query: select * from union_top_view
 PREHOOK: type: QUERY
