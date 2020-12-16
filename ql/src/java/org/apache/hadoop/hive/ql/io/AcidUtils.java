@@ -1345,11 +1345,10 @@ public class AcidUtils {
     } else if (fn.startsWith(DELTA_PREFIX) || fn.startsWith(DELETE_DELTA_PREFIX)) {
       String deltaPrefix = fn.startsWith(DELTA_PREFIX)  ? DELTA_PREFIX : DELETE_DELTA_PREFIX;
       ParsedDelta delta = parseDelta(child.getPath(), deltaPrefix, fs, null);
-      if(tblproperties != null && isTransactionalTable(tblproperties) &&
-          ValidWriteIdList.RangeResponse.ALL == writeIdList.isWriteIdRangeAborted(delta.minWriteId, delta.maxWriteId)) {
+
+      if (ValidWriteIdList.RangeResponse.ALL == writeIdList.isWriteIdRangeAborted(delta.minWriteId, delta.maxWriteId)) {
         aborted.add(child.getPath());
-      }
-      if (writeIdList.isWriteIdRangeValid(
+      } else if (writeIdList.isWriteIdRangeValid(
           delta.minWriteId, delta.maxWriteId) != ValidWriteIdList.RangeResponse.NONE) {
         working.add(delta);
       }
