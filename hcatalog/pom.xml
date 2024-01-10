@@ -102,10 +102,10 @@
         </exclusion>
       </exclusions>
     </dependency>
-    <!--dependency>
+    <dependency>
        <groupId>commons-httpclient</groupId>
        <artifactId>commons-httpclient</artifactId>
        <version>3.1</version>
-    </dependency-->
+    </dependency>
   </dependencies>
 </project>
